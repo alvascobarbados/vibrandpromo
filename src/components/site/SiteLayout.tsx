@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { QuoteBasketButton } from "@/components/site/QuoteBasketButton";
+import { AccountMenu } from "@/components/site/AccountMenu";
+import { AdminEditBar } from "@/components/site/AdminEditBar";
+import { useStaffSession } from "@/lib/staff-session";
 import { categoriesQuery } from "@/lib/catalog";
 import { COMPANY } from "@/lib/territories";
 import wordmarkCharcoal from "@/assets/wordmark-charcoal.png";
@@ -80,19 +83,13 @@ export function SiteLayout({
 }) {
   const [open, setOpen] = useState(false);
   const categories = useQuery(categoriesQuery);
+  const { isStaff } = useStaffSession();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-lime-700/20 bg-lime-500">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-          <div className="flex h-16 flex-nowrap items-center gap-3 sm:gap-4">
-            <div className="shrink-0">
-              <Logo />
-            </div>
-            <div className="min-w-0 flex-1">{headerSlot ?? <HeaderSearch />}</div>
-            <div className="shrink-0">
-              <QuoteBasketButton />
-            </div>
+          <div className="flex h-16 flex-nowrap items-center gap-2 sm:gap-3">
             <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button
@@ -138,14 +135,41 @@ export function SiteLayout({
                 >
                   Quote List
                 </Link>
+                {isStaff ? (
+                  <>
+                    <div className="my-2 border-t border-border" />
+                    <p className="px-3 pb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      Staff
+                    </p>
+                    <Link
+                      to="/admin"
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-3 py-3 text-base font-semibold text-foreground hover:bg-muted"
+                    >
+                      Admin
+                    </Link>
+                  </>
+                ) : null}
               </nav>
             </SheetContent>
             </Sheet>
+            <div className="shrink-0">
+              <Logo />
+            </div>
+            <div className="min-w-0 flex-1">{headerSlot ?? <HeaderSearch />}</div>
+            <div className="shrink-0">
+              <QuoteBasketButton />
+            </div>
+            <div className="shrink-0">
+              <AccountMenu />
+            </div>
           </div>
         </div>
       </header>
 
       <main className="flex-1">{children}</main>
+
+      <AdminEditBar />
 
       <footer className="border-t border-navy-800 bg-navy-900 text-white">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-3">

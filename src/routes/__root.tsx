@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { QuoteListProvider } from "@/lib/quote-list";
+import { StaffSessionProvider } from "@/lib/staff-session";
 
 function NotFoundComponent() {
   return (
@@ -138,11 +139,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <QuoteListProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster />
-      </QuoteListProvider>
+      <StaffSessionProvider>
+        <QuoteListProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <Toaster />
+        </QuoteListProvider>
+      </StaffSessionProvider>
     </QueryClientProvider>
   );
 }

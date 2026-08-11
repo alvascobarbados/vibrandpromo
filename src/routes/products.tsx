@@ -16,7 +16,8 @@ import {
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
 import { FilterPanel } from "@/components/site/FilterPanel";
-import { categoriesQuery, publicProductsQuery, subcategoriesQuery } from "@/lib/catalog";
+import { categoriesQuery, subcategoriesQuery } from "@/lib/catalog";
+import { useCatalogProducts } from "@/lib/staff-session";
 import {
   GROUP_LABELS,
   SORT_OPTIONS,
@@ -73,7 +74,7 @@ export const Route = createFileRoute("/products")({
 function CatalogPage() {
   const search = Route.useSearch() as CatalogSearch & { page: number };
   const navigate = useNavigate({ from: "/products" });
-  const products = useQuery(publicProductsQuery);
+  const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const [filtersOpen, setFiltersOpen] = useState(false);

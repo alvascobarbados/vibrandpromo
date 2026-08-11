@@ -8,10 +8,10 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
 import {
   categoriesQuery,
-  publicProductsQuery,
   subcategoriesQuery,
   type Product,
 } from "@/lib/catalog";
+import { useCatalogProducts } from "@/lib/staff-session";
 
 export const Route = createFileRoute("/c/$slug")({
   head: ({ params }) => {
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/c/$slug")({
 
 function CategoryPage() {
   const { slug } = Route.useParams();
-  const products = useQuery(publicProductsQuery);
+  const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const [activeChip, setActiveChip] = useState("all");
