@@ -1,10 +1,9 @@
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Search, SlidersHorizontal, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { SlidersHorizontal, X } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -17,7 +16,7 @@ import {
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
 import { FilterPanel } from "@/components/site/FilterPanel";
-import { categoriesQuery, publicProductsQuery } from "@/lib/catalog";
+import { categoriesQuery, publicProductsQuery, subcategoriesQuery } from "@/lib/catalog";
 import {
   GROUP_LABELS,
   SORT_OPTIONS,
@@ -43,6 +42,7 @@ export const Route = createFileRoute("/products")({
         sort: "default",
         page: 1,
         cat: [],
+        sub: [],
         moq: [],
         prod: [],
         colour: [],
@@ -54,13 +54,13 @@ export const Route = createFileRoute("/products")({
   },
   head: () => ({
     meta: [
-      { title: "Promotional Products Catalogue | Vibrand Barbados" },
+      { title: "All Promotional Products | Vibrand Barbados" },
       {
         name: "description",
         content:
           "Browse branded apparel, bags, drinkware, technology and display products by SKU, MOQ and production time. Add items to your quote list.",
       },
-      { property: "og:title", content: "Promotional Products Catalogue | Vibrand Barbados" },
+      { property: "og:title", content: "All Promotional Products | Vibrand Barbados" },
       {
         property: "og:description",
         content: "Search the Vibrand catalogue and build a quote request in minutes.",
@@ -75,23 +75,23 @@ function CatalogPage() {
   const navigate = useNavigate({ from: "/products" });
   const products = useQuery(publicProductsQuery);
   const categories = useQuery(categoriesQuery);
+  const subcategories = useQuery(subcategoriesQuery);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [isNarrow, setIsNarrow] = useState(true);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 420px)");
-    const sync = () => setIsNarrow(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
 
   const allProducts = products.data ?? [];
   const allCategories = categories.data ?? [];
+  const allSubcategories = subcategories.data ?? [];
 
   const filtered = useMemo(
-    () => sortProducts(filterProducts(allProducts, search, allCategories), search.sort),
-    [allProducts, allCategories, search],
+    () =>
+      sortProducts(
+        filterProducts(allProducts, search, {
+          categories: allCategories,
+          subcategories: allSubcategories,
+        }),
+        search.sort,
+      ),
+    [allProducts, allCategories, allSubcategories, search],
   );
 
   const total = filtered.length;
@@ -121,10 +121,12 @@ function CatalogPage() {
   }
 
   function clearFilters() {
-    update({ cat: [], moq: [], prod: [], colour: [], deco: [], src: [], mat: [] });
+    update({ cat: [], sub: [], moq: [], prod: [], colour: [], deco: [], src: [], mat: [] });
   }
 
-  const chips = (["cat", "moq", "prod", "colour", "deco", "src", "mat"] as FilterGroupId[]).flatMap(
+  const chips = (
+    ["cat", "sub", "moq", "prod", "colour", "deco", "src", "mat"] as FilterGroupId[]
+  ).flatMap(
     (group) =>
       search[group].map((value: string) => ({
         group,
@@ -132,27 +134,16 @@ function CatalogPage() {
         label:
           group === "cat"
             ? (allCategories.find((c) => c.slug === value)?.name ?? value)
-            : value,
+            : group === "sub"
+              ? (allSubcategories.find((s) => s.slug === value)?.name ?? value)
+              : value,
       })),
   );
 
-  const searchField = (
-    <div className="relative w-full">
-      <Search className="absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        value={search.q}
-        onChange={(event) => update({ q: event.target.value }, true)}
-        placeholder={isNarrow ? "Search" : "Product name / SKU"}
-        aria-label="Search products by name or SKU"
-        className="h-10 w-full min-w-0 rounded-full border-transparent bg-white pl-9 text-charcoal placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-lime"
-      />
-    </div>
-  );
-
   return (
-    <SiteLayout headerSlot={searchField}>
+    <SiteLayout>
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
-        <h1 className="sr-only">Vibrand promotional products catalogue</h1>
+        <h1 className="sr-only">All Vibrand promotional products</h1>
 
         <div className="flex flex-col gap-8 lg:flex-row">
           <aside className="hidden w-64 shrink-0 lg:block">
@@ -160,6 +151,7 @@ function CatalogPage() {
               variant="sidebar"
               products={allProducts}
               categories={allCategories}
+              subcategories={allSubcategories}
               search={search}
               resultCount={total}
               onToggle={toggle}
@@ -275,6 +267,7 @@ function CatalogPage() {
             variant="drawer"
             products={allProducts}
             categories={allCategories}
+            subcategories={allSubcategories}
             search={search}
             resultCount={total}
             onToggle={toggle}
