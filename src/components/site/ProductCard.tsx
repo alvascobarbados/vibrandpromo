@@ -31,7 +31,7 @@ function FlagBadge({ source }: { source: string }) {
 
 function SpecLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="whitespace-nowrap text-[10px] font-normal uppercase leading-3 tracking-[0.06em] text-n-500">
+    <p className="whitespace-nowrap text-[10px] font-normal uppercase leading-3 tracking-[0.01em] text-n-500">
       {children}
     </p>
   );
@@ -40,12 +40,17 @@ function SpecLabel({ children }: { children: React.ReactNode }) {
 function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | null }) {
   return (
     <p
-      className={`flex items-center gap-1.5 truncate text-[12px] leading-4 tabular-nums ${
+      className={`flex items-center gap-1 whitespace-nowrap leading-4 tabular-nums ${
         value ? "font-medium text-n-700" : "font-normal text-n-500"
       }`}
     >
-      <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
-      <span className="truncate">{value ?? "On request"}</span>
+      <Icon
+        className="size-3 shrink-0 translate-y-[0.5px] text-n-500 [@container(min-width:170px)]:size-[13px]"
+        strokeWidth={1.75}
+      />
+      <span className="whitespace-nowrap text-[clamp(8.5px,6.2cqw,12px)]">
+        {value ?? "On request"}
+      </span>
     </p>
   );
 }
@@ -67,7 +72,7 @@ export function ProductCard({
 
   return (
     <article
-      className={`relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-card ${
+      className={`@container relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-card ${
         hidden ? "border-dashed border-n-300 opacity-60" : "border-n-200"
       }`}
     >
@@ -97,7 +102,7 @@ export function ProductCard({
         <FlagBadge source={product.inventory_source} />
       </ProductImageCarousel>
 
-      <div className="flex flex-1 flex-col p-3">
+      <div className="flex flex-1 flex-col p-2.5 [@container(min-width:170px)]:p-3">
         <p className="truncate text-xs font-medium leading-4 text-n-500">
           {product.sku ?? "—"}
         </p>
@@ -108,14 +113,20 @@ export function ProductCard({
           {price ?? "\u00a0"}
         </p>
 
-        <div className="mt-auto flex h-[3.25rem] items-start border-t border-n-200 pt-2.5">
-          <div className="min-w-0 shrink-0 basis-[38%] pr-2">
+        <div className="mt-auto flex h-[3.25rem] items-stretch border-t border-n-200 pt-2.5">
+          <div className="shrink-0 pr-2">
             <SpecLabel>MOQ</SpecLabel>
-            <p className="mt-0.5 truncate text-[13px] font-medium leading-4 tabular-nums text-n-700">
+            <p
+              className={`mt-0.5 whitespace-nowrap font-medium leading-4 tabular-nums text-n-700 ${
+                product.moq
+                  ? "text-[clamp(11px,7cqw,13px)]"
+                  : "text-[clamp(7.5px,5cqw,12px)] font-normal text-n-500"
+              }`}
+            >
               {specValue(product.moq)}
             </p>
           </div>
-          <div className="min-w-0 flex-1 border-l border-n-200 pl-2.5">
+          <div className="min-w-0 flex-1 border-l border-n-200 pl-2">
             <SpecLabel>Lead time</SpecLabel>
             <div className="mt-0.5 space-y-0.5">
               <LeadRow icon={Plane} value={airLeadLabel(product, shipping)} />
@@ -141,7 +152,7 @@ export function ProductCard({
                 <p className="truncate text-sm font-semibold text-white">{product.name}</p>
                 <p className="text-xs text-white/60">{product.sku ?? "—"}</p>
               </div>
-              <div className="w-[15rem] shrink-0">
+              <div className="@container w-[15rem] shrink-0">
                 <AddToQuoteRow product={product} tone="dark" />
               </div>
             </div>

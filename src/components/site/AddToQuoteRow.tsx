@@ -23,7 +23,7 @@ export function AddToQuoteRow({
     return (
       <Link
         to="/quote"
-        className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-lime-500 px-3 text-[12px] font-medium text-n-700 transition-colors hover:bg-lime-300"
+        className="inline-flex h-10 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-lime-500 px-3 text-[12px] font-medium tabular-nums text-n-700 transition-colors hover:bg-lime-300"
       >
         <Check className="size-3.5" /> In quote · {existing.quantity}
       </Link>
@@ -44,12 +44,12 @@ export function AddToQuoteRow({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col items-stretch gap-2 [@container(min-width:200px)]:flex-row">
       <QuantityStepper quantity={quantity} moq={product.moq} onChange={setQuantity} tone={tone} />
       <button
         type="button"
         onClick={add}
-        className={`inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border px-3 text-[12px] font-medium transition-colors ${
+        className={`inline-flex h-10 min-h-10 w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[12px] font-medium transition-colors [@container(min-width:200px)]:w-auto [@container(min-width:200px)]:min-w-[72px] [@container(min-width:200px)]:flex-1 ${
           tone === "dark"
             ? "border-white/40 text-white hover:border-navy-700 hover:bg-navy-700 active:bg-navy-700"
             : "border-n-200 bg-white text-n-900 hover:border-navy-700 hover:bg-navy-700 hover:text-white active:border-navy-700 active:bg-navy-700 active:text-white"
