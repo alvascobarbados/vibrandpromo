@@ -138,13 +138,13 @@ function CatalogPage() {
 
   const searchField = (
     <div className="relative w-full">
-      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={search.q}
         onChange={(event) => update({ q: event.target.value }, true)}
         placeholder={isNarrow ? "Search" : "Product name / SKU"}
         aria-label="Search products by name or SKU"
-        className="h-10 w-full min-w-0 rounded-full pl-9"
+        className="h-10 w-full min-w-0 rounded-full border-transparent bg-white pl-9 text-charcoal placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-lime"
       />
     </div>
   );
