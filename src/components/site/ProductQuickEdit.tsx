@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
+import { validateLeadTimes } from "@/components/admin/ProductForm";
 import type { Product } from "@/lib/catalog";
 
 export function ProductQuickEdit({
