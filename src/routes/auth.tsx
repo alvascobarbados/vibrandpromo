@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyAccess } from "@/lib/staff.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -30,21 +31,38 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/admin", replace: true });
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      await routeByRole();
     });
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function routeByRole() {
+    try {
+      const access = await getMyAccess();
+      if (access.isStaff) {
+        navigate({ to: "/admin", replace: true });
+        return;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    toast.error("This account doesn't have admin access.");
+    navigate({ to: "/", replace: true });
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast.error(error.message);
       return;
     }
-    navigate({ to: "/admin", replace: true });
+    await routeByRole();
+    setLoading(false);
   }
 
   return (
