@@ -30,8 +30,6 @@ export function ImageLightbox({
   const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
   const lastTapRef = useRef(0);
   const closedRef = useRef(false);
-  const poppedRef = useRef(false);
-  const pushedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -89,33 +87,18 @@ export function ImageLightbox({
     onClose();
   }, [onClose]);
 
-  // back button / gesture closes the lightbox instead of leaving the catalog
+  // back button / gesture closes the lightbox and stays on the catalog
   useEffect(() => {
-    const history = router.history;
-    const loc = history.location;
-    if (!pushedRef.current) {
-      pushedRef.current = true;
-      history.push(`${loc.pathname}${loc.searchStr ?? ""}#photo`);
-    }
-    const unsub = history.subscribe(() => {
-      if (history.location.hash !== "photo") {
-        poppedRef.current = true;
-        finish();
-      }
+    return router.history.block({
+      enableBeforeUnload: false,
+      blockerFn: ({ action }) => {
+        if (action === "BACK") {
+          finish();
+          return true;
+        }
+        return false;
+      },
     });
-    return () => {
-      unsub();
-    };
-  }, [finish, router]);
-
-  // UI close pops the history entry we pushed; the subscription then unmounts us
-  const close = useCallback(() => {
-    if (closedRef.current) return;
-    if (!poppedRef.current && router.history.location.hash === "photo") {
-      router.history.back();
-      return;
-    }
-    finish();
   }, [finish, router]);
 
   const resetZoom = () => {
@@ -134,13 +117,13 @@ export function ImageLightbox({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") finish();
       else if (e.key === "ArrowLeft") go(index - 1);
       else if (e.key === "ArrowRight") go(index + 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [close, go, index]);
+  }, [finish, go, index]);
 
   const dist = (touches: React.TouchList) => {
     const a = touches[0];
@@ -189,7 +172,7 @@ export function ImageLightbox({
     const start = startRef.current;
     setDragging(false);
     if (start?.axis === "y" && dragY > CLOSE_DRAG) {
-      close();
+      finish();
       return;
     }
     if (start?.axis === "x" && Math.abs(dragX) > 60) {
@@ -222,13 +205,13 @@ export function ImageLightbox({
       <div
         className="absolute inset-0 bg-charcoal/95 transition-opacity duration-200"
         style={{ opacity: entered ? Math.max(0, 1 - dragY / 400) : 0 }}
-        onClick={close}
+        onClick={finish}
       />
 
       <button
         type="button"
         aria-label="Close"
-        onClick={close}
+        onClick={finish}
         className="absolute right-3 top-3 z-20 rounded-full bg-white/10 p-2 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
       >
         <X className="size-5" />
@@ -238,7 +221,7 @@ export function ImageLightbox({
         ref={containerRef}
         className="relative z-10 flex flex-1 items-center justify-center overflow-hidden"
         onClick={(e) => {
-          if (e.target === e.currentTarget) close();
+          if (e.target === e.currentTarget) finish();
         }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
