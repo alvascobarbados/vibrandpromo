@@ -67,7 +67,7 @@ export function QuoteListProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       items,
-      count: items.reduce((sum, i) => sum + 1 * 0 + 1, 0),
+      count: items.length,
       addItem,
       updateItem,
       removeItem,
