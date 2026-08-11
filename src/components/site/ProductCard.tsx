@@ -1,4 +1,4 @@
-import { Check, Plus } from "lucide-react";
+import { Check, Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -6,6 +6,8 @@ import { formatPrice, productImage, specValue, type Product } from "@/lib/catalo
 import { useQuoteList } from "@/lib/quote-list";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
+import { useStaffSession } from "@/lib/staff-session";
+import { ProductQuickEdit } from "@/components/site/ProductQuickEdit";
 
 function FlagBadge({ source }: { source: string }) {
   const usa = source === "USA Inventory";
@@ -55,6 +57,9 @@ export function ProductCard({
   const price = product.show_price ? formatPrice(product.price) : null;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = product.images ?? [];
+  const { editMode } = useStaffSession();
+  const [quickEditOpen, setQuickEditOpen] = useState(false);
+  const hidden = editMode && !product.is_active;
 
   const addToQuote = () => {
     addItem({
@@ -73,7 +78,28 @@ export function ProductCard({
   };
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-n-200 bg-white shadow-card">
+    <article
+      className={`relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-card ${
+        hidden ? "border-dashed border-n-300 opacity-60" : "border-n-200"
+      }`}
+    >
+      {editMode ? (
+        <>
+          <button
+            type="button"
+            aria-label={`Quick edit ${product.name}`}
+            onClick={() => setQuickEditOpen(true)}
+            className="absolute right-2 top-2 z-20 inline-flex size-8 items-center justify-center rounded-full border border-n-200 bg-white/95 text-navy-700 shadow-card hover:bg-lime-500 hover:text-n-700"
+          >
+            <Pencil className="size-4" />
+          </button>
+          {hidden ? (
+            <span className="absolute left-2 top-2 z-20 rounded-full bg-n-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              Hidden
+            </span>
+          ) : null}
+        </>
+      ) : null}
       <ProductImageCarousel
         images={images}
         alt={product.name}
@@ -166,6 +192,10 @@ export function ProductCard({
             </div>
           }
         />
+      ) : null}
+
+      {editMode && quickEditOpen ? (
+        <ProductQuickEdit product={product} open={quickEditOpen} onOpenChange={setQuickEditOpen} />
       ) : null}
     </article>
   );
