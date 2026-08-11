@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import { supabase } from "@/integrations/supabase/client";
 import { getMyAccess, type MyAccess } from "@/lib/staff.functions";
-import { allProductsQuery, publicProductsQuery, type Product } from "@/lib/catalog";
+import { allProductsQuery, publicProductsQuery } from "@/lib/catalog";
 
 type StaffSessionValue = {
   access: MyAccess | null;
