@@ -32,7 +32,7 @@ import {
 const PAGE_SIZE = 20;
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> & { page?: number } => ({
     ...parseCatalogSearch(search),
     page: Number(search['page']) > 0 ? Number(search['page']) : 1,
   }),
@@ -93,7 +93,7 @@ function CatalogPage() {
 
   function update(patch: Partial<CatalogSearch & { page: number }>, replace = false) {
     void navigate({
-      search: (prev: Record<string, unknown>) => ({ ...prev, page: 1, ...patch }),
+      search: (prev) => ({ ...prev, page: 1, ...patch }),
       replace,
       resetScroll: false,
     });
