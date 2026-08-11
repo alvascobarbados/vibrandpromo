@@ -18,7 +18,8 @@
 - Everything runs through server functions that verify the caller is an admin before touching anything. `user_roles` stays read-only from the browser (own row only) — no client writes.
 
 ## 3. Storage fixes
-- Check whether `product-images` really serves public URLs. If not, flip the bucket to public read (or switch the app to signed URLs if the workspace blocks public buckets) and prove it: attach one test image to one product, load it on the public site, screenshot, then remove the test image and restore the product.
+- Check whether `product-images` really serves public URLs. Preferred fix: flip the bucket to public read. Signed URLs are only a fallback if the platform genuinely blocks public buckets — and if that happens I will say so explicitly in the report and explain how expiry is handled so live images never break.
+- Prove it end to end: attach one test image to one product, load it on the public site, then remove the test image and restore the product.
 - Quote artwork uploads: accept only jpg, jpeg, png, pdf, ai, eps, svg, zip, max 20MB. Anything else gets a friendly inline error and is not uploaded. Enforced both in the form and on the bucket itself.
 - Add a hidden honeypot field to the quote form; submissions that fill it are silently discarded server-side.
 
