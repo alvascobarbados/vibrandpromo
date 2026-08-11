@@ -41,19 +41,6 @@ export function SiteLayout({
               <div className="hidden min-w-0 flex-1 md:block">{headerSlot}</div>
             ) : null}
             <div className={headerSlot ? "flex-1 md:hidden" : "flex-1"} />
-            <nav className="hidden items-center gap-1 md:flex">
-            {NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                activeOptions={{ exact: item.to === "/" }}
-                activeProps={{ className: "text-primary" }}
-                className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-            </nav>
             <QuoteBasketButton />
             <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
