@@ -20,6 +20,7 @@ import { Route as ProductsIndexRouteImport } from './routes/products.index'
 import { Route as ProductsSlugRouteImport } from './routes/products.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
+import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
 import { Route as AuthenticatedAdminQuotesRouteImport } from './routes/_authenticated/admin.quotes'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,6 +78,12 @@ const AuthenticatedAdminCategoriesRoute =
     path: '/admin/categories',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminProductsRoute =
+  AuthenticatedAdminProductsRouteImport.update({
+    id: '/admin/products',
+    path: '/admin/products',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminQuotesRoute =
   AuthenticatedAdminQuotesRouteImport.update({
     id: '/admin/quotes',
@@ -94,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/products/$slug': typeof ProductsSlugRoute
   '/products/': typeof ProductsIndexRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/admin/quotes': typeof AuthenticatedAdminQuotesRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -107,6 +115,7 @@ export interface FileRoutesByTo {
   '/products/$slug': typeof ProductsSlugRoute
   '/products': typeof ProductsIndexRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/admin/quotes': typeof AuthenticatedAdminQuotesRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
@@ -122,6 +131,7 @@ export interface FileRoutesById {
   '/products/$slug': typeof ProductsSlugRoute
   '/products/': typeof ProductsIndexRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
   '/_authenticated/admin/quotes': typeof AuthenticatedAdminQuotesRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/products/$slug'
     | '/products/'
     | '/admin/categories'
+    | '/admin/products'
     | '/admin/quotes'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/products/$slug'
     | '/products'
     | '/admin/categories'
+    | '/admin/products'
     | '/admin/quotes'
     | '/admin'
   id:
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/products/$slug'
     | '/products/'
     | '/_authenticated/admin/categories'
+    | '/_authenticated/admin/products'
     | '/_authenticated/admin/quotes'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
@@ -259,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCategoriesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/products': {
+      id: '/_authenticated/admin/products'
+      path: '/admin/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/quotes': {
       id: '/_authenticated/admin/quotes'
       path: '/admin/quotes'
@@ -271,12 +291,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
+  AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRoute
   AuthenticatedAdminQuotesRoute: typeof AuthenticatedAdminQuotesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
+  AuthenticatedAdminProductsRoute: AuthenticatedAdminProductsRoute,
   AuthenticatedAdminQuotesRoute: AuthenticatedAdminQuotesRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
