@@ -22,13 +22,13 @@ import { TERRITORIES } from "@/lib/territories";
 export const Route = createFileRoute("/quote")({
   head: () => ({
     meta: [
-      { title: "Your Quote List | Request Pricing from Alvasco" },
+      { title: "Your Quote List | Request Pricing from Vibrand" },
       {
         name: "description",
         content:
-          "Review your selected promotional products and submit a quote request. The Alvasco team responds within 24 hours.",
+          "Review your selected promotional products and submit a quote request. The Vibrand team responds within 24 hours.",
       },
-      { property: "og:title", content: "Your Quote List | Request Pricing from Alvasco" },
+      { property: "og:title", content: "Your Quote List | Request Pricing from Vibrand" },
       {
         property: "og:description",
         content: "Submit your branded merchandise quote request — no payment, no obligation.",

@@ -79,14 +79,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Alvasco (Barbados) Ltd. | Premium Promotional Products" },
+      { title: "Vibrand (Barbados) Ltd. | Premium Promotional Products" },
       {
         name: "description",
         content:
           "Branded merchandise, corporate gifts and promotional products for Caribbean businesses. Browse the catalogue and request a quote.",
       },
-      { name: "author", content: "Alvasco (Barbados) Ltd." },
-      { property: "og:title", content: "Alvasco (Barbados) Ltd. | Premium Promotional Products" },
+      { name: "author", content: "Vibrand (Barbados) Ltd." },
+      { property: "og:title", content: "Vibrand (Barbados) Ltd. | Premium Promotional Products" },
       {
         property: "og:description",
         content: "Premium promotional products and corporate gifting across the Caribbean.",

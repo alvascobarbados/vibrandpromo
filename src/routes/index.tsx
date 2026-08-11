@@ -1,7 +1,7 @@
 import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,16 +54,16 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Promotional Products Catalogue | Alvasco Barbados" },
+      { title: "Promotional Products Catalogue | Vibrand Barbados" },
       {
         name: "description",
         content:
           "Browse branded apparel, bags, drinkware, technology and display products by SKU, MOQ and production time. Add items to your quote list.",
       },
-      { property: "og:title", content: "Promotional Products Catalogue | Alvasco Barbados" },
+      { property: "og:title", content: "Promotional Products Catalogue | Vibrand Barbados" },
       {
         property: "og:description",
-        content: "Search the Alvasco catalogue and build a quote request in minutes.",
+        content: "Search the Vibrand catalogue and build a quote request in minutes.",
       },
     ],
   }),
@@ -76,6 +76,15 @@ function CatalogPage() {
   const products = useQuery(publicProductsQuery);
   const categories = useQuery(categoriesQuery);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [isNarrow, setIsNarrow] = useState(true);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 420px)");
+    const sync = () => setIsNarrow(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const allProducts = products.data ?? [];
   const allCategories = categories.data ?? [];
@@ -128,14 +137,14 @@ function CatalogPage() {
   );
 
   const searchField = (
-    <div className="relative">
+    <div className="relative w-full">
       <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={search.q}
         onChange={(event) => update({ q: event.target.value }, true)}
-        placeholder="Product name / SKU"
+        placeholder={isNarrow ? "Search" : "Product name / SKU"}
         aria-label="Search products by name or SKU"
-        className="h-10 rounded-full pl-9"
+        className="h-10 w-full min-w-0 rounded-full pl-9"
       />
     </div>
   );
@@ -143,7 +152,7 @@ function CatalogPage() {
   return (
     <SiteLayout headerSlot={searchField}>
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6">
-        <h1 className="sr-only">Alvasco promotional products catalogue</h1>
+        <h1 className="sr-only">Vibrand promotional products catalogue</h1>
 
         <div className="lg:hidden">
           <Button

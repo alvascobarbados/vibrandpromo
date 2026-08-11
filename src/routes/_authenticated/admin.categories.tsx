@@ -14,10 +14,10 @@ import { categoriesQuery, slugify } from "@/lib/catalog";
 export const Route = createFileRoute("/_authenticated/admin/categories")({
   head: () => ({
     meta: [
-      { title: "Categories | Alvasco Admin" },
+      { title: "Categories | Vibrand Admin" },
       { name: "description", content: "Create and manage product categories." },
-      { property: "og:title", content: "Categories | Alvasco Admin" },
-      { property: "og:description", content: "Manage Alvasco product categories." },
+      { property: "og:title", content: "Categories | Vibrand Admin" },
+      { property: "og:description", content: "Manage Vibrand product categories." },
       { name: "robots", content: "noindex" },
     ],
   }),
