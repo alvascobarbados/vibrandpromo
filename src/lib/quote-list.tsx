@@ -12,6 +12,7 @@ export type QuoteItem = {
 type QuoteListContextValue = {
   items: QuoteItem[];
   count: number;
+  bump: number;
   addItem: (item: QuoteItem) => void;
   updateItem: (productId: string, patch: Partial<QuoteItem>) => void;
   removeItem: (productId: string) => void;
@@ -24,6 +25,7 @@ const QuoteListContext = createContext<QuoteListContextValue | null>(null);
 
 export function QuoteListProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<QuoteItem[]>([]);
+  const [bump, setBump] = useState(0);
 
   useEffect(() => {
     try {
@@ -43,6 +45,7 @@ export function QuoteListProvider({ children }: { children: React.ReactNode }) {
   }, [items]);
 
   const addItem = useCallback((item: QuoteItem) => {
+    setBump((n) => n + 1);
     setItems((prev) => {
       const existing = prev.find((i) => i.productId === item.productId);
       if (!existing) return [...prev, item];
@@ -68,12 +71,13 @@ export function QuoteListProvider({ children }: { children: React.ReactNode }) {
     () => ({
       items,
       count: items.length,
+      bump,
       addItem,
       updateItem,
       removeItem,
       clear,
     }),
-    [items, addItem, updateItem, removeItem, clear],
+    [items, bump, addItem, updateItem, removeItem, clear],
   );
 
   return <QuoteListContext.Provider value={value}>{children}</QuoteListContext.Provider>;

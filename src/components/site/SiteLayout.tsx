@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { QuoteFab } from "@/components/site/QuoteFab";
+import { QuoteBasketButton } from "@/components/site/QuoteBasketButton";
 import { COMPANY } from "@/lib/territories";
 
 const NAV = [
@@ -34,25 +34,17 @@ export function SiteLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6">
-          <Logo />
-          {headerSlot ? <div className="min-w-0 flex-1">{headerSlot}</div> : <div className="flex-1" />}
-          <nav className="hidden items-center gap-1 md:flex">
-            {NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                activeOptions={{ exact: item.to === "/" }}
-                activeProps={{ className: "text-primary" }}
-                className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <Sheet open={open} onOpenChange={setOpen}>
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+          <div className="flex h-16 items-center gap-2 sm:gap-3">
+            <Logo />
+            {headerSlot ? (
+              <div className="hidden min-w-0 flex-1 md:block">{headerSlot}</div>
+            ) : null}
+            <div className={headerSlot ? "flex-1 md:hidden" : "flex-1"} />
+            <QuoteBasketButton />
+            <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+              <Button variant="ghost" size="icon" aria-label="Open menu">
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
@@ -77,12 +69,13 @@ export function SiteLayout({
                 </Link>
               </nav>
             </SheetContent>
-          </Sheet>
+            </Sheet>
+          </div>
+          {headerSlot ? <div className="pb-3 md:hidden">{headerSlot}</div> : null}
         </div>
       </header>
 
       <main className="flex-1">{children}</main>
-      <QuoteFab />
 
       <footer className="border-t border-border bg-charcoal text-charcoal-foreground">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-3">

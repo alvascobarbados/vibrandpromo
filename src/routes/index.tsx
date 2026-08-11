@@ -141,13 +141,11 @@ function CatalogPage() {
   );
 
   return (
-    <SiteLayout headerSlot={<div className="hidden sm:block">{searchField}</div>}>
+    <SiteLayout headerSlot={searchField}>
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6">
         <h1 className="sr-only">Alvasco promotional products catalogue</h1>
 
-        <div className="sm:hidden">{searchField}</div>
-
-        <div className="mt-3 lg:hidden">
+        <div className="lg:hidden">
           <Button
             variant="outline"
             className="w-full gap-2 rounded-xl"
