@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { ChevronDown, Clock, Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -438,6 +438,7 @@ function ProductSummary({
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
+  const shipping = useShippingSettings();
   return (
     <div className="space-y-5">
       {(product.images ?? []).length ? (
