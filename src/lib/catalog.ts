@@ -9,12 +9,21 @@ export type Category = {
   sort_order: number;
 };
 
+export type Subcategory = {
+  id: string;
+  name: string;
+  slug: string;
+  category_id: string;
+  sort_order: number;
+};
+
 export type Product = {
   id: string;
   name: string;
   slug: string;
   sku: string | null;
   category_id: string | null;
+  subcategory_id: string | null;
   description: string | null;
   details: string | null;
   price: number | null;
