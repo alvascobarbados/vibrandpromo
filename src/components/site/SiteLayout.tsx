@@ -9,9 +9,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { QuoteBasketButton } from "@/components/site/QuoteBasketButton";
 import { categoriesQuery } from "@/lib/catalog";
 import { COMPANY } from "@/lib/territories";
-import logoHorizontalCharcoal from "@/assets/vibrand-logo-charcoal.png";
-import logoMarkCharcoal from "@/assets/vibrand-mark-charcoal.png";
-import logoMark from "@/assets/vibrand-mark.png";
+import wordmarkCharcoal from "@/assets/wordmark-charcoal.png";
+import markCharcoal from "@/assets/mark-charcoal.png";
+import markLime from "@/assets/mark-lime.png";
 
 const NAV = [
   { to: "/", label: "Categories" },
@@ -23,8 +23,8 @@ const NAV = [
 function Logo() {
   return (
     <Link to="/" search={{}} aria-label="Vibrand — full catalogue" className="flex items-center">
-      <img src={logoMarkCharcoal} alt="Vibrand" className="h-8 w-auto sm:hidden" />
-      <img src={logoHorizontalCharcoal} alt="Vibrand" className="hidden h-8 w-auto sm:block" />
+      <img src={markCharcoal} alt="Vibrand" className="h-8 w-auto sm:hidden" />
+      <img src={wordmarkCharcoal} alt="Vibrand" className="hidden h-8 w-auto sm:block" />
     </Link>
   );
 }
@@ -150,7 +150,7 @@ export function SiteLayout({
       <footer className="border-t border-navy-800 bg-navy-900 text-white">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-3">
           <div>
-            <img src={logoMark} alt="Vibrand" className="h-10 w-auto" />
+            <img src={markLime} alt="Vibrand" className="h-10 w-auto" />
             <p className="mt-3 max-w-sm text-sm text-navy-100">
               Premium promotional products for businesses across 24 Caribbean territories.
             </p>

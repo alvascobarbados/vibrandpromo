@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { quoteRequestsQuery } from "@/lib/admin";
 import { canUsePage, type AdminPageKey } from "@/lib/page-access";
 import type { MyAccess } from "@/lib/staff.functions";
-import logoMark from "@/assets/vibrand-mark.png";
+import markLime from "@/assets/mark-lime.png";
 
 type NavItem = {
   to: string;
@@ -103,7 +103,7 @@ export function AdminSidebar({
             className="flex min-w-0 items-center gap-2 font-display text-base font-bold"
             onClick={onNavigate}
           >
-            <img src={logoMark} alt="Vibrand" className="h-7 w-auto shrink-0" />
+            <img src={markLime} alt="Vibrand" className="h-7 w-auto shrink-0" />
             {collapsed ? null : <span className="truncate">Admin</span>}
           </Link>
           <button
