@@ -33,10 +33,6 @@ export type Product = {
   images: string[];
   moq: number | null;
   production_days: number | null;
-  air_lead_min: number | null;
-  air_lead_max: number | null;
-  sea_lead_min: number | null;
-  sea_lead_max: number | null;
   colour_option: string | null;
   decoration_methods: string[];
   inventory_source: string;
@@ -87,25 +83,6 @@ export const AIR_LEAD_BUCKETS = [
   { id: "15-21", label: "15–21 days", min: 15, max: 21 },
   { id: "22+", label: "22+ days", min: 22, max: Number.POSITIVE_INFINITY },
 ] as const;
-
-/**
- * Renders a lead-time pair as a range. Equal ends collapse to one number and a
- * fully empty pair returns null so the card can show "On request".
- */
-export function leadRange(min: number | null, max: number | null): string | null {
-  if (min == null && max == null) return null;
-  const lo = min ?? (max as number);
-  const hi = max ?? (min as number);
-  return lo === hi ? `${lo} days` : `${lo}–${hi} days`;
-}
-
-export function airLead(product: Pick<Product, "air_lead_min" | "air_lead_max">) {
-  return leadRange(product.air_lead_min, product.air_lead_max);
-}
-
-export function seaLead(product: Pick<Product, "sea_lead_min" | "sea_lead_max">) {
-  return leadRange(product.sea_lead_min, product.sea_lead_max);
-}
 
 export function matchesBuckets(
   value: number | null,
