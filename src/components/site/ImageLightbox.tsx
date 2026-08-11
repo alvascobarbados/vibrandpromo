@@ -32,6 +32,7 @@ export function ImageLightbox({
   const closedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const scrollRef = useRef(typeof window === "undefined" ? 0 : window.scrollY);
 
   const markLoaded = useCallback((i: number) => {
     setLoaded((prev) => (prev.includes(i) || i < 0 || i >= images.length ? prev : [...prev, i]));
@@ -51,7 +52,7 @@ export function ImageLightbox({
   // lock page scroll without losing position
   useEffect(() => {
     const body = document.body;
-    const scrollY = window.scrollY;
+    const scrollY = scrollRef.current;
     const prev = {
       position: body.style.position,
       top: body.style.top,
