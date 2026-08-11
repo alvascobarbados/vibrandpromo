@@ -27,6 +27,18 @@ function FlagBadge({ source }: { source: string }) {
   );
 }
 
+function SpecValue({ value }: { value: string }) {
+  return (
+    <p
+      className={`mt-0.5 truncate font-bold leading-5 tabular-nums text-foreground ${
+        value.length > 8 ? "text-xs" : "text-sm"
+      }`}
+    >
+      {value}
+    </p>
+  );
+}
+
 export function ProductCard({
   product,
   coverOnly = false,
@@ -78,22 +90,18 @@ export function ProductCard({
           {price ?? "\u00a0"}
         </p>
 
-        <div className="mt-3 grid grid-cols-2 border-t border-border pt-3 text-center">
+        <div className="mt-auto grid grid-cols-2 border-t border-border pt-3 text-center">
           <div className="min-w-0 px-3">
             <p className="truncate text-[9px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground">
               MOQ
             </p>
-            <p className="mt-0.5 truncate text-sm font-bold leading-5 tabular-nums text-foreground">
-              {specValue(product.moq)}
-            </p>
+            <SpecValue value={specValue(product.moq)} />
           </div>
           <div className="min-w-0 border-l border-border px-3">
             <p className="truncate text-[9px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground">
               Production
             </p>
-            <p className="mt-0.5 truncate text-sm font-bold leading-5 tabular-nums text-foreground">
-              {specValue(product.production_days, "days")}
-            </p>
+            <SpecValue value={specValue(product.production_days, "days")} />
           </div>
         </div>
 
