@@ -48,7 +48,7 @@ export function CategoryRow({
   return (
     <div
       ref={trackRef}
-      className="-mx-4 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto overflow-y-hidden scroll-smooth px-4 pb-1 sm:mx-0 sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="-mx-4 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto overflow-y-hidden scroll-smooth px-4 pb-1 [scroll-padding-left:1rem] [scroll-padding-right:1rem] sm:mx-0 sm:px-0 sm:[scroll-padding-left:0px] sm:[scroll-padding-right:0px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       style={{ touchAction: "pan-x pan-y pinch-zoom", overscrollBehaviorX: "contain" }}
     >
       {items.map((product, index) => (

@@ -135,7 +135,7 @@ function CategoryPage() {
           </div>
 
           {sections.length ? (
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-3 [scroll-padding-left:1rem] [scroll-padding-right:1rem] sm:mx-0 sm:px-0 sm:[scroll-padding-left:0px] sm:[scroll-padding-right:0px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[{ slug: "all", name: "All" }, ...sections].map((chip) => (
                 <button
                   key={chip.slug}

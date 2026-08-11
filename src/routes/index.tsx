@@ -82,7 +82,7 @@ function HomePage() {
       {shelves.length ? (
         <div className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur">
           <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-3 [scroll-padding-left:1rem] [scroll-padding-right:1rem] sm:mx-0 sm:px-0 sm:[scroll-padding-left:0px] sm:[scroll-padding-right:0px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[{ slug: "all", name: "All" }, ...shelves.map((s) => s.category)].map((chip) => (
                 <button
                   key={chip.slug}
