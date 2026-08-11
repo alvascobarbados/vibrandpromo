@@ -4,6 +4,7 @@ import { LayoutDashboard, LogOut, Package, Tags, ClipboardList } from "lucide-re
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import logoMark from "@/assets/vibrand-mark.png";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -35,12 +36,18 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-secondary">
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-white/10 bg-charcoal text-charcoal-foreground">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link to="/" className="font-heading text-lg font-bold">
-            Vibrand <span className="text-primary">Admin</span>
+          <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold">
+            <img src={logoMark} alt="Vibrand" className="h-7 w-auto" />
+            <span>Admin</span>
           </Link>
-          <Button variant="outline" size="sm" className="gap-2" onClick={signOut}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-white/30 bg-transparent text-charcoal-foreground hover:bg-white/10 hover:text-charcoal-foreground"
+            onClick={signOut}
+          >
             <LogOut className="size-4" /> Sign out
           </Button>
         </div>
@@ -50,8 +57,8 @@ function AdminLayout() {
               key={item.to}
               to={item.to}
               activeOptions={{ exact: item.to === "/admin" }}
-              activeProps={{ className: "bg-primary/10 text-primary" }}
-              className="inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              activeProps={{ className: "bg-lime text-lime-foreground" }}
+              className="inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-charcoal-foreground/70 transition-colors hover:text-charcoal-foreground"
             >
               <item.icon className="size-4" />
               {item.label}

@@ -138,13 +138,13 @@ function CatalogPage() {
 
   const searchField = (
     <div className="relative w-full">
-      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={search.q}
         onChange={(event) => update({ q: event.target.value }, true)}
         placeholder={isNarrow ? "Search" : "Product name / SKU"}
         aria-label="Search products by name or SKU"
-        className="h-10 w-full min-w-0 rounded-full pl-9"
+        className="h-10 w-full min-w-0 rounded-full border-transparent bg-white pl-9 text-charcoal placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-lime"
       />
     </div>
   );
@@ -171,12 +171,16 @@ function CatalogPage() {
             <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
               <Button
                 variant="outline"
-                className="h-10 shrink-0 gap-2 rounded-full px-4 text-sm font-semibold lg:hidden"
+                className={`h-10 shrink-0 gap-2 rounded-full px-4 text-sm font-semibold lg:hidden ${
+                  activeFilterCount(search)
+                    ? "border-lime bg-lime text-lime-foreground hover:bg-lime/90 hover:text-lime-foreground"
+                    : "border-charcoal text-charcoal hover:bg-charcoal/5 hover:text-charcoal"
+                }`}
                 onClick={() => setFiltersOpen(true)}
               >
                 <SlidersHorizontal className="size-4" />
                 Filters
-                {activeFilterCount(search) ? ` (${activeFilterCount(search)})` : ""}
+                {activeFilterCount(search) ? ` • ${activeFilterCount(search)}` : ""}
               </Button>
               <div className="hidden lg:block" />
               <Select value={search.sort} onValueChange={(value) => update({ sort: value })}>
@@ -200,9 +204,9 @@ function CatalogPage() {
                     key={`${chip.group}-${chip.value}`}
                     type="button"
                     onClick={() => toggle(chip.group, chip.value)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-lime px-3 py-1.5 text-xs font-medium text-lime-foreground hover:bg-lime/90"
                   >
-                    <span className="text-muted-foreground">{GROUP_LABELS[chip.group]}:</span>
+                    <span className="text-lime-foreground/70">{GROUP_LABELS[chip.group]}:</span>
                     {chip.label}
                     <X className="size-3" />
                   </button>
@@ -210,7 +214,7 @@ function CatalogPage() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-xs font-semibold text-primary hover:underline"
+                  className="text-xs font-semibold text-charcoal hover:underline"
                 >
                   Clear all
                 </button>

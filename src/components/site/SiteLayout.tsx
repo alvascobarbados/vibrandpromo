@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { QuoteBasketButton } from "@/components/site/QuoteBasketButton";
 import { COMPANY } from "@/lib/territories";
-import logoHorizontal from "@/assets/vibrand-logo.png";
+import logoHorizontalWhite from "@/assets/vibrand-logo-white.png";
 import logoMark from "@/assets/vibrand-mark.png";
 
 const NAV = [
@@ -19,7 +19,7 @@ function Logo() {
   return (
     <Link to="/" search={{}} aria-label="Vibrand — full catalogue" className="flex items-center">
       <img src={logoMark} alt="Vibrand" className="h-8 w-auto sm:hidden" />
-      <img src={logoHorizontal} alt="Vibrand" className="hidden h-8 w-auto sm:block" />
+      <img src={logoHorizontalWhite} alt="Vibrand" className="hidden h-8 w-auto sm:block" />
     </Link>
   );
 }
@@ -35,7 +35,7 @@ export function SiteLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-charcoal">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           <div className="flex h-16 flex-nowrap items-center gap-3 sm:gap-4">
             <div className="shrink-0">
@@ -51,7 +51,12 @@ export function SiteLayout({
             </div>
             <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu" className="shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Open menu"
+                className="shrink-0 text-charcoal-foreground hover:bg-white/10 hover:text-charcoal-foreground"
+              >
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
@@ -86,7 +91,7 @@ export function SiteLayout({
       <footer className="border-t border-border bg-charcoal text-charcoal-foreground">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-3">
           <div>
-            <p className="font-display text-2xl font-bold">Vibrand</p>
+            <img src={logoMark} alt="Vibrand" className="h-10 w-auto" />
             <p className="mt-3 max-w-sm text-sm text-charcoal-foreground/70">
               Premium promotional products for businesses across 24 Caribbean territories.
             </p>
