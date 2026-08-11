@@ -115,7 +115,7 @@ function QuotePage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg">
-              <Link to="/products">Keep browsing</Link>
+              <Link to="/">Keep browsing</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link to="/">Back to home</Link>
@@ -140,7 +140,7 @@ function QuotePage() {
               <div className="rounded-2xl border border-dashed border-border p-10 text-center">
                 <p className="text-muted-foreground">Your quote list is empty.</p>
                 <Button asChild className="mt-5">
-                  <Link to="/products">Browse products</Link>
+                  <Link to="/">Browse products</Link>
                 </Button>
               </div>
             ) : (
@@ -157,13 +157,7 @@ function QuotePage() {
                   />
                   <div className="flex-1 space-y-2">
                     <div className="flex items-start justify-between gap-3">
-                      <Link
-                        to="/products/$slug"
-                        params={{ slug: item.slug }}
-                        className="font-semibold hover:text-primary"
-                      >
-                        {item.name}
-                      </Link>
+                      <p className="font-semibold">{item.name}</p>
                       <Button
                         variant="ghost"
                         size="icon"
