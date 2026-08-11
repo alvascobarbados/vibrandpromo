@@ -33,6 +33,10 @@ const COLUMNS = [
   "inventory_source",
   "moq",
   "production_days",
+  "air_lead_min",
+  "air_lead_max",
+  "sea_lead_min",
+  "sea_lead_max",
   "colour_option",
   "decoration_methods",
   "material",
@@ -117,6 +121,27 @@ function AdminImport() {
         .filter(Boolean);
       const moq = (row["moq"] ?? "").trim();
       const days = (row["production_days"] ?? "").trim();
+      const num = (key: string) => {
+        const raw = (row[key] ?? "").trim();
+        if (!raw) return null;
+        const parsed = Number(raw);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+      const airMin = num("air_lead_min");
+      const airMax = num("air_lead_max");
+      const seaMin = num("sea_lead_min");
+      const seaMax = num("sea_lead_max");
+      if (
+        (airMin != null && airMax != null && airMax < airMin) ||
+        (seaMin != null && seaMax != null && seaMax < seaMin)
+      ) {
+        found.push({
+          line,
+          sku,
+          reason: "The longest lead time is shorter than the shortest one",
+        });
+        return;
+      }
       prepared.push({
         sku,
         payload: {
@@ -128,6 +153,10 @@ function AdminImport() {
           inventory_source: (row["inventory_source"] ?? "").trim() || "Factory Direct",
           moq: moq ? Number(moq) : null,
           production_days: days ? Number(days) : null,
+          air_lead_min: airMin,
+          air_lead_max: airMax,
+          sea_lead_min: seaMin,
+          sea_lead_max: seaMax,
           colour_option: (row["colour_option"] ?? "").trim() || null,
           decoration_methods: methods,
           material: (row["material"] ?? "").trim() || null,
@@ -218,9 +247,12 @@ function AdminImport() {
           {COLUMNS.join(", ")}
         </p>
         <p className="mt-3 text-xs text-muted-foreground">
-          Leave MOQ or production days blank if they are on request. Separate several decoration
-          methods with a vertical bar, like Screen Printing | Heat Transfer. Put false in the
-          is_active column to keep a product hidden from the public site.
+          Leave MOQ or production days blank if they are on request. The four lead-time columns are
+          the number of days shown to customers — air_lead_min / air_lead_max for air freight and
+          sea_lead_min / sea_lead_max for sea freight. Leave a pair blank to show "On request", and
+          never put a smaller number in the max column than in the min column. Separate several
+          decoration methods with a vertical bar, like Screen Printing | Heat Transfer. Put false in
+          the is_active column to keep a product hidden from the public site.
         </p>
 
         <label
@@ -270,7 +302,8 @@ function AdminImport() {
                         <th className="py-2 pr-4">SKU</th>
                         <th className="py-2 pr-4">Name</th>
                         <th className="py-2 pr-4">MOQ</th>
-                        <th className="py-2 pr-4">Production</th>
+                        <th className="py-2 pr-4">Air lead</th>
+                        <th className="py-2 pr-4">Sea lead</th>
                         <th className="py-2 pr-4">Visible</th>
                       </tr>
                     </thead>
@@ -285,9 +318,16 @@ function AdminImport() {
                               : String(item.payload["moq"])}
                           </td>
                           <td className="py-2 pr-4">
-                            {item.payload["production_days"] == null
-                              ? "On request"
-                              : `${String(item.payload["production_days"])} days`}
+                            {leadRange(
+                              item.payload["air_lead_min"] as number | null,
+                              item.payload["air_lead_max"] as number | null,
+                            ) ?? "On request"}
+                          </td>
+                          <td className="py-2 pr-4">
+                            {leadRange(
+                              item.payload["sea_lead_min"] as number | null,
+                              item.payload["sea_lead_max"] as number | null,
+                            ) ?? "On request"}
                           </td>
                           <td className="py-2 pr-4">
                             {item.payload["is_active"] ? "Yes" : "Hidden"}
