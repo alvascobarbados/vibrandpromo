@@ -93,7 +93,11 @@ function CatalogPage() {
 
   function update(patch: Partial<CatalogSearch & { page: number }>, replace = false) {
     void navigate({
-      search: (prev) => ({ ...prev, page: 1, ...patch }),
+      search: (prev: Partial<CatalogSearch> & { page?: number }) => ({
+        ...prev,
+        page: 1,
+        ...patch,
+      }),
       replace,
       resetScroll: false,
     });
