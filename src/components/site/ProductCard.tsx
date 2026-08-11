@@ -1,9 +1,11 @@
 import { Check, Plus } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { formatPrice, productImage, PRODUCT_FALLBACK_IMAGE, type Product } from "@/lib/catalog";
 import { useQuoteList } from "@/lib/quote-list";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
+import { ImageLightbox } from "@/components/site/ImageLightbox";
 
 function FlagBadge({ source }: { source: string }) {
   const usa = source === "USA Inventory";
@@ -29,12 +31,27 @@ export function ProductCard({ product }: { product: Product }) {
   const { addItem, items } = useQuoteList();
   const inQuote = items.some((item) => item.productId === product.id);
   const price = product.show_price ? formatPrice(product.price) : null;
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const images = product.images?.length ? product.images : [PRODUCT_FALLBACK_IMAGE];
+
+  const addToQuote = () => {
+    addItem({
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      image: productImage(product),
+      quantity: product.moq,
+      notes: "",
+    });
+    toast.success(`${product.name} added at MOQ ${product.moq}`);
+  };
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card">
       <ProductImageCarousel
-        images={product.images?.length ? product.images : [PRODUCT_FALLBACK_IMAGE]}
+        images={images}
         alt={product.name}
+        onImageTap={(i) => setLightboxIndex(i)}
       >
         <FlagBadge source={product.inventory_source} />
       </ProductImageCarousel>
@@ -62,17 +79,7 @@ export function ProductCard({ product }: { product: Product }) {
         <button
           type="button"
           disabled={inQuote}
-          onClick={() => {
-            addItem({
-              productId: product.id,
-              slug: product.slug,
-              name: product.name,
-              image: productImage(product),
-              quantity: product.moq,
-              notes: "",
-            });
-            toast.success(`${product.name} added at MOQ ${product.moq}`);
-          }}
+          onClick={addToQuote}
           className={`mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full border px-3 py-2 text-[11px] font-bold uppercase tracking-wide transition-colors ${
             inQuote
               ? "border-primary bg-primary/10 text-primary"
@@ -90,6 +97,43 @@ export function ProductCard({ product }: { product: Product }) {
           )}
         </button>
       </div>
+
+      {lightboxIndex !== null ? (
+        <ImageLightbox
+          images={images}
+          alt={product.name}
+          startIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          footer={
+            <div className="flex items-center gap-3 border-t border-white/10 bg-charcoal/80 px-4 py-3 backdrop-blur-sm">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-white">{product.name}</p>
+                <p className="text-xs text-white/60">{product.sku ?? "—"}</p>
+              </div>
+              <button
+                type="button"
+                disabled={inQuote}
+                onClick={addToQuote}
+                className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                  inQuote
+                    ? "border-primary bg-primary/15 text-primary"
+                    : "border-white/40 text-white hover:border-primary hover:text-primary"
+                }`}
+              >
+                {inQuote ? (
+                  <>
+                    <Check className="size-3.5" /> In Quote
+                  </>
+                ) : (
+                  <>
+                    <Plus className="size-3.5" /> Add to Quote
+                  </>
+                )}
+              </button>
+            </div>
+          }
+        />
+      ) : null}
     </article>
   );
 }
