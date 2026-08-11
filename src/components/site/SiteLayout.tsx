@@ -9,9 +9,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { QuoteBasketButton } from "@/components/site/QuoteBasketButton";
 import { categoriesQuery } from "@/lib/catalog";
 import { COMPANY } from "@/lib/territories";
-import logoHorizontalCharcoal from "@/assets/vibrand-logo-charcoal.png";
-import logoMarkCharcoal from "@/assets/vibrand-mark-charcoal.png";
-import logoMark from "@/assets/vibrand-mark.png";
+import wordmarkCharcoal from "@/assets/wordmark-charcoal.png";
+import markCharcoal from "@/assets/mark-charcoal.png";
+import markLime from "@/assets/mark-lime.png";
 
 const NAV = [
   { to: "/", label: "Categories" },
