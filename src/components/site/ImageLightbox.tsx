@@ -61,6 +61,7 @@ export function ImageLightbox({
   }, []);
 
   const finish = useCallback(() => {
+    console.log('finish called', new Error().stack);
     if (closedRef.current) return;
     closedRef.current = true;
     onClose();
