@@ -19,9 +19,9 @@ export function QuoteBasketButton() {
     <Link
       to="/quote"
       aria-label={`Open quote list (${count} items)`}
-      className="relative inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted"
+      className="relative inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/10"
     >
-      <ShoppingBag className="size-5 text-charcoal" />
+      <ShoppingBag className="size-5 text-charcoal-foreground" />
       {count > 0 ? (
         <span
           className={`absolute -right-0.5 -top-0.5 inline-flex min-w-5 items-center justify-center rounded-full bg-lime px-1.5 py-0.5 text-[11px] font-bold leading-none text-lime-foreground ${
