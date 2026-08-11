@@ -65,7 +65,7 @@ export function seaLeadWeeks(
   };
 }
 
-function formatRange(range: Range | null, unit: "days" | "weeks"): string | null {
+function formatRange(range: Range | null, unit: "days" | "wks"): string | null {
   if (!range) return null;
   return range.min === range.max ? `${range.min} ${unit}` : `${range.min}–${range.max} ${unit}`;
 }
@@ -77,7 +77,7 @@ export function airLeadLabel(product: LeadSource, map: ShippingMap): string | nu
 }
 
 export function seaLeadLabel(product: LeadSource, map: ShippingMap): string | null {
-  return formatRange(seaLeadWeeks(product.production_days, settingFor(map, product.inventory_source)), "weeks");
+  return formatRange(seaLeadWeeks(product.production_days, settingFor(map, product.inventory_source)), "wks");
 }
 
 /** Value the "Lead time (air)" filter buckets are measured against. */

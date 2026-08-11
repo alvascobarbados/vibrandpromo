@@ -46,14 +46,16 @@ export function QuantityStepper({
       : "text-n-700 hover:bg-n-50 disabled:text-n-300";
 
   return (
-    <div className="relative">
-      <div className={`inline-flex h-9 items-center rounded-full border ${shell}`}>
+    <div className="relative w-full shrink-0 [@container(min-width:200px)]:w-auto">
+      <div
+        className={`flex h-10 w-full items-center justify-between rounded-full border [@container(min-width:200px)]:inline-flex [@container(min-width:200px)]:w-auto [@container(min-width:200px)]:justify-start ${shell}`}
+      >
         <button
           type="button"
           aria-label="Decrease quantity"
           disabled={quantity <= floor}
           onClick={() => onChange(stepQty(quantity, -1, moq))}
-          className={`inline-flex size-8 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent ${btn}`}
+          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent ${btn}`}
         >
           <Minus className="size-3.5" />
         </button>
@@ -69,13 +71,16 @@ export function QuantityStepper({
               commit((event.target as HTMLInputElement).value);
             }
           }}
-          className="w-11 border-0 bg-transparent p-0 text-center text-[13px] font-medium tabular-nums outline-none"
+          style={{ width: `${Math.max(2, Math.min(draft.length, 6))}ch` }}
+          className={`border-0 bg-transparent p-0 text-center font-medium tabular-nums outline-none ${
+            draft.length >= 5 ? "text-[12px]" : "text-[13px]"
+          }`}
         />
         <button
           type="button"
           aria-label="Increase quantity"
           onClick={() => onChange(stepQty(quantity, 1, moq))}
-          className={`inline-flex size-8 items-center justify-center rounded-full transition-colors ${btn}`}
+          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors ${btn}`}
         >
           <Plus className="size-3.5" />
         </button>
