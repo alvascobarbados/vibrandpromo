@@ -25,7 +25,6 @@ import { Route as AuthenticatedAdminImportRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
 import { Route as AuthenticatedAdminQuotesRouteImport } from './routes/_authenticated/admin.quotes'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin.staff'
-import { Route as ApiPublicMaintBucketRouteImport } from './routes/api/public/maint-bucket'
 import { Route as ApiPublicProductImageSplatRouteImport } from './routes/api/public/product-image.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -113,11 +112,6 @@ const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
   path: '/admin/staff',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiPublicMaintBucketRoute = ApiPublicMaintBucketRouteImport.update({
-  id: '/api/public/maint-bucket',
-  path: '/api/public/maint-bucket',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicProductImageSplatRoute =
   ApiPublicProductImageSplatRouteImport.update({
     id: '/api/public/product-image/$',
@@ -140,7 +134,6 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/admin/quotes': typeof AuthenticatedAdminQuotesRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
-  '/api/public/maint-bucket': typeof ApiPublicMaintBucketRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
@@ -159,7 +152,6 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/admin/quotes': typeof AuthenticatedAdminQuotesRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
-  '/api/public/maint-bucket': typeof ApiPublicMaintBucketRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
@@ -180,7 +172,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
   '/_authenticated/admin/quotes': typeof AuthenticatedAdminQuotesRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
-  '/api/public/maint-bucket': typeof ApiPublicMaintBucketRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
@@ -201,7 +192,6 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/quotes'
     | '/admin/staff'
-    | '/api/public/maint-bucket'
     | '/admin/'
     | '/api/public/product-image/$'
   fileRoutesByTo: FileRoutesByTo
@@ -220,7 +210,6 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/quotes'
     | '/admin/staff'
-    | '/api/public/maint-bucket'
     | '/admin'
     | '/api/public/product-image/$'
   id:
@@ -240,7 +229,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/products'
     | '/_authenticated/admin/quotes'
     | '/_authenticated/admin/staff'
-    | '/api/public/maint-bucket'
     | '/_authenticated/admin/'
     | '/api/public/product-image/$'
   fileRoutesById: FileRoutesById
@@ -254,7 +242,6 @@ export interface RootRouteChildren {
   ProductsRoute: typeof ProductsRoute
   QuoteRoute: typeof QuoteRoute
   CSlugRoute: typeof CSlugRoute
-  ApiPublicMaintBucketRoute: typeof ApiPublicMaintBucketRoute
   ApiPublicProductImageSplatRoute: typeof ApiPublicProductImageSplatRoute
 }
 
@@ -372,13 +359,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/maint-bucket': {
-      id: '/api/public/maint-bucket'
-      path: '/api/public/maint-bucket'
-      fullPath: '/api/public/maint-bucket'
-      preLoaderRoute: typeof ApiPublicMaintBucketRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/product-image/$': {
       id: '/api/public/product-image/$'
       path: '/api/public/product-image/$'
@@ -423,9 +403,18 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsRoute: ProductsRoute,
   QuoteRoute: QuoteRoute,
   CSlugRoute: CSlugRoute,
-  ApiPublicMaintBucketRoute: ApiPublicMaintBucketRoute,
   ApiPublicProductImageSplatRoute: ApiPublicProductImageSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

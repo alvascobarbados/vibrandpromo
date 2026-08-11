@@ -251,6 +251,24 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_submission_log: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       subcategories: {
         Row: {
           category_id: string
