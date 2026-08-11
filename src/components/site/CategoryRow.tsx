@@ -6,7 +6,7 @@ import { ProductCard } from "@/components/site/ProductCard";
 import type { Product } from "@/lib/catalog";
 
 const CARD_WIDTH =
-  "w-[calc((100%-2rem)/2.25)] sm:w-[calc((100%-3rem)/3.3)] xl:w-[calc((100%-4rem)/4.3)]";
+  "w-[calc((100%-1.5rem)/2.1)] sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]";
 
 export function CategoryRow({
   items,
@@ -24,7 +24,7 @@ export function CategoryRow({
     const node = trackRef.current;
     if (!node) return;
     const cardWidth = node.firstElementChild?.clientWidth ?? node.clientWidth / 2;
-    const gap = 16;
+    const gap = 12;
     const lastVisible = Math.ceil((node.scrollLeft + node.clientWidth) / (cardWidth + gap));
     setRenderCount((prev) => Math.max(prev, lastVisible + 2));
   }, []);
@@ -48,7 +48,7 @@ export function CategoryRow({
   return (
     <div
       ref={trackRef}
-      className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden scroll-smooth px-4 pb-2 sm:mx-0 sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="-mx-4 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto overflow-y-hidden scroll-smooth px-4 pb-1 sm:mx-0 sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       style={{ touchAction: "pan-x pan-y pinch-zoom", overscrollBehaviorX: "contain" }}
     >
       {items.map((product, index) => (
@@ -56,7 +56,7 @@ export function CategoryRow({
           {index < renderCount ? (
             <ProductCard product={product} coverOnly />
           ) : (
-            <div className="h-full min-h-[280px] rounded-2xl border border-border bg-muted/40" />
+            <div className="h-full rounded-2xl border border-border bg-muted/40" />
           )}
         </div>
       ))}

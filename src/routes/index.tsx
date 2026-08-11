@@ -106,23 +106,26 @@ function HomePage() {
         <h1 className="sr-only">Vibrand promotional products by category</h1>
 
         {loading ? (
-          <div className="space-y-10">
+          <div className="space-y-12">
             {Array.from({ length: 3 }).map((_, index) => (
               <div key={index}>
                 <Skeleton className="h-6 w-48" />
-                <div className="mt-3 flex gap-4 overflow-hidden">
+                <div className="mt-6 flex gap-3 overflow-hidden">
                   {Array.from({ length: 4 }).map((__, i) => (
-                    <Skeleton
+                    <div
                       key={i}
-                      className="aspect-[3/4] w-[calc((100%-2rem)/2.25)] shrink-0 rounded-2xl sm:w-[calc((100%-3rem)/3.3)] xl:w-[calc((100%-4rem)/4.3)]"
-                    />
+                      className="w-[calc((100%-1.5rem)/2.1)] shrink-0 sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]"
+                    >
+                      <Skeleton className="aspect-square rounded-t-2xl" />
+                      <Skeleton className="mt-0.5 h-[199px] rounded-b-2xl" />
+                    </div>
                   ))}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-12">
             {shelves.map(({ category, items }, index) => {
               const preview = items.slice(0, 8);
               return (
@@ -154,7 +157,7 @@ function HomePage() {
                     </Link>
                   </div>
 
-                  <div className="mt-3">
+                  <div className="mt-6">
                     <LazySection eager={index < 2} layout="row" placeholderCount={4}>
                       <CategoryRow
                         items={preview}

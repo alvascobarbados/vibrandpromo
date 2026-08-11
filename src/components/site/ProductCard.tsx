@@ -27,6 +27,22 @@ function FlagBadge({ source }: { source: string }) {
   );
 }
 
+function SpecValue({ value }: { value: string }) {
+  return (
+    <p
+      className={`mt-0.5 truncate font-bold leading-5 tabular-nums text-foreground ${
+        value.length > 8
+          ? "text-[clamp(5.5px,1.9vw,12px)]"
+          : value.length > 5
+            ? "text-[clamp(9px,2.9vw,14px)]"
+            : "text-[clamp(11px,3.4vw,14px)]"
+      }`}
+    >
+      {value}
+    </p>
+  );
+}
+
 export function ProductCard({
   product,
   coverOnly = false,
@@ -57,7 +73,7 @@ export function ProductCard({
   };
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card">
       <ProductImageCarousel
         images={images}
         alt={product.name}
@@ -68,24 +84,28 @@ export function ProductCard({
       </ProductImageCarousel>
 
       <div className="flex flex-1 flex-col p-3">
-        <p className="text-xs font-medium text-muted-foreground">{product.sku ?? "—"}</p>
-        <h3 className="mt-0.5 text-sm font-semibold leading-snug text-foreground">{product.name}</h3>
-        {price ? <p className="mt-1 text-sm font-semibold text-charcoal">{price}</p> : null}
+        <p className="truncate text-xs font-medium leading-4 text-muted-foreground">
+          {product.sku ?? "—"}
+        </p>
+        <h3 className="mt-0.5 line-clamp-2 h-[2.5rem] text-sm font-semibold leading-5 text-foreground">
+          {product.name}
+        </h3>
+        <p className="mt-1 h-[1.25rem] truncate text-sm font-semibold leading-5 text-charcoal">
+          {price ?? "\u00a0"}
+        </p>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-3 text-center">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="mt-auto grid grid-cols-2 border-t border-border pt-3 text-center">
+          <div className="min-w-0 pl-1 pr-2 sm:pr-3">
+            <p className="whitespace-nowrap text-[clamp(5.5px,1.7vw,9px)] font-semibold uppercase leading-3 tracking-[-0.04em] text-muted-foreground">
               MOQ
             </p>
-            <p className="text-sm font-semibold text-foreground">{specValue(product.moq)}</p>
+            <SpecValue value={specValue(product.moq)} />
           </div>
-          <div className="border-l border-border">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="min-w-0 border-l border-border pl-2 pr-1 sm:pl-3">
+            <p className="whitespace-nowrap text-[clamp(5.5px,1.7vw,9px)] font-semibold uppercase leading-3 tracking-[-0.04em] text-muted-foreground">
               Production
             </p>
-            <p className="text-sm font-semibold text-foreground">
-              {specValue(product.production_days, "days")}
-            </p>
+            <SpecValue value={specValue(product.production_days, "days")} />
           </div>
         </div>
 
@@ -93,7 +113,7 @@ export function ProductCard({
           type="button"
           disabled={inQuote}
           onClick={addToQuote}
-          className={`mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full border px-3 py-2 text-[11px] font-bold uppercase tracking-wide transition-colors ${
+          className={`mt-3 inline-flex h-9 w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-[10px] font-bold uppercase leading-none tracking-wide sm:text-[11px] transition-colors ${
             inQuote
               ? "border-lime bg-lime text-lime-foreground"
               : "border-charcoal bg-charcoal text-charcoal-foreground hover:bg-charcoal/90"
