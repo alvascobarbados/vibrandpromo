@@ -15,6 +15,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { QUOTE_STATUSES, quoteRequestItemsQuery, quoteRequestsQuery } from "@/lib/admin";
 
+const STATUS_BADGE: Record<string, string> = {
+  new: "bg-lime-500 text-n-700",
+  in_progress: "bg-navy-500 text-white",
+  quoted: "bg-success text-success-foreground",
+  closed: "bg-n-500 text-white",
+};
+
 export const Route = createFileRoute("/_authenticated/admin/quotes")({
   beforeLoad: ({ context }) => requirePage(context.access, "quotes"),
   head: () => ({
