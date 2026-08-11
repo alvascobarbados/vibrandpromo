@@ -1,7 +1,8 @@
 import { Pencil, Plane, Ship } from "lucide-react";
 import { useState } from "react";
 
-import { airLead, formatPrice, seaLead, specValue, type Product } from "@/lib/catalog";
+import { formatPrice, specValue, type Product } from "@/lib/catalog";
+import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
 import { AddToQuoteRow } from "@/components/site/AddToQuoteRow";
@@ -60,6 +61,7 @@ export function ProductCard({
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = product.images ?? [];
   const { editMode } = useStaffSession();
+  const shipping = useShippingSettings();
   const [quickEditOpen, setQuickEditOpen] = useState(false);
   const hidden = editMode && !product.is_active;
 
@@ -116,8 +118,8 @@ export function ProductCard({
           <div className="min-w-0 flex-1 border-l border-n-200 pl-2.5">
             <SpecLabel>Lead time</SpecLabel>
             <div className="mt-0.5 space-y-0.5">
-              <LeadRow icon={Plane} value={airLead(product)} />
-              <LeadRow icon={Ship} value={seaLead(product)} />
+              <LeadRow icon={Plane} value={airLeadLabel(product, shipping)} />
+              <LeadRow icon={Ship} value={seaLeadLabel(product, shipping)} />
             </div>
           </div>
         </div>
