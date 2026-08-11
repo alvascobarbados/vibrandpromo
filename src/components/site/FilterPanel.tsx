@@ -21,6 +21,7 @@ import {
   type CatalogSearch,
   type FilterGroupId,
 } from "@/lib/catalog-filters";
+import { useShippingSettings, type ShippingMap } from "@/lib/shipping";
 
 type Option = { value: string; label: string };
 
@@ -54,9 +55,10 @@ function useCounts(
   subcategories: Subcategory[],
   search: CatalogSearch,
   options: Record<FilterGroupId, Option[]>,
+  shipping: ShippingMap,
 ) {
   return useMemo(() => {
-    const taxonomy = { categories, subcategories };
+    const taxonomy = { categories, subcategories, shipping };
     const matchers = groupMatchers(taxonomy);
     const counts = {} as Record<FilterGroupId, Record<string, number>>;
     for (const group of GROUP_IDS) {
@@ -69,7 +71,7 @@ function useCounts(
       }
     }
     return counts;
-  }, [products, categories, subcategories, search, options]);
+  }, [products, categories, subcategories, search, options, shipping]);
 }
 
 type Props = {
@@ -124,7 +126,8 @@ export function FilterPanel({
   onClose,
 }: Props) {
   const options = useFilterOptions(products, categories, subcategories);
-  const counts = useCounts(products, categories, subcategories, search, options);
+  const shipping = useShippingSettings();
+  const counts = useCounts(products, categories, subcategories, search, options, shipping);
   const [activeGroup, setActiveGroup] = useState<FilterGroupId>("cat");
   const [expanded, setExpanded] = useState<string[]>([]);
 

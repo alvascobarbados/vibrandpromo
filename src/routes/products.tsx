@@ -28,6 +28,7 @@ import {
   type CatalogSearch,
   type FilterGroupId,
 } from "@/lib/catalog-filters";
+import { useShippingSettings } from "@/lib/shipping";
 
 const PAGE_SIZE = 20;
 
@@ -77,6 +78,7 @@ function CatalogPage() {
   const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
+  const shipping = useShippingSettings();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const allProducts = products.data ?? [];
@@ -89,10 +91,11 @@ function CatalogPage() {
         filterProducts(allProducts, search, {
           categories: allCategories,
           subcategories: allSubcategories,
+          shipping,
         }),
         search.sort,
       ),
-    [allProducts, allCategories, allSubcategories, search],
+    [allProducts, allCategories, allSubcategories, search, shipping],
   );
 
   const total = filtered.length;
