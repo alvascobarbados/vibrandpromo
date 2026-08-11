@@ -27,7 +27,13 @@ function FlagBadge({ source }: { source: string }) {
   );
 }
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  coverOnly = false,
+}: {
+  product: Product;
+  coverOnly?: boolean;
+}) {
   const { addItem, items } = useQuoteList();
   const inQuote = items.some((item) => item.productId === product.id);
   const price = product.show_price ? formatPrice(product.price) : null;
@@ -55,6 +61,7 @@ export function ProductCard({ product }: { product: Product }) {
       <ProductImageCarousel
         images={images}
         alt={product.name}
+        coverOnly={coverOnly}
         onImageTap={(i) => setLightboxIndex(i)}
       >
         <FlagBadge source={product.inventory_source} />

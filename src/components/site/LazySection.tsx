@@ -5,10 +5,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function LazySection({
   eager = false,
   placeholderCount = 6,
+  layout = "grid",
   children,
 }: {
   eager?: boolean;
   placeholderCount?: number;
+  layout?: "grid" | "row";
   children: ReactNode;
 }) {
   const [visible, setVisible] = useState(eager);
@@ -32,6 +34,19 @@ export function LazySection({
   }, [visible]);
 
   if (visible) return <>{children}</>;
+
+  if (layout === "row") {
+    return (
+      <div ref={ref} className="flex gap-4 overflow-hidden">
+        {Array.from({ length: placeholderCount }).map((_, index) => (
+          <Skeleton
+            key={index}
+            className="aspect-[3/4] w-[calc((100%-2rem)/2.25)] shrink-0 rounded-2xl sm:w-[calc((100%-3rem)/3.3)] xl:w-[calc((100%-4rem)/4.3)]"
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
