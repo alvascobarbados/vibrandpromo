@@ -223,7 +223,7 @@ export function FilterPanel({
         )}
         <Button
           variant="outline"
-          className="w-full border-navy-200 text-navy-500 hover:bg-navy-50 hover:text-navy-700"
+          className="w-full border-n-200 text-navy-500 hover:bg-navy-50 hover:text-navy-700"
           onClick={onClear}
         >
           Clear Filters
