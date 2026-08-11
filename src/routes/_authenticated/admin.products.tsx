@@ -88,6 +88,7 @@ function AdminProducts() {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [uploading, setUploading] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
 
@@ -415,7 +416,8 @@ function AdminProducts() {
                     if (dragIndex === null || dragIndex === index) return;
                     setForm((prev) => {
                       const next = [...prev.images];
-                      const [moved] = next.splice(dragIndex, 1);
+                      const moved = next.splice(dragIndex, 1)[0];
+                      if (moved === undefined) return prev;
                       next.splice(index, 0, moved);
                       return { ...prev, images: next };
                     });
