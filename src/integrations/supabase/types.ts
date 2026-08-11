@@ -64,8 +64,6 @@ export type Database = {
       }
       products: {
         Row: {
-          air_lead_max: number | null
-          air_lead_min: number | null
           capacity: string | null
           category_id: string | null
           colour_option: string | null
@@ -84,8 +82,6 @@ export type Database = {
           name: string
           price: number | null
           production_days: number | null
-          sea_lead_max: number | null
-          sea_lead_min: number | null
           show_price: boolean
           size: string | null
           sku: string | null
@@ -95,8 +91,6 @@ export type Database = {
           weight: string | null
         }
         Insert: {
-          air_lead_max?: number | null
-          air_lead_min?: number | null
           capacity?: string | null
           category_id?: string | null
           colour_option?: string | null
@@ -115,8 +109,6 @@ export type Database = {
           name: string
           price?: number | null
           production_days?: number | null
-          sea_lead_max?: number | null
-          sea_lead_min?: number | null
           show_price?: boolean
           size?: string | null
           sku?: string | null
@@ -126,8 +118,6 @@ export type Database = {
           weight?: string | null
         }
         Update: {
-          air_lead_max?: number | null
-          air_lead_min?: number | null
           capacity?: string | null
           category_id?: string | null
           colour_option?: string | null
@@ -146,8 +136,6 @@ export type Database = {
           name?: string
           price?: number | null
           production_days?: number | null
-          sea_lead_max?: number | null
-          sea_lead_min?: number | null
           show_price?: boolean
           size?: string | null
           sku?: string | null
@@ -299,6 +287,36 @@ export type Database = {
           created_at?: string
           id?: string
           ip_hash?: string
+        }
+        Relationships: []
+      }
+      shipping_settings: {
+        Row: {
+          air_max_days: number
+          air_min_days: number
+          created_at: string
+          sea_max_weeks: number
+          sea_min_weeks: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          air_max_days?: number
+          air_min_days?: number
+          created_at?: string
+          sea_max_weeks?: number
+          sea_min_weeks?: number
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          air_max_days?: number
+          air_min_days?: number
+          created_at?: string
+          sea_max_weeks?: number
+          sea_min_weeks?: number
+          source?: string
+          updated_at?: string
         }
         Relationships: []
       }
