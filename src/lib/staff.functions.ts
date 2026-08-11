@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 
 export type StaffRole = "admin" | "staff";
 
@@ -56,11 +58,8 @@ export const updateMyProfile = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-async function assertAdmin(supabase: { rpc: (fn: string, args: Record<string, unknown>) => unknown }, userId: string) {
-  const { data, error } = (await (supabase as any).rpc("is_admin", { _user_id: userId })) as {
-    data: boolean | null;
-    error: { message: string } | null;
-  };
+async function assertAdmin(supabase: SupabaseClient<Database>, userId: string) {
+  const { data, error } = await supabase.rpc("is_admin", { _user_id: userId });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Forbidden: admin access required");
 }
@@ -68,7 +67,7 @@ async function assertAdmin(supabase: { rpc: (fn: string, args: Record<string, un
 export const listStaffUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<StaffUser[]> => {
-    await assertAdmin(context.supabase as never, context.userId);
+    await assertAdmin(context.supabase as SupabaseClient<Database>, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 200 });
@@ -109,7 +108,7 @@ export const createStaffUser = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase as never, context.userId);
+    await assertAdmin(context.supabase as SupabaseClient<Database>, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
@@ -139,7 +138,7 @@ export const setStaffRole = createServerFn({ method: "POST" })
     z.object({ user_id: z.string().uuid(), role: z.enum(["admin", "staff"]) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase as never, context.userId);
+    await assertAdmin(context.supabase as SupabaseClient<Database>, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     if (data.role !== "admin") {
@@ -172,7 +171,7 @@ export const deleteStaffUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ user_id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase as never, context.userId);
+    await assertAdmin(context.supabase as SupabaseClient<Database>, context.userId);
     if (data.user_id === context.userId) {
       throw new Error("You cannot remove your own account.");
     }
