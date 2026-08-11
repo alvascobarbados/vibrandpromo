@@ -4,11 +4,11 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  AIR_LEAD_BUCKETS,
   COLOUR_OPTIONS,
   DECORATION_METHODS,
   INVENTORY_SOURCES,
   MOQ_BUCKETS,
-  PRODUCTION_BUCKETS,
   type Category,
   type Product,
   type Subcategory,
@@ -39,7 +39,7 @@ export function useFilterOptions(
       cat: categories.map((c) => ({ value: c.slug, label: c.name })),
       sub: subcategories.map((s) => ({ value: s.slug, label: s.name })),
       moq: MOQ_BUCKETS.map((b) => ({ value: b.id, label: b.label })),
-      prod: PRODUCTION_BUCKETS.map((b) => ({ value: b.id, label: b.label })),
+      prod: AIR_LEAD_BUCKETS.map((b) => ({ value: b.id, label: b.label })),
       colour: COLOUR_OPTIONS.map((c) => ({ value: c, label: c })),
       deco: DECORATION_METHODS.map((d) => ({ value: d, label: d })),
       src: INVENTORY_SOURCES.map((s) => ({ value: s, label: s })),
