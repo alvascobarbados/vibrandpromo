@@ -69,11 +69,13 @@ export function ProductImageCarousel({
         onPointerUp={(e) => {
           const start = tapRef.current;
           tapRef.current = null;
+          console.log('tapup', JSON.stringify(start), !!onImageTap);
           if (!start || !onImageTap) return;
           const moved =
             Math.abs(e.clientX - start.x) > 8 ||
             Math.abs(e.clientY - start.y) > 8 ||
             Math.abs((trackRef.current?.scrollLeft ?? 0) - start.scroll) > 4;
+          console.log('moved?', moved);
           if (moved) return;
           const node = trackRef.current;
           const current = node ? Math.round(node.scrollLeft / (node.clientWidth || 1)) : index;
