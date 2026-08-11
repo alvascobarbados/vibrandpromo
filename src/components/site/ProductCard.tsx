@@ -48,7 +48,7 @@ function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | nu
         className="size-3 shrink-0 translate-y-[0.5px] text-n-500 [@container(min-width:170px)]:size-[13px]"
         strokeWidth={1.75}
       />
-      <span className="whitespace-nowrap text-[clamp(8.5px,6.2cqw,12px)]">
+      <span className="whitespace-nowrap text-[clamp(9px,6.2cqw,12px)]">
         {value ?? "On request"}
       </span>
     </p>
@@ -113,20 +113,20 @@ export function ProductCard({
           {price ?? "\u00a0"}
         </p>
 
-        <div className="mt-auto flex h-[3.25rem] items-stretch border-t border-n-200 pt-2.5">
-          <div className="shrink-0 pr-2">
+        <div className="mt-auto flex min-h-[3.25rem] flex-col items-stretch border-t border-n-200 pt-2.5 [@container(min-width:150px)]:flex-row">
+          <div className="shrink-0 [@container(min-width:150px)]:pr-2">
             <SpecLabel>MOQ</SpecLabel>
             <p
               className={`mt-0.5 whitespace-nowrap font-medium leading-4 tabular-nums text-n-700 ${
                 product.moq
                   ? "text-[clamp(11px,7cqw,13px)]"
-                  : "text-[clamp(7.5px,5cqw,12px)] font-normal text-n-500"
+                  : "text-[clamp(9px,5.6cqw,12px)] font-normal text-n-500"
               }`}
             >
               {specValue(product.moq)}
             </p>
           </div>
-          <div className="min-w-0 flex-1 border-l border-n-200 pl-2">
+          <div className="mt-1 min-w-0 flex-1 [@container(min-width:150px)]:mt-0 [@container(min-width:150px)]:border-l [@container(min-width:150px)]:border-n-200 [@container(min-width:150px)]:pl-2">
             <SpecLabel>Lead time</SpecLabel>
             <div className="mt-0.5 space-y-0.5">
               <LeadRow icon={Plane} value={airLeadLabel(product, shipping)} />
