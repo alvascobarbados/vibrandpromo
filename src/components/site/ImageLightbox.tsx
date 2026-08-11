@@ -7,7 +7,7 @@ import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
 const CLOSE_DRAG = 110;
 
 export function ImageLightbox({
-  images,
+  images: rawImages,
   alt,
   startIndex,
   onClose,

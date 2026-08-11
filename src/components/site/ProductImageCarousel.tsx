@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
+import { imageSrc } from "@/lib/catalog";
 
 export function ProductImageCarousel({
   images,
@@ -16,7 +17,7 @@ export function ProductImageCarousel({
   onImageTap?: (index: number) => void;
   coverOnly?: boolean;
 }) {
-  const list = images;
+  const list = images.map(imageSrc);
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState<number[]>([0]);
