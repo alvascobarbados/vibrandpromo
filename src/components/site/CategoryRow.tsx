@@ -65,7 +65,7 @@ export function CategoryRow({
         <Link
           to="/c/$slug"
           params={{ slug: categorySlug }}
-          className={`flex shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-charcoal/40 bg-card px-3 text-center text-xs font-bold uppercase tracking-wide text-charcoal transition-colors hover:bg-muted ${CARD_WIDTH}`}
+          className={`flex shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-navy-300 bg-white px-3 text-center text-xs font-bold uppercase tracking-wide text-navy-700 transition-colors hover:bg-navy-50 ${CARD_WIDTH}`}
         >
           <ArrowRight className="size-5" />
           View all {total}
