@@ -12,14 +12,20 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyAccess } from "@/lib/staff.functions";
 import logoMark from "@/assets/vibrand-mark.png";
+import { Users, UserCog } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+
+    const access = await getMyAccess();
+    if (!access.isStaff) throw redirect({ to: "/" });
+
+    return { user: data.user, access };
   },
   component: AdminLayout,
 });
@@ -31,11 +37,15 @@ const NAV = [
   { to: "/admin/quotes", label: "Quote requests", icon: ClipboardList },
   { to: "/admin/import", label: "Import products", icon: FileSpreadsheet },
   { to: "/admin/bulk-images", label: "Bulk images", icon: ImageUp },
+  { to: "/admin/staff", label: "Staff", icon: Users, adminOnly: true },
+  { to: "/admin/account", label: "My account", icon: UserCog },
 ] as const;
 
 function AdminLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { access } = Route.useRouteContext();
+  const nav = NAV.filter((item) => !("adminOnly" in item && item.adminOnly) || access.isAdmin);
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -62,7 +72,7 @@ function AdminLayout() {
           </Button>
         </div>
         <nav className="mx-auto flex w-full max-w-7xl gap-1 overflow-x-auto px-4 pb-2 sm:px-6">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <Link
               key={item.to}
               to={item.to}

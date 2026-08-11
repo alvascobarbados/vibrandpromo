@@ -40,11 +40,15 @@ export const Route = createFileRoute("/quote")({
   component: QuotePage,
 });
 
+const ARTWORK_MAX_BYTES = 20 * 1024 * 1024;
+const ARTWORK_EXTENSIONS = ["jpg", "jpeg", "png", "pdf", "ai", "eps", "svg", "zip"];
+
 function QuotePage() {
   const { items, updateItem, removeItem, clear } = useQuoteList();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [artwork, setArtwork] = useState<File | null>(null);
+  const [botField, setBotField] = useState("");
   const [form, setForm] = useState({
     customer_name: "",
     company: "",
@@ -56,6 +60,23 @@ function QuotePage() {
 
   const set = (key: keyof typeof form) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  function pickArtwork(file: File | null) {
+    if (!file) {
+      setArtwork(null);
+      return;
+    }
+    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!ARTWORK_EXTENSIONS.includes(extension)) {
+      toast.error("Please attach a JPG, PNG, PDF, AI, EPS, SVG or ZIP file.");
+      return;
+    }
+    if (file.size > ARTWORK_MAX_BYTES) {
+      toast.error("That file is larger than 20MB. Please attach a smaller version.");
+      return;
+    }
+    setArtwork(file);
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -82,6 +103,7 @@ function QuotePage() {
         data: {
           ...form,
           artwork_url: artworkUrl,
+          website: botField,
           items: items.map((item) => ({
             product_id: item.productId,
             product_name: item.name,
@@ -278,7 +300,24 @@ function QuotePage() {
                 id="artwork"
                 type="file"
                 className="hidden"
-                onChange={(event) => setArtwork(event.target.files?.[0] ?? null)}
+                accept=".jpg,.jpeg,.png,.pdf,.ai,.eps,.svg,.zip"
+                onChange={(event) => pickArtwork(event.target.files?.[0] ?? null)}
+              />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                JPG, PNG, PDF, AI, EPS, SVG or ZIP · up to 20MB
+              </p>
+            </div>
+
+            <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+              <label htmlFor="website">Website</label>
+              <input
+                id="website"
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={botField}
+                onChange={(event) => setBotField(event.target.value)}
               />
             </div>
 

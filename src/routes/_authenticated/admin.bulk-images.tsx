@@ -74,7 +74,7 @@ function BulkImages() {
             .from("product-images")
             .upload(path, entry.file);
           if (error) throw error;
-          urls.push(supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl);
+          urls.push(path);
         }
         const { error: updateError } = await supabase
           .from("products")

@@ -3,11 +3,12 @@ import { useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
+import { imageSrcList } from "@/lib/catalog";
 
 const CLOSE_DRAG = 110;
 
 export function ImageLightbox({
-  images,
+  images: rawImages,
   alt,
   startIndex,
   onClose,
@@ -20,6 +21,7 @@ export function ImageLightbox({
   footer?: React.ReactNode;
 }) {
   const [index, setIndex] = useState(startIndex);
+  const images = imageSrcList(rawImages);
   const [loaded, setLoaded] = useState<number[]>([startIndex]);
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
