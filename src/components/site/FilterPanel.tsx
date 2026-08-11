@@ -85,10 +85,16 @@ function OptionRow({
   onChange: () => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2.5 text-sm hover:bg-muted">
+    <label
+      className={`flex cursor-pointer items-center gap-3 rounded-full px-2.5 py-2.5 text-sm transition-colors ${
+        checked ? "bg-lime text-lime-foreground" : "hover:bg-muted"
+      }`}
+    >
       <Checkbox checked={checked} onCheckedChange={onChange} />
-      <span className="flex-1 text-foreground">{label}</span>
-      <span className="text-xs text-muted-foreground">({count})</span>
+      <span className="flex-1">{label}</span>
+      <span className={`text-xs ${checked ? "text-lime-foreground/70" : "text-muted-foreground"}`}>
+        ({count})
+      </span>
     </label>
   );
 }
@@ -193,7 +199,10 @@ export function FilterPanel({
         <Button variant="outline" className="flex-1" onClick={onClear}>
           Clear Filters
         </Button>
-        <Button className="flex-1" onClick={onClose}>
+        <Button
+          className="flex-1 bg-lime text-lime-foreground hover:bg-lime/90"
+          onClick={onClose}
+        >
           Show {resultCount} Results
         </Button>
       </div>
