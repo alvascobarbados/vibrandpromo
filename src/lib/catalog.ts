@@ -127,6 +127,32 @@ export const publicProductsQuery = queryOptions({
   },
 });
 
+export const subcategoriesQuery = queryOptions({
+  queryKey: ["subcategories"],
+  queryFn: async (): Promise<Subcategory[]> => {
+    const { data, error } = await supabase
+      .from("subcategories")
+      .select("id, name, slug, category_id, sort_order")
+      .order("sort_order", { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as Subcategory[];
+  },
+});
+
+const legacyPublicProductsQuery = queryOptions({
+  queryKey: ["products", "public"],
+  queryFn: async (): Promise<Product[]> => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as Product[];
+  },
+});
+void legacyPublicProductsQuery;
+
 export const allProductsQuery = queryOptions({
   queryKey: ["products", "all"],
   queryFn: async (): Promise<Product[]> => {
