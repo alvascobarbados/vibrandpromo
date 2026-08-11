@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -36,6 +36,22 @@ export const Route = createFileRoute("/")({
     ...parseCatalogSearch(search),
     page: Number(search['page']) > 0 ? Number(search['page']) : 1,
   }),
+  search: {
+    middlewares: [
+      stripSearchParams({
+        q: "",
+        sort: "default",
+        page: 1,
+        cat: [],
+        moq: [],
+        prod: [],
+        colour: [],
+        deco: [],
+        src: [],
+        mat: [],
+      }),
+    ],
+  },
   head: () => ({
     meta: [
       { title: "Promotional Products Catalogue | Alvasco Barbados" },

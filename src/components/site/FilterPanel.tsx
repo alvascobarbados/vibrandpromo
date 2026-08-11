@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight, X } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -139,11 +139,8 @@ export function FilterPanel({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+      <div className="border-b border-border px-4 py-3">
         <p className="font-display text-lg font-bold">Filters</p>
-        <Button variant="ghost" size="icon" aria-label="Close filters" onClick={onClose}>
-          <X className="size-5" />
-        </Button>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[42%_58%]">
