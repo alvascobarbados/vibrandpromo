@@ -7,7 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { LazySection } from "@/components/site/LazySection";
 import { CategoryRow } from "@/components/site/CategoryRow";
-import { categoriesQuery, publicProductsQuery, type Product } from "@/lib/catalog";
+import { categoriesQuery, type Product } from "@/lib/catalog";
+import { useCatalogProducts } from "@/lib/staff-session";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const products = useQuery(publicProductsQuery);
+  const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
   const [activeChip, setActiveChip] = useState("all");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
