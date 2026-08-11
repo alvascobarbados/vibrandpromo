@@ -92,7 +92,7 @@ export function ImageLightbox({
   useEffect(() => {
     return router.history.block({
       enableBeforeUnload: false,
-      blockerFn: ({ action }) => {
+      blockerFn: ({ action }: { action: string }) => {
         if (action === "BACK") {
           finish();
           return true;
