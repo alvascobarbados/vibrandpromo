@@ -133,7 +133,7 @@ function AdminProducts() {
         material: form.material || null,
         slug: slugify(form.name),
         category_id: form.category_id || null,
-        subcategory_id: form.subcategory_id || null,
+        subcategory_id: form.subcategory_id,
         description: form.description || null,
         details: form.details || null,
         price: form.price ? Number(form.price) : null,
