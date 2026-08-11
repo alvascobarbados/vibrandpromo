@@ -96,7 +96,7 @@ export function AdminSidebar({
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="flex h-full flex-col bg-charcoal text-charcoal-foreground">
+      <div className="flex h-full flex-col bg-navy-900 text-navy-100">
         <div className="flex items-center gap-2 px-3 py-4">
           <Link
             to="/"
@@ -110,7 +110,7 @@ export function AdminSidebar({
             type="button"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             onClick={onToggleCollapsed}
-            className="ml-auto hidden shrink-0 rounded-lg p-1.5 text-charcoal-foreground/60 transition-colors hover:bg-white/10 hover:text-charcoal-foreground md:block"
+            className="ml-auto hidden shrink-0 rounded-lg p-1.5 text-navy-300 transition-colors hover:bg-navy-800 hover:text-white md:block"
           >
             {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
           </button>
@@ -120,9 +120,9 @@ export function AdminSidebar({
           {groups.map((group) => (
             <div key={group.label}>
               {collapsed ? (
-                <div className="mx-3 mb-2 h-px bg-white/10" />
+                <div className="mx-3 mb-2 h-px bg-navy-800" />
               ) : (
-                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-charcoal-foreground/40">
+                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-navy-300">
                   {group.label}
                 </p>
               )}
@@ -133,21 +133,21 @@ export function AdminSidebar({
                     <Link
                       to={item.to}
                       activeOptions={{ exact: item.exact ?? false }}
-                      activeProps={{ className: "bg-lime text-lime-foreground" }}
+                      activeProps={{ className: "bg-lime-500 text-n-700" }}
                       onClick={onNavigate}
-                      className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium text-charcoal-foreground/70 transition-colors hover:bg-white/10 hover:text-charcoal-foreground ${
+                      className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium text-navy-100 transition-colors hover:bg-navy-800 hover:text-white ${
                         collapsed ? "justify-center gap-0" : "gap-3"
                       }`}
                     >
                       <item.icon className="size-4 shrink-0" />
                       {collapsed ? null : <span className="truncate">{item.label}</span>}
                       {badge && !collapsed ? (
-                        <span className="ml-auto rounded-full bg-lime px-2 py-0.5 text-xs font-bold text-lime-foreground">
+                        <span className="ml-auto rounded-full bg-lime-500 px-2 py-0.5 text-xs font-bold text-n-700">
                           {badge}
                         </span>
                       ) : null}
                       {badge && collapsed ? (
-                        <span className="absolute right-1 top-1 size-2 rounded-full bg-lime" />
+                        <span className="absolute right-1 top-1 size-2 rounded-full bg-lime-500" />
                       ) : null}
                     </Link>
                   );
@@ -172,9 +172,9 @@ export function AdminSidebar({
           ))}
         </nav>
 
-        <div className="border-t border-white/10 px-2 py-3">
+        <div className="border-t border-navy-800 px-2 py-3">
           <div className={`flex items-center gap-3 px-1 pb-3 ${collapsed ? "justify-center" : ""}`}>
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-lime text-sm font-bold text-lime-foreground">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-lime-500 text-sm font-bold text-n-700">
               {initials(access.displayName, access.email)}
             </span>
             {collapsed ? null : (
@@ -182,7 +182,7 @@ export function AdminSidebar({
                 <p className="truncate text-sm font-semibold">
                   {access.displayName || access.email}
                 </p>
-                <p className="text-xs capitalize text-charcoal-foreground/50">
+                <p className="text-xs capitalize text-navy-300">
                   {access.isAdmin ? "Admin" : "Staff"}
                 </p>
               </div>
@@ -192,8 +192,8 @@ export function AdminSidebar({
           <Link
             to="/admin/account"
             onClick={onNavigate}
-            activeProps={{ className: "bg-lime text-lime-foreground" }}
-            className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium text-charcoal-foreground/70 transition-colors hover:bg-white/10 hover:text-charcoal-foreground ${
+            activeProps={{ className: "bg-lime-500 text-n-700" }}
+            className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium text-navy-100 transition-colors hover:bg-navy-800 hover:text-white ${
               collapsed ? "justify-center" : "gap-3"
             }`}
           >
@@ -204,7 +204,7 @@ export function AdminSidebar({
           <Button
             variant="ghost"
             onClick={signOut}
-            className={`mt-1 w-full text-charcoal-foreground/70 hover:bg-white/10 hover:text-charcoal-foreground ${
+            className={`mt-1 w-full text-navy-100 hover:bg-navy-800 hover:text-white ${
               collapsed ? "justify-center px-0" : "justify-start gap-3 px-3"
             }`}
           >
