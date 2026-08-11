@@ -19,7 +19,7 @@ type QuoteListContextValue = {
   clear: () => void;
 };
 
-const STORAGE_KEY = "alvasco-quote-list";
+const STORAGE_KEY = "vibrand-quote-list";
 
 const QuoteListContext = createContext<QuoteListContextValue | null>(null);
 

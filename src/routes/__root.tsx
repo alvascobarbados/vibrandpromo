@@ -79,21 +79,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Vibrand (Barbados) Ltd. | Premium Promotional Products" },
+      { title: "Vibrand Caribbean Inc. | Premium Promotional Products" },
       {
         name: "description",
         content:
           "Branded merchandise, corporate gifts and promotional products for Caribbean businesses. Browse the catalogue and request a quote.",
       },
-      { name: "author", content: "Vibrand (Barbados) Ltd." },
-      { property: "og:title", content: "Vibrand (Barbados) Ltd. | Premium Promotional Products" },
+      { name: "author", content: "Vibrand Caribbean Inc." },
+      { property: "og:title", content: "Vibrand Caribbean Inc. | Premium Promotional Products" },
       {
         property: "og:description",
         content: "Premium promotional products and corporate gifting across the Caribbean.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "theme-color", content: "#f76b1c" },
+      { name: "theme-color", content: "#BFD730" },
     ],
     links: [
       {

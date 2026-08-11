@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { QuoteBasketButton } from "@/components/site/QuoteBasketButton";
 import { COMPANY } from "@/lib/territories";
+import logoHorizontal from "@/assets/vibrand-logo.png";
+import logoMark from "@/assets/vibrand-mark.png";
 
 const NAV = [
   { to: "/", label: "Catalogue" },
@@ -15,11 +17,9 @@ const NAV = [
 
 function Logo() {
   return (
-    <Link to="/" search={{}} className="flex items-baseline gap-1">
-      <span className="font-display text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
-        Vibrand
-      </span>
-      <span className="size-1.5 rounded-full bg-primary sm:size-2" />
+    <Link to="/" search={{}} aria-label="Vibrand — full catalogue" className="flex items-center">
+      <img src={logoMark} alt="Vibrand" className="h-8 w-auto sm:hidden" />
+      <img src={logoHorizontal} alt="Vibrand" className="hidden h-8 w-auto sm:block" />
     </Link>
   );
 }
@@ -36,8 +36,8 @@ export function SiteLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto w-full max-w-7xl px-2 sm:px-6">
-          <div className="flex h-14 flex-nowrap items-center gap-1.5 sm:h-16 sm:gap-3">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+          <div className="flex h-16 flex-nowrap items-center gap-3 sm:gap-4">
             <div className="shrink-0">
               <Logo />
             </div>
@@ -92,33 +92,33 @@ export function SiteLayout({
             </p>
           </div>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Explore</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-lime">Explore</p>
             <ul className="mt-4 space-y-2 text-sm text-charcoal-foreground/75">
               {NAV.map((item) => (
                 <li key={item.to}>
-                  <Link to={item.to} className="hover:text-primary">
+                  <Link to={item.to} className="hover:text-lime">
                     {item.label}
                   </Link>
                 </li>
               ))}
               <li>
-                <Link to="/quote" className="hover:text-primary">
+                <Link to="/quote" className="hover:text-lime">
                   Request a Quote
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Get in touch</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-lime">Get in touch</p>
             <ul className="mt-4 space-y-3 text-sm text-charcoal-foreground/75">
               <li className="flex items-center gap-2">
-                <Mail className="size-4 text-primary" /> {COMPANY.email}
+                <Mail className="size-4 text-lime" /> {COMPANY.email}
               </li>
               <li className="flex items-center gap-2">
-                <Phone className="size-4 text-primary" /> {COMPANY.phone}
+                <Phone className="size-4 text-lime" /> {COMPANY.phone}
               </li>
               <li className="flex items-center gap-2">
-                <MapPin className="size-4 text-primary" /> {COMPANY.location}
+                <MapPin className="size-4 text-lime" /> {COMPANY.location}
               </li>
               <li className="text-charcoal-foreground/55">{COMPANY.hours}</li>
             </ul>
@@ -127,7 +127,7 @@ export function SiteLayout({
         <div className="border-t border-white/10">
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-charcoal-foreground/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p>© {new Date().getFullYear()} {COMPANY.name} All rights reserved.</p>
-            <Link to="/auth" className="hover:text-primary">
+            <Link to="/auth" className="hover:text-lime">
               Staff Login
             </Link>
           </div>

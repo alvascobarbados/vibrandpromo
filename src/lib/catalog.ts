@@ -73,7 +73,7 @@ export function matchesBuckets(
   });
 }
 
-export const PRODUCT_FALLBACK_IMAGE = "https://picsum.photos/seed/alvasco-product/900/900";
+export const PRODUCT_FALLBACK_IMAGE = "https://picsum.photos/seed/vibrand-product/900/900";
 
 export function productImage(product: Pick<Product, "images">) {
   return product.images?.[0] ?? PRODUCT_FALLBACK_IMAGE;

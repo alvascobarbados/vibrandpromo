@@ -154,14 +154,14 @@ export function FilterPanel({
                 onClick={() => setActiveGroup(group)}
                 className={`flex w-full items-center justify-between gap-1 px-4 py-4 text-left text-sm font-medium ${
                   activeGroup === group
-                    ? "bg-background text-primary"
+                    ? "border-l-4 border-lime bg-background text-foreground"
                     : "text-foreground hover:bg-background/60"
                 }`}
               >
                 <span>
                   {GROUP_LABELS[group]}
                   {selected ? (
-                    <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
+                    <span className="ml-1.5 rounded-full bg-lime px-1.5 py-0.5 text-[10px] font-bold text-lime-foreground">
                       {selected}
                     </span>
                   ) : null}
