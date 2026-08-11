@@ -112,10 +112,13 @@ function HomePage() {
                 <Skeleton className="h-6 w-48" />
                 <div className="mt-6 flex gap-3 overflow-hidden">
                   {Array.from({ length: 4 }).map((__, i) => (
-                    <Skeleton
+                    <div
                       key={i}
-                      className="h-[var(--card-h)] w-[calc((100%-1.5rem)/2.25)] shrink-0 rounded-2xl sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]"
-                    />
+                      className="w-[calc((100%-1.5rem)/2.25)] shrink-0 sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]"
+                    >
+                      <Skeleton className="aspect-square rounded-t-2xl" />
+                      <Skeleton className="mt-0.5 h-[210px] rounded-b-2xl" />
+                    </div>
                   ))}
                 </div>
               </div>

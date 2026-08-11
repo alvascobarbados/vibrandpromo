@@ -39,10 +39,13 @@ export function LazySection({
     return (
       <div ref={ref} className="flex gap-3 overflow-hidden pb-1">
         {Array.from({ length: placeholderCount }).map((_, index) => (
-          <Skeleton
+          <div
             key={index}
-            className="h-[var(--card-h)] w-[calc((100%-1.5rem)/2.25)] shrink-0 rounded-2xl sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]"
-          />
+            className="w-[calc((100%-1.5rem)/2.25)] shrink-0 sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]"
+          >
+            <Skeleton className="aspect-square rounded-t-2xl" />
+            <Skeleton className="mt-0.5 h-[210px] rounded-b-2xl" />
+          </div>
         ))}
       </div>
     );
