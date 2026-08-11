@@ -268,7 +268,7 @@ export function ImageLightbox({
               <span
                 key={`lb-dot-${src}-${i}`}
                 className={`size-1.5 rounded-full transition-colors ${
-                  i === index ? "bg-white" : "bg-white/40"
+                  i === index ? "bg-lime" : "bg-white/40"
                 }`}
               />
             ))}

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/contact")({
       {
         name: "description",
         content:
-          "Reach the Vibrand team in Saint Michael, Barbados. Call +1 (246) 625-1000 or email sales@alvas.co, Monday to Friday 8AM–5PM AST.",
+          "Reach the Vibrand Caribbean Inc. team in Saint Michael, Barbados. Call +1 (246) 625-1000 or email sales@vibrand.com, Monday to Friday 8AM–5PM AST.",
       },
       { property: "og:title", content: "Contact Vibrand | Promotional Products in Barbados" },
       {

@@ -130,7 +130,7 @@ export function ProductImageCarousel({
               <span
                 key={`dot-${src}-${i}`}
                 className={`size-1.5 rounded-full transition-colors ${
-                  i === index ? "bg-white" : "bg-white/50"
+                  i === index ? "bg-lime" : "bg-white/50"
                 }`}
               />
             ))}

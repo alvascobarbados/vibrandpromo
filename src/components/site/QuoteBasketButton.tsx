@@ -24,7 +24,7 @@ export function QuoteBasketButton() {
       <ShoppingBag className="size-5 text-charcoal" />
       {count > 0 ? (
         <span
-          className={`absolute -right-0.5 -top-0.5 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[11px] font-bold leading-none text-primary-foreground ${
+          className={`absolute -right-0.5 -top-0.5 inline-flex min-w-5 items-center justify-center rounded-full bg-lime px-1.5 py-0.5 text-[11px] font-bold leading-none text-lime-foreground ${
             animating ? "animate-badge-bounce" : ""
           }`}
         >
