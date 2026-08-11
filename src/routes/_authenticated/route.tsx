@@ -1,6 +1,14 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, LogOut, Package, Tags, ClipboardList } from "lucide-react";
+import {
+  LayoutDashboard,
+  LogOut,
+  Package,
+  Tags,
+  ClipboardList,
+  FileSpreadsheet,
+  ImageUp,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +29,8 @@ const NAV = [
   { to: "/admin/products", label: "Products", icon: Package },
   { to: "/admin/categories", label: "Categories", icon: Tags },
   { to: "/admin/quotes", label: "Quote requests", icon: ClipboardList },
+  { to: "/admin/import", label: "Import products", icon: FileSpreadsheet },
+  { to: "/admin/bulk-images", label: "Bulk images", icon: ImageUp },
 ] as const;
 
 function AdminLayout() {
