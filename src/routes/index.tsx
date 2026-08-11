@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
 import { LazySection } from "@/components/site/LazySection";
+import { CategoryRow } from "@/components/site/CategoryRow";
 import { categoriesQuery, publicProductsQuery, type Product } from "@/lib/catalog";
 
 export const Route = createFileRoute("/")({
@@ -110,9 +111,12 @@ function HomePage() {
             {Array.from({ length: 3 }).map((_, index) => (
               <div key={index}>
                 <Skeleton className="h-6 w-48" />
-                <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-                  {Array.from({ length: 6 }).map((__, i) => (
-                    <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
+                <div className="mt-3 flex gap-4 overflow-hidden">
+                  {Array.from({ length: 4 }).map((__, i) => (
+                    <Skeleton
+                      key={i}
+                      className="aspect-[3/4] w-[calc((100%-2rem)/2.25)] shrink-0 rounded-2xl sm:w-[calc((100%-3rem)/3.3)] xl:w-[calc((100%-4rem)/4.3)]"
+                    />
                   ))}
                 </div>
               </div>
@@ -121,7 +125,7 @@ function HomePage() {
         ) : (
           <div className="space-y-10">
             {shelves.map(({ category, items }, index) => {
-              const preview = items.slice(0, 6);
+              const preview = items.slice(0, 8);
               return (
                 <section
                   key={category.id}
@@ -152,24 +156,14 @@ function HomePage() {
                   </div>
 
                   <div className="mt-3">
-                    <LazySection eager={index < 2} placeholderCount={preview.length}>
-                      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-                        {preview.map((product) => (
-                          <ProductCard key={product.id} product={product} />
-                        ))}
-                      </div>
+                    <LazySection eager={index < 2} layout="row" placeholderCount={4}>
+                      <CategoryRow
+                        items={preview}
+                        total={items.length}
+                        categorySlug={category.slug}
+                      />
                     </LazySection>
                   </div>
-
-                  {items.length > 6 ? (
-                    <Link
-                      to="/c/$slug"
-                      params={{ slug: category.slug }}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-charcoal px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-charcoal transition-colors hover:bg-muted"
-                    >
-                      View all {items.length} <ArrowRight className="size-4" />
-                    </Link>
-                  ) : null}
                 </section>
               );
             })}
