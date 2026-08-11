@@ -27,8 +27,8 @@ export const TERRITORIES = [
 ] as const;
 
 export const COMPANY = {
-  name: "Vibrand (Barbados) Ltd.",
-  email: "sales@alvas.co",
+  name: "Vibrand Caribbean Inc.",
+  email: "sales@vibrand.com",
   phone: "+1 (246) 625-1000",
   location: "Saint Michael, Barbados",
   hours: "Mon–Fri, 8AM–5PM AST",
