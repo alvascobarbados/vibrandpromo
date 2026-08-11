@@ -41,6 +41,13 @@ export const Route = createFileRoute("/_authenticated/admin/products")({
 
 type FormState = {
   name: string;
+  sku: string;
+  moq: string;
+  production_days: string;
+  colour_option: string;
+  decoration_methods: string[];
+  inventory_source: string;
+  material: string;
   category_id: string;
   description: string;
   details: string;
@@ -53,6 +60,13 @@ type FormState = {
 
 const EMPTY: FormState = {
   name: "",
+  sku: "",
+  moq: "25",
+  production_days: "14",
+  colour_option: "Fully Customised",
+  decoration_methods: [],
+  inventory_source: "Factory Direct",
+  material: "",
   category_id: "",
   description: "",
   details: "",
@@ -77,6 +91,13 @@ function AdminProducts() {
     setEditing(product.id);
     setForm({
       name: product.name,
+      sku: product.sku ?? "",
+      moq: String(product.moq ?? 25),
+      production_days: String(product.production_days ?? 14),
+      colour_option: product.colour_option ?? "Fully Customised",
+      decoration_methods: product.decoration_methods ?? [],
+      inventory_source: product.inventory_source ?? "Factory Direct",
+      material: product.material ?? "",
       category_id: product.category_id ?? "",
       description: product.description ?? "",
       details: product.details ?? "",
@@ -93,6 +114,13 @@ function AdminProducts() {
     mutationFn: async () => {
       const payload = {
         name: form.name,
+        sku: form.sku.trim(),
+        moq: Number(form.moq) || 1,
+        production_days: Number(form.production_days) || 1,
+        colour_option: form.colour_option,
+        decoration_methods: form.decoration_methods,
+        inventory_source: form.inventory_source,
+        material: form.material || null,
         slug: slugify(form.name),
         category_id: form.category_id || null,
         description: form.description || null,
@@ -161,6 +189,10 @@ function AdminProducts() {
             toast.error("Product name is required");
             return;
           }
+          if (!form.sku.trim()) {
+            toast.error("SKU is required");
+            return;
+          }
           save.mutate();
         }}
       >
@@ -201,6 +233,103 @@ function AdminProducts() {
               value={form.price}
               onChange={(event) => setForm((prev) => ({ ...prev, price: event.target.value }))}
             />
+          </div>
+          <div>
+            <Label htmlFor="p-sku">SKU (product code)</Label>
+            <Input
+              id="p-sku"
+              value={form.sku}
+              onChange={(event) => setForm((prev) => ({ ...prev, sku: event.target.value }))}
+              placeholder="e.g. 102009"
+            />
+          </div>
+          <div>
+            <Label htmlFor="p-moq">Minimum order quantity (MOQ)</Label>
+            <Input
+              id="p-moq"
+              type="number"
+              min={1}
+              value={form.moq}
+              onChange={(event) => setForm((prev) => ({ ...prev, moq: event.target.value }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="p-days">Production time (days)</Label>
+            <Input
+              id="p-days"
+              type="number"
+              min={1}
+              value={form.production_days}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, production_days: event.target.value }))
+              }
+            />
+          </div>
+          <div>
+            <Label htmlFor="p-material">Material</Label>
+            <Input
+              id="p-material"
+              value={form.material}
+              onChange={(event) => setForm((prev) => ({ ...prev, material: event.target.value }))}
+              placeholder="e.g. 18/8 Stainless Steel"
+            />
+          </div>
+          <div>
+            <Label>Colour options</Label>
+            <Select
+              value={form.colour_option}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, colour_option: value }))}
+            >
+              <SelectTrigger className="mt-1.5">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COLOUR_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Inventory source</Label>
+            <Select
+              value={form.inventory_source}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, inventory_source: value }))}
+            >
+              <SelectTrigger className="mt-1.5">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INVENTORY_SOURCES.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="sm:col-span-2">
+            <Label>Decoration methods</Label>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {DECORATION_METHODS.map((method) => (
+                <label key={method} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={form.decoration_methods.includes(method)}
+                    onCheckedChange={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        decoration_methods: prev.decoration_methods.includes(method)
+                          ? prev.decoration_methods.filter((value) => value !== method)
+                          : [...prev.decoration_methods, method],
+                      }))
+                    }
+                  />
+                  {method}
+                </label>
+              ))}
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-6 pt-6">
             <label className="flex items-center gap-2 text-sm">
