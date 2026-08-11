@@ -1,16 +1,20 @@
-import { Link } from "@tanstack/react-router";
-import { Menu, Mail, Phone, MapPin } from "lucide-react";
-import { useState } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Menu, Mail, Phone, MapPin, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { QuoteBasketButton } from "@/components/site/QuoteBasketButton";
+import { categoriesQuery } from "@/lib/catalog";
 import { COMPANY } from "@/lib/territories";
 import logoHorizontalWhite from "@/assets/vibrand-logo-white.png";
 import logoMark from "@/assets/vibrand-mark.png";
 
 const NAV = [
-  { to: "/", label: "Catalogue" },
+  { to: "/", label: "Categories" },
+  { to: "/products", label: "All Products" },
   { to: "/about", label: "About Us" },
   { to: "/contact", label: "Contact" },
 ] as const;
@@ -24,6 +28,48 @@ function Logo() {
   );
 }
 
+function HeaderSearch() {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const urlQuery = useRouterState({
+    select: (state) => ((state.location.search as { q?: string }).q ?? ""),
+  });
+  const [value, setValue] = useState(urlQuery);
+  const [isNarrow, setIsNarrow] = useState(true);
+
+  useEffect(() => setValue(urlQuery), [urlQuery]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 420px)");
+    const sync = () => setIsNarrow(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  return (
+    <div className="relative w-full">
+      <Search className="absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        value={value}
+        onChange={(event) => {
+          const next = event.target.value;
+          setValue(next);
+          void navigate({
+            to: "/products",
+            search: (prev: Record<string, unknown>) => ({ ...prev, q: next, page: 1 }),
+            replace: pathname === "/products",
+            resetScroll: false,
+          });
+        }}
+        placeholder={isNarrow ? "Search" : "Product name / SKU"}
+        aria-label="Search products by name or SKU"
+        className="h-10 w-full min-w-0 rounded-full border-transparent bg-white pl-9 text-charcoal placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-lime"
+      />
+    </div>
+  );
+}
+
 export function SiteLayout({
   children,
   headerSlot,
@@ -32,6 +78,7 @@ export function SiteLayout({
   headerSlot?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const categories = useQuery(categoriesQuery);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -41,11 +88,7 @@ export function SiteLayout({
             <div className="shrink-0">
               <Logo />
             </div>
-            {headerSlot ? (
-              <div className="min-w-0 flex-1">{headerSlot}</div>
-            ) : (
-              <div className="flex-1" />
-            )}
+            <div className="min-w-0 flex-1">{headerSlot ?? <HeaderSearch />}</div>
             <div className="shrink-0">
               <QuoteBasketButton />
             </div>
@@ -60,8 +103,23 @@ export function SiteLayout({
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72">
-              <nav className="mt-10 flex flex-col gap-1">
+            <SheetContent side="right" className="w-72 overflow-y-auto">
+              <nav className="mt-10 flex flex-col gap-1 pb-10">
+                <p className="px-3 pb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Categories
+                </p>
+                {(categories.data ?? []).map((category) => (
+                  <Link
+                    key={category.id}
+                    to="/c/$slug"
+                    params={{ slug: category.slug }}
+                    onClick={() => setOpen(false)}
+                    className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+                <div className="my-2 border-t border-border" />
                 {NAV.map((item) => (
                   <Link
                     key={item.to}

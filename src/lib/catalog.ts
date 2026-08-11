@@ -9,12 +9,21 @@ export type Category = {
   sort_order: number;
 };
 
+export type Subcategory = {
+  id: string;
+  name: string;
+  slug: string;
+  category_id: string;
+  sort_order: number;
+};
+
 export type Product = {
   id: string;
   name: string;
   slug: string;
   sku: string | null;
   category_id: string | null;
+  subcategory_id: string | null;
   description: string | null;
   details: string | null;
   price: number | null;
@@ -115,6 +124,18 @@ export const publicProductsQuery = queryOptions({
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as Product[];
+  },
+});
+
+export const subcategoriesQuery = queryOptions({
+  queryKey: ["subcategories"],
+  queryFn: async (): Promise<Subcategory[]> => {
+    const { data, error } = await supabase
+      .from("subcategories")
+      .select("id, name, slug, category_id, sort_order")
+      .order("sort_order", { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as Subcategory[];
   },
 });
 

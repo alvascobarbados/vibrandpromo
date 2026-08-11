@@ -62,6 +62,7 @@ export type Database = {
           show_price: boolean
           sku: string | null
           slug: string
+          subcategory_id: string
           updated_at: string
         }
         Insert: {
@@ -84,6 +85,7 @@ export type Database = {
           show_price?: boolean
           sku?: string | null
           slug: string
+          subcategory_id: string
           updated_at?: string
         }
         Update: {
@@ -106,6 +108,7 @@ export type Database = {
           show_price?: boolean
           sku?: string | null
           slug?: string
+          subcategory_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -114,6 +117,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "subcategories"
             referencedColumns: ["id"]
           },
         ]
@@ -204,6 +214,44 @@ export type Database = {
           territory?: string
         }
         Relationships: []
+      }
+      subcategories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
