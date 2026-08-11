@@ -88,6 +88,7 @@ function AdminProducts() {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [uploading, setUploading] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
 
@@ -399,15 +400,45 @@ function AdminProducts() {
             }}
           />
           {form.images.length ? (
-            <div className="mt-3 flex flex-wrap gap-3">
-              {form.images.map((image) => (
-                <div key={image} className="relative">
+            <>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Drag an image to reorder. The first image is the cover shown on the product card.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-3">
+              {form.images.map((image, index) => (
+                <div
+                  key={image}
+                  draggable
+                  onDragStart={() => setDragIndex(index)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    if (dragIndex === null || dragIndex === index) return;
+                    setForm((prev) => {
+                      const next = [...prev.images];
+                      const moved = next.splice(dragIndex, 1)[0];
+                      if (moved === undefined) return prev;
+                      next.splice(index, 0, moved);
+                      return { ...prev, images: next };
+                    });
+                    setDragIndex(null);
+                  }}
+                  onDragEnd={() => setDragIndex(null)}
+                  className={`relative cursor-grab active:cursor-grabbing ${
+                    dragIndex === index ? "opacity-50" : ""
+                  }`}
+                >
                   <img
                     src={image}
                     alt=""
                     loading="lazy"
                     className="size-20 rounded-lg border border-border object-cover"
                   />
+                  {index === 0 ? (
+                    <span className="absolute bottom-0 left-0 right-0 rounded-b-lg bg-charcoal/80 py-0.5 text-center text-[10px] font-semibold uppercase text-white">
+                      Cover
+                    </span>
+                  ) : null}
                   <button
                     type="button"
                     aria-label="Remove image"
@@ -424,6 +455,7 @@ function AdminProducts() {
                 </div>
               ))}
             </div>
+            </>
           ) : null}
         </div>
 
