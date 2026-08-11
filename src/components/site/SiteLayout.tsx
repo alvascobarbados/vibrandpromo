@@ -16,7 +16,7 @@ const NAV = [
 function Logo() {
   return (
     <Link to="/" search={{}} className="flex items-baseline gap-1">
-      <span className="font-display text-2xl font-bold tracking-tight text-charcoal">Alvasco</span>
+      <span className="font-display text-2xl font-bold tracking-tight text-charcoal">Vibrand</span>
       <span className="size-2 rounded-full bg-primary" />
     </Link>
   );
@@ -80,7 +80,7 @@ export function SiteLayout({
       <footer className="border-t border-border bg-charcoal text-charcoal-foreground">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-3">
           <div>
-            <p className="font-display text-2xl font-bold">Alvasco</p>
+            <p className="font-display text-2xl font-bold">Vibrand</p>
             <p className="mt-3 max-w-sm text-sm text-charcoal-foreground/70">
               Premium promotional products for businesses across 24 Caribbean territories.
             </p>

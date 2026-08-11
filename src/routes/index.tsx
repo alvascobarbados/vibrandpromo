@@ -54,16 +54,16 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Promotional Products Catalogue | Alvasco Barbados" },
+      { title: "Promotional Products Catalogue | Vibrand Barbados" },
       {
         name: "description",
         content:
           "Browse branded apparel, bags, drinkware, technology and display products by SKU, MOQ and production time. Add items to your quote list.",
       },
-      { property: "og:title", content: "Promotional Products Catalogue | Alvasco Barbados" },
+      { property: "og:title", content: "Promotional Products Catalogue | Vibrand Barbados" },
       {
         property: "og:description",
-        content: "Search the Alvasco catalogue and build a quote request in minutes.",
+        content: "Search the Vibrand catalogue and build a quote request in minutes.",
       },
     ],
   }),
@@ -143,7 +143,7 @@ function CatalogPage() {
   return (
     <SiteLayout headerSlot={searchField}>
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6">
-        <h1 className="sr-only">Alvasco promotional products catalogue</h1>
+        <h1 className="sr-only">Vibrand promotional products catalogue</h1>
 
         <div className="lg:hidden">
           <Button

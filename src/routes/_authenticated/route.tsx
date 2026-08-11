@@ -38,7 +38,7 @@ function AdminLayout() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link to="/" className="font-heading text-lg font-bold">
-            Alvasco <span className="text-primary">Admin</span>
+            Vibrand <span className="text-primary">Admin</span>
           </Link>
           <Button variant="outline" size="sm" className="gap-2" onClick={signOut}>
             <LogOut className="size-4" /> Sign out

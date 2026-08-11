@@ -21,10 +21,10 @@ import {
 export const Route = createFileRoute("/_authenticated/admin/quotes")({
   head: () => ({
     meta: [
-      { title: "Quote Requests | Alvasco Admin" },
+      { title: "Quote Requests | Vibrand Admin" },
       { name: "description", content: "Review and manage customer quote requests." },
-      { property: "og:title", content: "Quote Requests | Alvasco Admin" },
-      { property: "og:description", content: "Manage Alvasco quote requests." },
+      { property: "og:title", content: "Quote Requests | Vibrand Admin" },
+      { property: "og:description", content: "Manage Vibrand quote requests." },
       { name: "robots", content: "noindex" },
     ],
   }),

@@ -7,13 +7,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Alvasco | Caribbean Promotional Products Supplier" },
+      { title: "About Vibrand | Caribbean Promotional Products Supplier" },
       {
         name: "description",
         content:
-          "Alvasco (Barbados) Ltd. supplies premium branded promotional products to businesses across 24 Caribbean territories, with global sourcing standards.",
+          "Vibrand (Barbados) Ltd. supplies premium branded promotional products to businesses across 24 Caribbean territories, with global sourcing standards.",
       },
-      { property: "og:title", content: "About Alvasco | Caribbean Promotional Products Supplier" },
+      { property: "og:title", content: "About Vibrand | Caribbean Promotional Products Supplier" },
       {
         property: "og:description",
         content:
@@ -57,7 +57,7 @@ function AboutPage() {
             Branded merchandise, built for Caribbean business
           </h1>
           <p className="mt-6 text-lg text-charcoal-foreground/75">
-            Alvasco (Barbados) Ltd. has spent decades helping Caribbean organisations put their brand
+            Vibrand (Barbados) Ltd. has spent decades helping Caribbean organisations put their brand
             into people's hands — from staff uniforms and conference giveaways to executive gifts and
             large-format display.
           </p>

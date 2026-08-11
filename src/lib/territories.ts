@@ -27,7 +27,7 @@ export const TERRITORIES = [
 ] as const;
 
 export const COMPANY = {
-  name: "Alvasco (Barbados) Ltd.",
+  name: "Vibrand (Barbados) Ltd.",
   email: "sales@alvas.co",
   phone: "+1 (246) 625-1000",
   location: "Saint Michael, Barbados",

@@ -33,10 +33,10 @@ import {
 export const Route = createFileRoute("/_authenticated/admin/products")({
   head: () => ({
     meta: [
-      { title: "Products | Alvasco Admin" },
+      { title: "Products | Vibrand Admin" },
       { name: "description", content: "Create, edit and publish catalogue products." },
-      { property: "og:title", content: "Products | Alvasco Admin" },
-      { property: "og:description", content: "Manage the Alvasco product catalogue." },
+      { property: "og:title", content: "Products | Vibrand Admin" },
+      { property: "og:description", content: "Manage the Vibrand product catalogue." },
       { name: "robots", content: "noindex" },
     ],
   }),

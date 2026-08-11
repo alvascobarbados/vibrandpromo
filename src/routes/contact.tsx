@@ -8,13 +8,13 @@ import { COMPANY } from "@/lib/territories";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact Alvasco | Promotional Products in Barbados" },
+      { title: "Contact Vibrand | Promotional Products in Barbados" },
       {
         name: "description",
         content:
-          "Reach the Alvasco team in Saint Michael, Barbados. Call +1 (246) 625-1000 or email sales@alvas.co, Monday to Friday 8AM–5PM AST.",
+          "Reach the Vibrand team in Saint Michael, Barbados. Call +1 (246) 625-1000 or email sales@alvas.co, Monday to Friday 8AM–5PM AST.",
       },
-      { property: "og:title", content: "Contact Alvasco | Promotional Products in Barbados" },
+      { property: "og:title", content: "Contact Vibrand | Promotional Products in Barbados" },
       {
         property: "og:description",
         content: "Call, email or send us a quote request — we respond within 24 hours.",

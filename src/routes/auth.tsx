@@ -10,13 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Staff Sign In | Alvasco Admin" },
+      { title: "Staff Sign In | Vibrand Admin" },
       {
         name: "description",
-        content: "Secure sign in for Alvasco staff to manage products, categories and quote requests.",
+        content: "Secure sign in for Vibrand staff to manage products, categories and quote requests.",
       },
-      { property: "og:title", content: "Staff Sign In | Alvasco Admin" },
-      { property: "og:description", content: "Alvasco staff administration sign in." },
+      { property: "og:title", content: "Staff Sign In | Vibrand Admin" },
+      { property: "og:description", content: "Vibrand staff administration sign in." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -55,7 +55,7 @@ function AuthPage() {
         </Link>
         <h1 className="mt-4 text-2xl font-bold">Staff sign in</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Admin access is limited to Alvasco team accounts.
+          Admin access is limited to Vibrand team accounts.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">

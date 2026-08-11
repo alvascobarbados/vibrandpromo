@@ -8,10 +8,10 @@ import { quoteRequestsQuery } from "@/lib/admin";
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
     meta: [
-      { title: "Admin Dashboard | Alvasco Staff" },
-      { name: "description", content: "Overview of Alvasco products, categories and quote requests." },
-      { property: "og:title", content: "Admin Dashboard | Alvasco Staff" },
-      { property: "og:description", content: "Alvasco staff dashboard." },
+      { title: "Admin Dashboard | Vibrand Staff" },
+      { name: "description", content: "Overview of Vibrand products, categories and quote requests." },
+      { property: "og:title", content: "Admin Dashboard | Vibrand Staff" },
+      { property: "og:description", content: "Vibrand staff dashboard." },
       { name: "robots", content: "noindex" },
     ],
   }),
