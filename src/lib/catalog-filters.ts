@@ -4,10 +4,12 @@ import {
   matchesBuckets,
   type Category,
   type Product,
+  type Subcategory,
 } from "@/lib/catalog";
 
 export type FilterGroupId =
   | "cat"
+  | "sub"
   | "moq"
   | "prod"
   | "colour"
@@ -19,6 +21,7 @@ export type CatalogSearch = {
   q: string;
   sort: string;
   cat: string[];
+  sub: string[];
   moq: string[];
   prod: string[];
   colour: string[];
@@ -31,6 +34,7 @@ export const EMPTY_SEARCH: CatalogSearch = {
   q: "",
   sort: "default",
   cat: [],
+  sub: [],
   moq: [],
   prod: [],
   colour: [],
@@ -48,6 +52,7 @@ export const SORT_OPTIONS = [
 
 export const GROUP_LABELS: Record<FilterGroupId, string> = {
   cat: "Category",
+  sub: "Subcategory",
   moq: "MOQ Range",
   prod: "Production Time",
   colour: "Colour Options",
@@ -67,6 +72,7 @@ export function parseCatalogSearch(raw: Record<string, unknown>): CatalogSearch 
     q: typeof raw['q'] === "string" ? raw['q'] : "",
     sort: typeof raw['sort'] === "string" ? raw['sort'] : "default",
     cat: toArray(raw['cat']),
+    sub: toArray(raw['sub']),
     moq: toArray(raw['moq']),
     prod: toArray(raw['prod']),
     colour: toArray(raw['colour']),
@@ -85,13 +91,19 @@ function matchesSearchTerm(product: Product, q: string) {
   );
 }
 
-export function groupMatchers(categories: Category[]) {
+export type Taxonomy = { categories: Category[]; subcategories: Subcategory[] };
+
+export function groupMatchers({ categories, subcategories }: Taxonomy) {
   const categoryById = new Map(categories.map((c) => [c.id, c] as const));
+  const subById = new Map(subcategories.map((s) => [s.id, s] as const));
 
   const matchers: Record<FilterGroupId, (product: Product, values: string[]) => boolean> = {
     cat: (product, values) =>
       values.length === 0 ||
       values.includes(categoryById.get(product.category_id ?? "")?.slug ?? ""),
+    sub: (product, values) =>
+      values.length === 0 ||
+      values.includes(subById.get(product.subcategory_id ?? "")?.slug ?? ""),
     moq: (product, values) => matchesBuckets(product.moq, values, MOQ_BUCKETS),
     prod: (product, values) => matchesBuckets(product.production_days, values, PRODUCTION_BUCKETS),
     colour: (product, values) => values.length === 0 || values.includes(product.colour_option),
@@ -105,19 +117,21 @@ export function groupMatchers(categories: Category[]) {
   return matchers;
 }
 
-const GROUP_IDS: FilterGroupId[] = ["cat", "moq", "prod", "colour", "deco", "src", "mat"];
+const GROUP_IDS: FilterGroupId[] = ["cat", "sub", "moq", "prod", "colour", "deco", "src", "mat"];
 
 export function filterProducts(
   products: Product[],
   search: CatalogSearch,
-  categories: Category[],
+  taxonomy: Taxonomy,
   skipGroup?: FilterGroupId,
 ) {
-  const matchers = groupMatchers(categories);
+  const matchers = groupMatchers(taxonomy);
   return products.filter((product) => {
     if (!matchesSearchTerm(product, search.q)) return false;
     return GROUP_IDS.every((group) =>
-      group === skipGroup ? true : matchers[group](product, search[group]),
+      group === skipGroup || (skipGroup === "cat" && group === "sub")
+        ? true
+        : matchers[group](product, search[group]),
     );
   });
 }
