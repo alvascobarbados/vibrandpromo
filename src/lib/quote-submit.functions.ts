@@ -11,6 +11,8 @@ const quoteSchema = z.object({
   territory: trimmed(120),
   message: z.string().trim().max(2000).optional().or(z.literal("")),
   artwork_url: z.string().trim().max(500).regex(/^[\w./-]+$/).nullable().optional(),
+  // Honeypot: real customers never see or fill this.
+  website: z.string().max(200).optional(),
   items: z
     .array(
       z.object({
@@ -31,7 +33,12 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { items, ...request } = data;
+    const { items, website, ...request } = data;
+
+    if (website && website.trim().length > 0) {
+      // Silently accept and drop obvious bot submissions.
+      return { ok: true as const };
+    }
 
     const { data: inserted, error } = await supabaseAdmin
       .from("quote_requests")
