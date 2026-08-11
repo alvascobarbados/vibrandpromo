@@ -54,12 +54,15 @@ export function ImageLightbox({
     const body = document.body;
     const prev = body.style.overflow;
     const prevPad = body.style.paddingRight;
+    const scrollY = window.scrollY;
     const gap = window.innerWidth - document.documentElement.clientWidth;
     body.style.overflow = "hidden";
     if (gap > 0) body.style.paddingRight = `${gap}px`;
     return () => {
       body.style.overflow = prev;
       body.style.paddingRight = prevPad;
+      window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior });
+      requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior }));
     };
   }, []);
 
