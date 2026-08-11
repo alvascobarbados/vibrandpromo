@@ -1,3 +1,4 @@
+import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImageUp } from "lucide-react";
@@ -9,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { allProductsQuery } from "@/lib/catalog";
 
 export const Route = createFileRoute("/_authenticated/admin/bulk-images")({
+  beforeLoad: ({ context }) => requirePage(context.access, "bulk_images"),
   head: () => ({
     meta: [
       { title: "Bulk Image Upload | Vibrand Admin" },

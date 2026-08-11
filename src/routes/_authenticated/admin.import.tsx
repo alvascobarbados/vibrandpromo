@@ -1,3 +1,4 @@
+import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileSpreadsheet, Upload } from "lucide-react";
@@ -11,6 +12,7 @@ import { parseCsvRecords } from "@/lib/csv";
 import { categoriesQuery, subcategoriesQuery, slugify } from "@/lib/catalog";
 
 export const Route = createFileRoute("/_authenticated/admin/import")({
+  beforeLoad: ({ context }) => requirePage(context.access, "import"),
   head: () => ({
     meta: [
       { title: "Import Products | Vibrand Admin" },

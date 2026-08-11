@@ -41,6 +41,27 @@ export type Database = {
         }
         Relationships: []
       }
+      page_access_locks: {
+        Row: {
+          created_at: string
+          id: string
+          page: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           capacity: string | null
@@ -333,6 +354,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_use_page: {
+        Args: { _page: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

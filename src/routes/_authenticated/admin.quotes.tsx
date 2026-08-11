@@ -1,3 +1,4 @@
+import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -19,6 +20,7 @@ import {
 } from "@/lib/admin";
 
 export const Route = createFileRoute("/_authenticated/admin/quotes")({
+  beforeLoad: ({ context }) => requirePage(context.access, "quotes"),
   head: () => ({
     meta: [
       { title: "Quote Requests | Vibrand Admin" },
