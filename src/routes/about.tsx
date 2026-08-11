@@ -11,7 +11,7 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "Vibrand (Barbados) Ltd. supplies premium branded promotional products to businesses across 24 Caribbean territories, with global sourcing standards.",
+          "Vibrand Caribbean Inc. supplies premium branded promotional products to businesses across 24 Caribbean territories, with global sourcing standards.",
       },
       { property: "og:title", content: "About Vibrand | Caribbean Promotional Products Supplier" },
       {
@@ -57,7 +57,7 @@ function AboutPage() {
             Branded merchandise, built for Caribbean business
           </h1>
           <p className="mt-6 text-lg text-charcoal-foreground/75">
-            Vibrand (Barbados) Ltd. has spent decades helping Caribbean organisations put their brand
+            Vibrand Caribbean Inc. has spent decades helping Caribbean organisations put their brand
             into people's hands — from staff uniforms and conference giveaways to executive gifts and
             large-format display.
           </p>

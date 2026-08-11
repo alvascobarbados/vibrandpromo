@@ -151,22 +151,10 @@ function CatalogPage() {
 
   return (
     <SiteLayout headerSlot={searchField}>
-      <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
         <h1 className="sr-only">Vibrand promotional products catalogue</h1>
 
-        <div className="lg:hidden">
-          <Button
-            variant="outline"
-            className="w-full gap-2 rounded-xl"
-            onClick={() => setFiltersOpen(true)}
-          >
-            <SlidersHorizontal className="size-4" />
-            Show Filters
-            {activeFilterCount(search) ? ` (${activeFilterCount(search)})` : ""}
-          </Button>
-        </div>
-
-        <div className="mt-4 flex flex-col gap-8 lg:flex-row">
+        <div className="flex flex-col gap-8 lg:flex-row">
           <aside className="hidden w-64 shrink-0 lg:block">
             <FilterPanel
               variant="sidebar"
@@ -180,14 +168,19 @@ function CatalogPage() {
           </aside>
 
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-muted-foreground">
-                {total === 0
-                  ? "Showing 0 products"
-                  : `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} products`}
-              </p>
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+              <Button
+                variant="outline"
+                className="h-10 shrink-0 gap-2 rounded-full px-4 text-sm font-semibold lg:hidden"
+                onClick={() => setFiltersOpen(true)}
+              >
+                <SlidersHorizontal className="size-4" />
+                Filters
+                {activeFilterCount(search) ? ` (${activeFilterCount(search)})` : ""}
+              </Button>
+              <div className="hidden lg:block" />
               <Select value={search.sort} onValueChange={(value) => update({ sort: value })}>
-                <SelectTrigger className="w-44">
+                <SelectTrigger className="ml-auto h-10 w-40 rounded-full sm:w-44">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -225,7 +218,7 @@ function CatalogPage() {
             ) : null}
 
             {products.isLoading ? (
-              <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+              <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
                 {Array.from({ length: 8 }).map((_, index) => (
                   <Skeleton key={index} className="aspect-[3/4] rounded-2xl" />
                 ))}
@@ -235,11 +228,16 @@ function CatalogPage() {
                 No products match your search.
               </p>
             ) : (
-              <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-                {visible.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  {`Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} products`}
+                </p>
+                <div className="mt-2 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                  {visible.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              </>
             )}
 
             {totalPages > 1 ? (
