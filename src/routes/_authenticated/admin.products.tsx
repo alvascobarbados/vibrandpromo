@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { ChevronDown, Clock, Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -37,18 +37,17 @@ import {
   payloadFromForm,
   type FormState,
 } from "@/components/admin/ProductForm";
-import { BulkLeadTimes } from "@/components/admin/BulkLeadTimes";
 import { supabase } from "@/integrations/supabase/client";
 import {
   allProductsQuery,
   categoriesQuery,
   subcategoriesQuery,
   imageSrc,
-  leadRange,
   productImage,
   specValue,
   type Product,
 } from "@/lib/catalog";
+import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 
 const searchSchema = z.object({
   q: fallback(z.string(), "").default(""),
@@ -90,7 +89,6 @@ function AdminProducts() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Product | null>(null);
-  const [bulkLeadOpen, setBulkLeadOpen] = useState(false);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
 
@@ -179,10 +177,6 @@ function AdminProducts() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Products</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => setBulkLeadOpen(true)}>
-            <Clock className="size-4" />
-            Set lead times in bulk
-          </Button>
           <Button
             onClick={() => {
               setForm(EMPTY_FORM);
@@ -384,13 +378,6 @@ function AdminProducts() {
         </SheetContent>
       </Sheet>
 
-      <BulkLeadTimes
-        open={bulkLeadOpen}
-        onOpenChange={setBulkLeadOpen}
-        products={products.data ?? []}
-        categories={categories.data ?? []}
-      />
-
       <AlertDialog
         open={pendingDelete !== null}
         onOpenChange={(open) => {
@@ -451,6 +438,7 @@ function ProductSummary({
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
+  const shipping = useShippingSettings();
   return (
     <div className="space-y-5">
       {(product.images ?? []).length ? (
@@ -471,18 +459,9 @@ function ProductSummary({
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
         <Spec label="MOQ" value={specValue(product.moq)} />
-        <Spec
-          label="Air lead time"
-          value={leadRange(product.air_lead_min, product.air_lead_max) ?? "On request"}
-        />
-        <Spec
-          label="Sea lead time"
-          value={leadRange(product.sea_lead_min, product.sea_lead_max) ?? "On request"}
-        />
-        <Spec
-          label="Production (internal)"
-          value={specValue(product.production_days, "days")}
-        />
+        <Spec label="Production time" value={specValue(product.production_days, "days")} />
+        <Spec label="Air lead time" value={airLeadLabel(product, shipping) ?? "On request"} />
+        <Spec label="Sea lead time" value={seaLeadLabel(product, shipping) ?? "On request"} />
         <Spec label="Colour options" value={product.colour_option ?? ""} />
         <Spec label="Inventory source" value={product.inventory_source} />
         <Spec label="Material" value={product.material ?? ""} />

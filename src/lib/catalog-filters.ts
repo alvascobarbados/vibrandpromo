@@ -6,6 +6,7 @@ import {
   type Product,
   type Subcategory,
 } from "@/lib/catalog";
+import { calculatedAirMin, type ShippingMap } from "@/lib/shipping";
 
 export type FilterGroupId = "cat" | "sub" | "moq" | "prod" | "colour" | "deco" | "src" | "mat";
 
@@ -82,9 +83,13 @@ function matchesSearchTerm(product: Product, q: string) {
   );
 }
 
-export type Taxonomy = { categories: Category[]; subcategories: Subcategory[] };
+export type Taxonomy = {
+  categories: Category[];
+  subcategories: Subcategory[];
+  shipping: ShippingMap;
+};
 
-export function groupMatchers({ categories, subcategories }: Taxonomy) {
+export function groupMatchers({ categories, subcategories, shipping }: Taxonomy) {
   const categoryById = new Map(categories.map((c) => [c.id, c] as const));
   const subById = new Map(subcategories.map((s) => [s.id, s] as const));
 
@@ -95,7 +100,8 @@ export function groupMatchers({ categories, subcategories }: Taxonomy) {
     sub: (product, values) =>
       values.length === 0 || values.includes(subById.get(product.subcategory_id ?? "")?.slug ?? ""),
     moq: (product, values) => matchesBuckets(product.moq, values, MOQ_BUCKETS),
-    prod: (product, values) => matchesBuckets(product.air_lead_min, values, AIR_LEAD_BUCKETS),
+    prod: (product, values) =>
+      matchesBuckets(calculatedAirMin(product, shipping), values, AIR_LEAD_BUCKETS),
     colour: (product, values) =>
       values.length === 0 || values.includes(product.colour_option ?? ""),
     deco: (product, values) =>

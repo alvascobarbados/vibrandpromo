@@ -26,16 +26,13 @@ import {
   type Product,
   type Subcategory,
 } from "@/lib/catalog";
+import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 
 export type FormState = {
   name: string;
   sku: string;
   moq: string;
   production_days: string;
-  air_lead_min: string;
-  air_lead_max: string;
-  sea_lead_min: string;
-  sea_lead_max: string;
   colour_option: string;
   decoration_methods: string[];
   inventory_source: string;
@@ -60,10 +57,6 @@ export const EMPTY_FORM: FormState = {
   sku: "",
   moq: "",
   production_days: "",
-  air_lead_min: "",
-  air_lead_max: "",
-  sea_lead_min: "",
-  sea_lead_max: "",
   colour_option: "Fully Customised",
   decoration_methods: [],
   inventory_source: "Factory Direct",
@@ -89,10 +82,6 @@ export function formFromProduct(product: Product): FormState {
     sku: product.sku ?? "",
     moq: product.moq == null ? "" : String(product.moq),
     production_days: product.production_days == null ? "" : String(product.production_days),
-    air_lead_min: product.air_lead_min == null ? "" : String(product.air_lead_min),
-    air_lead_max: product.air_lead_max == null ? "" : String(product.air_lead_max),
-    sea_lead_min: product.sea_lead_min == null ? "" : String(product.sea_lead_min),
-    sea_lead_max: product.sea_lead_max == null ? "" : String(product.sea_lead_max),
     colour_option: product.colour_option ?? "Fully Customised",
     decoration_methods: product.decoration_methods ?? [],
     inventory_source: product.inventory_source ?? "Factory Direct",
@@ -119,10 +108,6 @@ export function payloadFromForm(form: FormState) {
     sku: form.sku.trim(),
     moq: form.moq.trim() ? Number(form.moq) : null,
     production_days: form.production_days.trim() ? Number(form.production_days) : null,
-    air_lead_min: form.air_lead_min.trim() ? Number(form.air_lead_min) : null,
-    air_lead_max: form.air_lead_max.trim() ? Number(form.air_lead_max) : null,
-    sea_lead_min: form.sea_lead_min.trim() ? Number(form.sea_lead_min) : null,
-    sea_lead_max: form.sea_lead_max.trim() ? Number(form.sea_lead_max) : null,
     colour_option: form.colour_option,
     decoration_methods: form.decoration_methods,
     inventory_source: form.inventory_source,
@@ -149,29 +134,23 @@ export function validateForm(form: FormState): string | null {
   if (!form.name.trim()) return "Please give the product a name.";
   if (!form.sku.trim()) return "Please enter a SKU (product code).";
   if (!form.subcategory_id) return "Please choose a category and subcategory.";
-  const problem = validateLeadTimes(form);
-  if (problem) return problem;
   return null;
 }
 
-/** Each lead-time pair may be left empty, but a maximum can never be below its minimum. */
-export function validateLeadTimes(form: {
-  air_lead_min: string;
-  air_lead_max: string;
-  sea_lead_min: string;
-  sea_lead_max: string;
-}): string | null {
-  const pairs = [
-    { label: "air", min: form.air_lead_min, max: form.air_lead_max },
-    { label: "sea", min: form.sea_lead_min, max: form.sea_lead_max },
-  ];
-  for (const pair of pairs) {
-    if (!pair.min.trim() || !pair.max.trim()) continue;
-    if (Number(pair.max) < Number(pair.min)) {
-      return `The longest ${pair.label} lead time can't be shorter than the shortest one.`;
-    }
-  }
-  return null;
+/**
+ * Customer-facing lead times are derived from production time plus the global
+ * shipping windows, so the form shows them read-only.
+ */
+function LeadPreview({ production, source }: { production: string; source: string }) {
+  const shipping = useShippingSettings();
+  const days = production.trim() ? Number(production) : null;
+  const value = { production_days: Number.isFinite(days as number) ? days : null, inventory_source: source };
+  return (
+    <p className="mt-1.5 text-xs text-muted-foreground">
+      Lead time shown to customers: air {airLeadLabel(value, shipping) ?? "On request"} · sea{" "}
+      {seaLeadLabel(value, shipping) ?? "On request"}
+    </p>
+  );
 }
 
 type Props = {
@@ -312,72 +291,8 @@ export function ProductForm({
             placeholder="Leave blank for On request"
           />
         </div>
-        <div className="sm:col-span-2">
-          <Label>Lead time (days shown to customers)</Label>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Leave a pair blank to show "On request" for that shipping method.
-          </p>
-          <div className="mt-2 grid gap-3 sm:grid-cols-4">
-            <div>
-              <Label htmlFor={id("air-min")} className="text-xs">
-                Air — fastest
-              </Label>
-              <Input
-                id={id("air-min")}
-                type="number"
-                min={0}
-                value={form.air_lead_min}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, air_lead_min: event.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor={id("air-max")} className="text-xs">
-                Air — slowest
-              </Label>
-              <Input
-                id={id("air-max")}
-                type="number"
-                min={0}
-                value={form.air_lead_max}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, air_lead_max: event.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor={id("sea-min")} className="text-xs">
-                Sea — fastest
-              </Label>
-              <Input
-                id={id("sea-min")}
-                type="number"
-                min={0}
-                value={form.sea_lead_min}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, sea_lead_min: event.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor={id("sea-max")} className="text-xs">
-                Sea — slowest
-              </Label>
-              <Input
-                id={id("sea-max")}
-                type="number"
-                min={0}
-                value={form.sea_lead_max}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, sea_lead_max: event.target.value }))
-                }
-              />
-            </div>
-          </div>
-        </div>
         <div>
-          <Label htmlFor={id("days")}>Production time (days) — internal reference</Label>
+          <Label htmlFor={id("days")}>Production time (days)</Label>
           <Input
             id={id("days")}
             type="number"
@@ -386,8 +301,9 @@ export function ProductForm({
             onChange={(event) =>
               setForm((prev) => ({ ...prev, production_days: event.target.value }))
             }
-            placeholder="Not shown on the public site"
+            placeholder="Leave blank for On request"
           />
+          <LeadPreview production={form.production_days} source={form.inventory_source} />
         </div>
         <div>
           <Label htmlFor={id("material")}>Material</Label>
