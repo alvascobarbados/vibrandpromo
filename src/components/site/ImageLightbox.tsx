@@ -101,8 +101,12 @@ export function ImageLightbox({
     return () => window.removeEventListener("keydown", onKey);
   }, [finish, go, index]);
 
-  const dist = (t: TouchList) =>
-    Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  const dist = (touches: React.TouchList) => {
+    const a = touches[0];
+    const b = touches[1];
+    if (!a || !b) return 0;
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  };
 
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
@@ -111,6 +115,7 @@ export function ImageLightbox({
       return;
     }
     const t = e.touches[0];
+    if (!t) return;
     startRef.current = { x: t.clientX, y: t.clientY, axis: "" };
     setDragging(true);
   };
@@ -122,12 +127,13 @@ export function ImageLightbox({
       return;
     }
     const start = startRef.current;
-    if (!start || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - start.x;
-    const dy = e.touches[0].clientY - start.y;
+    const t = e.touches[0];
+    if (!start || !t || e.touches.length !== 1) return;
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
     if (zoom > 1) {
       setPan((p) => ({ x: p.x + dx * 0.5, y: p.y + dy * 0.5 }));
-      startRef.current = { ...start, x: e.touches[0].clientX, y: e.touches[0].clientY };
+      startRef.current = { ...start, x: t.clientX, y: t.clientY };
       return;
     }
     if (!start.axis && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
