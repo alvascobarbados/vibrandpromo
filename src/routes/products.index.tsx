@@ -16,7 +16,7 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
 import { categoriesQuery, publicProductsQuery } from "@/lib/catalog";
 
-export const Route = createFileRoute("/products")({
+export const Route = createFileRoute("/products/")({
   head: () => ({
     meta: [
       { title: "Promotional Products Catalogue | Alvasco Barbados" },
