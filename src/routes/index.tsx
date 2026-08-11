@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { CompactProductCard } from "@/components/site/CompactProductCard";
+import { ProductCard } from "@/components/site/ProductCard";
+import { LazySection } from "@/components/site/LazySection";
 import { categoriesQuery, publicProductsQuery, type Product } from "@/lib/catalog";
 
 export const Route = createFileRoute("/")({
@@ -32,6 +33,8 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const products = useQuery(publicProductsQuery);
   const categories = useQuery(categoriesQuery);
+  const [activeChip, setActiveChip] = useState("all");
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const shelves = useMemo(() => {
     const byCategory = new Map<string, Product[]>();
@@ -48,9 +51,58 @@ function HomePage() {
 
   const loading = products.isLoading || categories.isLoading;
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (visible?.target instanceof HTMLElement) {
+          setActiveChip(visible.target.dataset['cat'] ?? "all");
+        }
+      },
+      { rootMargin: "-140px 0px -60% 0px", threshold: 0 },
+    );
+    for (const node of Object.values(sectionRefs.current)) {
+      if (node) observer.observe(node);
+    }
+    return () => observer.disconnect();
+  }, [shelves]);
+
+  function scrollToSection(target: string) {
+    setActiveChip(target);
+    const node =
+      target === "all" ? document.getElementById("home-top") : sectionRefs.current[target];
+    node?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <SiteLayout>
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
+      {shelves.length ? (
+        <div className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {[{ slug: "all", name: "All" }, ...shelves.map((s) => s.category)].map((chip) => (
+                <button
+                  key={chip.slug}
+                  type="button"
+                  onClick={() => scrollToSection(chip.slug)}
+                  aria-current={activeChip === chip.slug}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                    activeChip === chip.slug
+                      ? "border-lime bg-lime text-lime-foreground"
+                      : "border-border bg-card text-charcoal hover:bg-muted"
+                  }`}
+                >
+                  {chip.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div id="home-top" className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
         <h1 className="sr-only">Vibrand promotional products by category</h1>
 
         {loading ? (
@@ -58,9 +110,9 @@ function HomePage() {
             {Array.from({ length: 3 }).map((_, index) => (
               <div key={index}>
                 <Skeleton className="h-6 w-48" />
-                <div className="mt-3 flex gap-4 overflow-hidden">
-                  {Array.from({ length: 5 }).map((__, i) => (
-                    <Skeleton key={i} className="size-40 shrink-0 rounded-2xl" />
+                <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                  {Array.from({ length: 6 }).map((__, i) => (
+                    <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
                   ))}
                 </div>
               </div>
@@ -68,36 +120,59 @@ function HomePage() {
           </div>
         ) : (
           <div className="space-y-10">
-            {shelves.map(({ category, items }) => (
-              <section key={category.id} aria-labelledby={`shelf-${category.slug}`}>
-                <div className="flex items-end justify-between gap-3">
-                  <h2
-                    id={`shelf-${category.slug}`}
-                    className="font-display text-lg font-bold text-foreground sm:text-xl"
-                  >
-                    {category.name}
-                    <span className="ml-2 text-sm font-medium text-muted-foreground">
-                      {items.length} item{items.length === 1 ? "" : "s"}
-                    </span>
-                  </h2>
-                  <Link
-                    to="/c/$slug"
-                    params={{ slug: category.slug }}
-                    className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-charcoal hover:underline"
-                  >
-                    See all <ArrowRight className="size-4" />
-                  </Link>
-                </div>
+            {shelves.map(({ category, items }, index) => {
+              const preview = items.slice(0, 6);
+              return (
+                <section
+                  key={category.id}
+                  data-cat={category.slug}
+                  ref={(node) => {
+                    sectionRefs.current[category.slug] = node;
+                  }}
+                  aria-labelledby={`shelf-${category.slug}`}
+                  className="scroll-mt-32"
+                >
+                  <div className="flex items-end justify-between gap-3">
+                    <h2
+                      id={`shelf-${category.slug}`}
+                      className="font-display text-lg font-bold text-foreground sm:text-xl"
+                    >
+                      {category.name}
+                      <span className="ml-2 text-sm font-medium text-muted-foreground">
+                        {items.length} item{items.length === 1 ? "" : "s"}
+                      </span>
+                    </h2>
+                    <Link
+                      to="/c/$slug"
+                      params={{ slug: category.slug }}
+                      className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-charcoal hover:underline"
+                    >
+                      See all <ArrowRight className="size-4" />
+                    </Link>
+                  </div>
 
-                <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {items.map((product) => (
-                    <div key={product.id} className="snap-start">
-                      <CompactProductCard product={product} />
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
+                  <div className="mt-3">
+                    <LazySection eager={index < 2} placeholderCount={preview.length}>
+                      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                        {preview.map((product) => (
+                          <ProductCard key={product.id} product={product} />
+                        ))}
+                      </div>
+                    </LazySection>
+                  </div>
+
+                  {items.length > 6 ? (
+                    <Link
+                      to="/c/$slug"
+                      params={{ slug: category.slug }}
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-charcoal px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-charcoal transition-colors hover:bg-muted"
+                    >
+                      View all {items.length} <ArrowRight className="size-4" />
+                    </Link>
+                  ) : null}
+                </section>
+              );
+            })}
           </div>
         )}
 
