@@ -23,9 +23,12 @@ export function ProductQuickEdit({
   const queryClient = useQueryClient();
   const [name, setName] = useState(product.name);
   const [moq, setMoq] = useState(product.moq == null ? "" : String(product.moq));
-  const [days, setDays] = useState(
-    product.production_days == null ? "" : String(product.production_days),
-  );
+  const [lead, setLead] = useState({
+    air_lead_min: product.air_lead_min == null ? "" : String(product.air_lead_min),
+    air_lead_max: product.air_lead_max == null ? "" : String(product.air_lead_max),
+    sea_lead_min: product.sea_lead_min == null ? "" : String(product.sea_lead_min),
+    sea_lead_max: product.sea_lead_max == null ? "" : String(product.sea_lead_max),
+  });
   const [price, setPrice] = useState(product.price == null ? "" : String(product.price));
   const [showPrice, setShowPrice] = useState(product.show_price);
   const [isActive, setIsActive] = useState(product.is_active);
@@ -44,6 +47,11 @@ export function ProductQuickEdit({
       toast.error("Name is required.");
       return;
     }
+    const leadProblem = validateLeadTimes(lead);
+    if (leadProblem) {
+      toast.error(leadProblem);
+      return;
+    }
     setSaving(true);
     // Writes go through the user's own authenticated client, so the staff-only
     // RLS policies on public.products are the enforcement point.
@@ -52,7 +60,10 @@ export function ProductQuickEdit({
       .update({
         name: name.trim(),
         moq: numberOrNull(moq),
-        production_days: numberOrNull(days),
+        air_lead_min: numberOrNull(lead.air_lead_min),
+        air_lead_max: numberOrNull(lead.air_lead_max),
+        sea_lead_min: numberOrNull(lead.sea_lead_min),
+        sea_lead_max: numberOrNull(lead.sea_lead_max),
         price: numberOrNull(price),
         show_price: showPrice,
         is_active: isActive,
@@ -84,26 +95,41 @@ export function ProductQuickEdit({
             <Input id="qe-name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="qe-moq">MOQ</Label>
-              <Input
-                id="qe-moq"
-                inputMode="numeric"
-                value={moq}
-                placeholder="On request"
-                onChange={(e) => setMoq(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="qe-days">Production days</Label>
-              <Input
-                id="qe-days"
-                inputMode="numeric"
-                value={days}
-                placeholder="On request"
-                onChange={(e) => setDays(e.target.value)}
-              />
+          <div>
+            <Label htmlFor="qe-moq">MOQ</Label>
+            <Input
+              id="qe-moq"
+              inputMode="numeric"
+              value={moq}
+              placeholder="On request"
+              onChange={(e) => setMoq(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Lead time (days)</Label>
+            <div className="mt-1.5 grid grid-cols-2 gap-3">
+              {(
+                [
+                  ["air_lead_min", "Air — fastest"],
+                  ["air_lead_max", "Air — slowest"],
+                  ["sea_lead_min", "Sea — fastest"],
+                  ["sea_lead_max", "Sea — slowest"],
+                ] as const
+              ).map(([key, label]) => (
+                <div key={key}>
+                  <Label htmlFor={`qe-${key}`} className="text-xs text-muted-foreground">
+                    {label}
+                  </Label>
+                  <Input
+                    id={`qe-${key}`}
+                    inputMode="numeric"
+                    value={lead[key]}
+                    placeholder="On request"
+                    onChange={(e) => setLead((prev) => ({ ...prev, [key]: e.target.value }))}
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
