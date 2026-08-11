@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { ProductCard } from "@/components/site/ProductCard";
 import { LazySection } from "@/components/site/LazySection";
 import { CategoryRow } from "@/components/site/CategoryRow";
 import { categoriesQuery, publicProductsQuery, type Product } from "@/lib/catalog";
