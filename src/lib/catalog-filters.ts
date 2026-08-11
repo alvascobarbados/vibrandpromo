@@ -106,7 +106,8 @@ export function groupMatchers({ categories, subcategories }: Taxonomy) {
       values.includes(subById.get(product.subcategory_id ?? "")?.slug ?? ""),
     moq: (product, values) => matchesBuckets(product.moq, values, MOQ_BUCKETS),
     prod: (product, values) => matchesBuckets(product.production_days, values, PRODUCTION_BUCKETS),
-    colour: (product, values) => values.length === 0 || values.includes(product.colour_option),
+    colour: (product, values) =>
+      values.length === 0 || values.includes(product.colour_option ?? ""),
     deco: (product, values) =>
       values.length === 0 ||
       values.some((value) => (product.decoration_methods ?? []).includes(value)),
@@ -139,7 +140,10 @@ export function filterProducts(
 export function sortProducts(products: Product[], sort: string) {
   const list = [...products];
   if (sort === "name") return list.sort((a, b) => a.name.localeCompare(b.name));
-  if (sort === "moq") return list.sort((a, b) => a.moq - b.moq);
+  if (sort === "moq")
+    return list.sort(
+      (a, b) => (a.moq ?? Number.POSITIVE_INFINITY) - (b.moq ?? Number.POSITIVE_INFINITY),
+    );
   if (sort === "newest")
     return list.sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),

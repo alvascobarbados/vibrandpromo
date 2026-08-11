@@ -2,15 +2,16 @@ import { Check, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { productImage, PRODUCT_FALLBACK_IMAGE, type Product } from "@/lib/catalog";
+import { productImage, type Product } from "@/lib/catalog";
 import { useQuoteList } from "@/lib/quote-list";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
+import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
 
 export function CompactProductCard({ product }: { product: Product }) {
   const { addItem, items } = useQuoteList();
   const inQuote = items.some((item) => item.productId === product.id);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const images = product.images?.length ? product.images : [PRODUCT_FALLBACK_IMAGE];
+  const images = product.images ?? [];
   const usa = product.inventory_source === "USA Inventory";
 
   const addToQuote = () => {
@@ -19,10 +20,14 @@ export function CompactProductCard({ product }: { product: Product }) {
       slug: product.slug,
       name: product.name,
       image: productImage(product),
-      quantity: product.moq,
+      quantity: product.moq ?? 1,
       notes: "",
     });
-    toast.success(`${product.name} added at MOQ ${product.moq}`);
+    toast.success(
+      product.moq
+        ? `${product.name} added at MOQ ${product.moq}`
+        : `${product.name} added — MOQ on request`,
+    );
   };
 
   return (
@@ -34,12 +39,16 @@ export function CompactProductCard({ product }: { product: Product }) {
           aria-label={`View ${product.name} images`}
           className="block aspect-square w-full"
         >
-          <img
-            src={images[0]}
-            alt={product.name}
-            loading="lazy"
-            className="size-full object-cover"
-          />
+          {images[0] ? (
+            <img
+              src={images[0]}
+              alt={product.name}
+              loading="lazy"
+              className="size-full object-cover"
+            />
+          ) : (
+            <ProductPlaceholder className="size-full" />
+          )}
         </button>
         <span
           title={product.inventory_source}
@@ -60,7 +69,9 @@ export function CompactProductCard({ product }: { product: Product }) {
           <p className="line-clamp-2 text-xs font-semibold leading-snug text-foreground">
             {product.name}
           </p>
-          <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">MOQ {product.moq}</p>
+          <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+            {product.moq ? `MOQ ${product.moq}` : "MOQ on request"}
+          </p>
         </div>
         <button
           type="button"

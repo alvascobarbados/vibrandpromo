@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2, Upload } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
 import { supabase } from "@/integrations/supabase/client";
 import {
   allProductsQuery,
@@ -53,6 +54,10 @@ type FormState = {
   decoration_methods: string[];
   inventory_source: string;
   material: string;
+  size: string;
+  capacity: string;
+  weight: string;
+  features: string;
   category_id: string;
   subcategory_id: string;
   description: string;
@@ -67,12 +72,16 @@ type FormState = {
 const EMPTY: FormState = {
   name: "",
   sku: "",
-  moq: "25",
-  production_days: "14",
+  moq: "",
+  production_days: "",
   colour_option: "Fully Customised",
   decoration_methods: [],
   inventory_source: "Factory Direct",
   material: "",
+  size: "",
+  capacity: "",
+  weight: "",
+  features: "",
   category_id: "",
   subcategory_id: "",
   description: "",
@@ -93,20 +102,38 @@ function AdminProducts() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [uploading, setUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [tableSearch, setTableSearch] = useState("");
+  const [missingPhotosOnly, setMissingPhotosOnly] = useState(false);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
+
+  const visibleProducts = useMemo(() => {
+    const term = tableSearch.trim().toLowerCase();
+    return (products.data ?? []).filter((product) => {
+      if (missingPhotosOnly && (product.images ?? []).length > 0) return false;
+      if (!term) return true;
+      return (
+        product.name.toLowerCase().includes(term) ||
+        (product.sku ?? "").toLowerCase().includes(term)
+      );
+    });
+  }, [products.data, tableSearch, missingPhotosOnly]);
 
   function startEdit(product: Product) {
     setEditing(product.id);
     setForm({
       name: product.name,
       sku: product.sku ?? "",
-      moq: String(product.moq ?? 25),
-      production_days: String(product.production_days ?? 14),
+      moq: product.moq == null ? "" : String(product.moq),
+      production_days: product.production_days == null ? "" : String(product.production_days),
       colour_option: product.colour_option ?? "Fully Customised",
       decoration_methods: product.decoration_methods ?? [],
       inventory_source: product.inventory_source ?? "Factory Direct",
       material: product.material ?? "",
+      size: product.size ?? "",
+      capacity: product.capacity ?? "",
+      weight: product.weight ?? "",
+      features: product.features ?? "",
       category_id: product.category_id ?? "",
       subcategory_id: product.subcategory_id ?? "",
       description: product.description ?? "",
@@ -125,12 +152,16 @@ function AdminProducts() {
       const payload = {
         name: form.name,
         sku: form.sku.trim(),
-        moq: Number(form.moq) || 1,
-        production_days: Number(form.production_days) || 1,
+        moq: form.moq.trim() ? Number(form.moq) : null,
+        production_days: form.production_days.trim() ? Number(form.production_days) : null,
         colour_option: form.colour_option,
         decoration_methods: form.decoration_methods,
         inventory_source: form.inventory_source,
         material: form.material || null,
+        size: form.size || null,
+        capacity: form.capacity || null,
+        weight: form.weight || null,
+        features: form.features || null,
         slug: slugify(form.name),
         category_id: form.category_id || null,
         subcategory_id: form.subcategory_id,
@@ -291,6 +322,7 @@ function AdminProducts() {
               min={1}
               value={form.moq}
               onChange={(event) => setForm((prev) => ({ ...prev, moq: event.target.value }))}
+              placeholder="Leave blank for On request"
             />
           </div>
           <div>
@@ -303,6 +335,7 @@ function AdminProducts() {
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, production_days: event.target.value }))
               }
+              placeholder="Leave blank for On request"
             />
           </div>
           <div>
@@ -312,6 +345,42 @@ function AdminProducts() {
               value={form.material}
               onChange={(event) => setForm((prev) => ({ ...prev, material: event.target.value }))}
               placeholder="e.g. 18/8 Stainless Steel"
+            />
+          </div>
+          <div>
+            <Label htmlFor="p-size">Size</Label>
+            <Input
+              id="p-size"
+              value={form.size}
+              onChange={(event) => setForm((prev) => ({ ...prev, size: event.target.value }))}
+              placeholder="e.g. 1.5cm x 35cm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="p-capacity">Capacity</Label>
+            <Input
+              id="p-capacity"
+              value={form.capacity}
+              onChange={(event) => setForm((prev) => ({ ...prev, capacity: event.target.value }))}
+              placeholder="e.g. 500ml"
+            />
+          </div>
+          <div>
+            <Label htmlFor="p-weight">Weight</Label>
+            <Input
+              id="p-weight"
+              value={form.weight}
+              onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
+              placeholder="e.g. 242g"
+            />
+          </div>
+          <div>
+            <Label htmlFor="p-features">Features</Label>
+            <Input
+              id="p-features"
+              value={form.features}
+              onChange={(event) => setForm((prev) => ({ ...prev, features: event.target.value }))}
+              placeholder="e.g. Handle & Pouch"
             />
           </div>
           <div>
@@ -513,25 +582,54 @@ function AdminProducts() {
         </div>
       </form>
 
-      <div className="mt-8 space-y-2">
+      <div className="mt-8 flex flex-wrap items-center gap-3">
+        <Input
+          value={tableSearch}
+          onChange={(event) => setTableSearch(event.target.value)}
+          placeholder="Search by name or SKU"
+          className="max-w-xs"
+        />
+        <label className="flex items-center gap-2 text-sm">
+          <Switch checked={missingPhotosOnly} onCheckedChange={setMissingPhotosOnly} />
+          Missing photos only
+        </label>
+        <p className="text-sm text-muted-foreground">
+          {visibleProducts.length} of {(products.data ?? []).length} products ·{" "}
+          {(products.data ?? []).filter((p) => (p.images ?? []).length === 0).length} without photos
+        </p>
+      </div>
+
+      <div className="mt-4 space-y-2">
         {products.isLoading
           ? Array.from({ length: 5 }).map((_, index) => (
               <Skeleton key={index} className="h-20 rounded-xl" />
             ))
-          : (products.data ?? []).map((product) => (
+          : visibleProducts.map((product) => (
               <div
                 key={product.id}
                 className="flex items-center gap-4 rounded-xl border border-border bg-card p-3"
               >
-                <img
-                  src={productImage(product)}
-                  alt={product.name}
-                  loading="lazy"
-                  className="size-14 rounded-lg object-cover"
-                />
+                {productImage(product) ? (
+                  <img
+                    src={productImage(product) ?? ""}
+                    alt={product.name}
+                    loading="lazy"
+                    className="size-14 rounded-lg object-cover"
+                  />
+                ) : (
+                  <ProductPlaceholder className="size-14 shrink-0 rounded-lg" />
+                )}
                 <div className="flex-1">
-                  <p className="font-medium">{product.name}</p>
+                  <p className="font-medium">
+                    {product.name}
+                    {(product.images ?? []).length === 0 ? (
+                      <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                        No photo
+                      </span>
+                    ) : null}
+                  </p>
                   <p className="text-xs text-muted-foreground">
+                    {product.sku ? `${product.sku} · ` : ""}
                     {product.is_active ? "Active" : "Hidden"}
                     {product.is_featured ? " · Featured" : ""}
                   </p>

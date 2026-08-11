@@ -2,6 +2,8 @@ import { X } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
+
 const CLOSE_DRAG = 110;
 
 export function ImageLightbox({
@@ -238,6 +240,11 @@ export function ImageLightbox({
             transition: dragging ? "none" : "transform 260ms cubic-bezier(0.22,1,0.36,1), opacity 200ms ease-out",
           }}
         >
+          {images.length === 0 ? (
+            <div className="flex size-full shrink-0 items-center justify-center p-4">
+              <ProductPlaceholder variant="dark" className="aspect-square w-full max-w-lg rounded-2xl" />
+            </div>
+          ) : null}
           {images.map((src, i) => (
             <div key={`${src}-${i}`} className="flex size-full shrink-0 items-center justify-center p-4">
               {loaded.includes(i) ? (
