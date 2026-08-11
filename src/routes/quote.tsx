@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { QuantityStepper } from "@/components/site/QuantityStepper";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuoteList } from "@/lib/quote-list";
 import { submitQuoteRequest } from "@/lib/quote-submit.functions";
