@@ -43,73 +43,85 @@ export type Database = {
       }
       products: {
         Row: {
+          capacity: string | null
           category_id: string | null
-          colour_option: string
+          colour_option: string | null
           created_at: string
           decoration_methods: string[]
           description: string | null
           details: string | null
+          features: string | null
           id: string
           images: string[]
           inventory_source: string
           is_active: boolean
           is_featured: boolean
           material: string | null
-          moq: number
+          moq: number | null
           name: string
           price: number | null
-          production_days: number
+          production_days: number | null
           show_price: boolean
+          size: string | null
           sku: string | null
           slug: string
           subcategory_id: string
           updated_at: string
+          weight: string | null
         }
         Insert: {
+          capacity?: string | null
           category_id?: string | null
-          colour_option?: string
+          colour_option?: string | null
           created_at?: string
           decoration_methods?: string[]
           description?: string | null
           details?: string | null
+          features?: string | null
           id?: string
           images?: string[]
           inventory_source?: string
           is_active?: boolean
           is_featured?: boolean
           material?: string | null
-          moq?: number
+          moq?: number | null
           name: string
           price?: number | null
-          production_days?: number
+          production_days?: number | null
           show_price?: boolean
+          size?: string | null
           sku?: string | null
           slug: string
           subcategory_id: string
           updated_at?: string
+          weight?: string | null
         }
         Update: {
+          capacity?: string | null
           category_id?: string | null
-          colour_option?: string
+          colour_option?: string | null
           created_at?: string
           decoration_methods?: string[]
           description?: string | null
           details?: string | null
+          features?: string | null
           id?: string
           images?: string[]
           inventory_source?: string
           is_active?: boolean
           is_featured?: boolean
           material?: string | null
-          moq?: number
+          moq?: number | null
           name?: string
           price?: number | null
-          production_days?: number
+          production_days?: number | null
           show_price?: boolean
+          size?: string | null
           sku?: string | null
           slug?: string
           subcategory_id?: string
           updated_at?: string
+          weight?: string | null
         }
         Relationships: [
           {

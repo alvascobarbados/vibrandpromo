@@ -4,7 +4,7 @@ export type QuoteItem = {
   productId: string;
   slug: string;
   name: string;
-  image: string;
+  image: string | null;
   quantity: number;
   notes: string;
 };

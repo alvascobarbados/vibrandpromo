@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { PRODUCT_FALLBACK_IMAGE } from "@/lib/catalog";
+import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
 
 export function ProductImageCarousel({
   images,
@@ -14,7 +14,7 @@ export function ProductImageCarousel({
   children?: React.ReactNode;
   onImageTap?: (index: number) => void;
 }) {
-  const list = images.length > 0 ? images : [PRODUCT_FALLBACK_IMAGE];
+  const list = images;
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState<number[]>([0]);
@@ -54,6 +54,15 @@ export function ProductImageCarousel({
   };
 
   const multiple = list.length > 1;
+
+  if (list.length === 0) {
+    return (
+      <div className="relative aspect-square overflow-hidden">
+        <ProductPlaceholder className="size-full" />
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="group relative aspect-square overflow-hidden bg-muted">

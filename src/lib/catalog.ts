@@ -31,12 +31,16 @@ export type Product = {
   is_active: boolean;
   is_featured: boolean;
   images: string[];
-  moq: number;
-  production_days: number;
-  colour_option: string;
+  moq: number | null;
+  production_days: number | null;
+  colour_option: string | null;
   decoration_methods: string[];
   inventory_source: string;
   material: string | null;
+  size: string | null;
+  capacity: string | null;
+  weight: string | null;
+  features: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -46,12 +50,15 @@ export const DECORATION_METHODS = [
   "Debossed Logo",
   "Digital Printing",
   "Embroidery",
+  "Epoxy Dome",
   "Gold Stamping",
   "Heat Transfer",
   "Laser Engraving",
   "Screen Printing",
+  "Sticker Logo",
   "Sublimation (Full Colour)",
   "UV Printing",
+  "Woven Patch",
 ] as const;
 
 export const COLOUR_OPTIONS = ["Fully Customised", "Stock Colours"] as const;
@@ -71,21 +78,26 @@ export const PRODUCTION_BUCKETS = [
 ] as const;
 
 export function matchesBuckets(
-  value: number,
+  value: number | null,
   ids: string[],
   buckets: ReadonlyArray<{ id: string; min: number; max: number }>,
 ) {
   if (ids.length === 0) return true;
+  if (value == null) return false;
   return ids.some((id) => {
     const bucket = buckets.find((b) => b.id === id);
     return bucket ? value >= bucket.min && value <= bucket.max : false;
   });
 }
 
-export const PRODUCT_FALLBACK_IMAGE = "https://picsum.photos/seed/vibrand-product/900/900";
+export function productImage(product: Pick<Product, "images">): string | null {
+  return product.images?.[0] ?? null;
+}
 
-export function productImage(product: Pick<Product, "images">) {
-  return product.images?.[0] ?? PRODUCT_FALLBACK_IMAGE;
+/** Spec values are optional in the catalogue — blank means "On request". */
+export function specValue(value: number | null, suffix?: string) {
+  if (value == null) return "On request";
+  return suffix ? `${value} ${suffix}` : String(value);
 }
 
 export function formatPrice(price: number | null) {

@@ -2,7 +2,7 @@ import { Check, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { formatPrice, productImage, PRODUCT_FALLBACK_IMAGE, type Product } from "@/lib/catalog";
+import { formatPrice, productImage, specValue, type Product } from "@/lib/catalog";
 import { useQuoteList } from "@/lib/quote-list";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
@@ -32,7 +32,7 @@ export function ProductCard({ product }: { product: Product }) {
   const inQuote = items.some((item) => item.productId === product.id);
   const price = product.show_price ? formatPrice(product.price) : null;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const images = product.images?.length ? product.images : [PRODUCT_FALLBACK_IMAGE];
+  const images = product.images ?? [];
 
   const addToQuote = () => {
     addItem({
@@ -40,10 +40,14 @@ export function ProductCard({ product }: { product: Product }) {
       slug: product.slug,
       name: product.name,
       image: productImage(product),
-      quantity: product.moq,
+      quantity: product.moq ?? 1,
       notes: "",
     });
-    toast.success(`${product.name} added at MOQ ${product.moq}`);
+    toast.success(
+      product.moq
+        ? `${product.name} added at MOQ ${product.moq}`
+        : `${product.name} added — MOQ on request`,
+    );
   };
 
   return (
@@ -66,13 +70,15 @@ export function ProductCard({ product }: { product: Product }) {
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               MOQ
             </p>
-            <p className="text-sm font-semibold text-foreground">{product.moq}</p>
+            <p className="text-sm font-semibold text-foreground">{specValue(product.moq)}</p>
           </div>
           <div className="border-l border-border">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Production
             </p>
-            <p className="text-sm font-semibold text-foreground">{product.production_days} days</p>
+            <p className="text-sm font-semibold text-foreground">
+              {specValue(product.production_days, "days")}
+            </p>
           </div>
         </div>
 
