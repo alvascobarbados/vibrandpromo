@@ -52,18 +52,33 @@ export function ImageLightbox({
   // lock page scroll without losing position
   useEffect(() => {
     const body = document.body;
-    const prev = body.style.overflow;
-    const prevPad = body.style.paddingRight;
     const scrollY = window.scrollY;
-    const gap = window.innerWidth - document.documentElement.clientWidth;
-    body.style.overflow = "hidden";
-    if (gap > 0) body.style.paddingRight = `${gap}px`;
-    return () => {
-      body.style.overflow = prev;
-      body.style.paddingRight = prevPad;
-      window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior });
-      requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior }));
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
     };
+    body.style.position = "fixed";
+    body.style.top = `${-scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    const restore = () => {
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+      requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      setTimeout(() => window.scrollTo(0, scrollY), 80);
+    };
+    return restore;
   }, []);
 
   const finish = useCallback(() => {
@@ -85,8 +100,17 @@ export function ImageLightbox({
     });
     return () => {
       unsub();
-      if (!poppedRef.current && history.location.hash === "photo") history.back();
     };
+  }, [finish, router]);
+
+  // UI close pops the history entry we pushed; the subscription then unmounts us
+  const close = useCallback(() => {
+    if (closedRef.current) return;
+    if (!poppedRef.current && router.history.location.hash === "photo") {
+      router.history.back();
+      return;
+    }
+    finish();
   }, [finish, router]);
 
   const resetZoom = () => {
@@ -105,13 +129,13 @@ export function ImageLightbox({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") finish();
+      if (e.key === "Escape") close();
       else if (e.key === "ArrowLeft") go(index - 1);
       else if (e.key === "ArrowRight") go(index + 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [finish, go, index]);
+  }, [close, go, index]);
 
   const dist = (touches: React.TouchList) => {
     const a = touches[0];
@@ -160,7 +184,7 @@ export function ImageLightbox({
     const start = startRef.current;
     setDragging(false);
     if (start?.axis === "y" && dragY > CLOSE_DRAG) {
-      finish();
+      close();
       return;
     }
     if (start?.axis === "x" && Math.abs(dragX) > 60) {
@@ -193,13 +217,13 @@ export function ImageLightbox({
       <div
         className="absolute inset-0 bg-charcoal/95 transition-opacity duration-200"
         style={{ opacity: entered ? Math.max(0, 1 - dragY / 400) : 0 }}
-        onClick={finish}
+        onClick={close}
       />
 
       <button
         type="button"
         aria-label="Close"
-        onClick={finish}
+        onClick={close}
         className="absolute right-3 top-3 z-20 rounded-full bg-white/10 p-2 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
       >
         <X className="size-5" />
@@ -209,7 +233,7 @@ export function ImageLightbox({
         ref={containerRef}
         className="relative z-10 flex flex-1 items-center justify-center overflow-hidden"
         onClick={(e) => {
-          if (e.target === e.currentTarget) finish();
+          if (e.target === e.currentTarget) close();
         }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
