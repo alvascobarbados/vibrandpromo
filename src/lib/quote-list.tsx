@@ -7,6 +7,8 @@ export type QuoteItem = {
   image: string | null;
   quantity: number;
   notes: string;
+  /** Minimum order quantity captured at add time, so the quote list can enforce it. */
+  moq?: number | null;
 };
 
 type QuoteListContextValue = {
