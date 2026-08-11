@@ -1,14 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2, Upload } from "lucide-react";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
+import { ChevronDown, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -16,24 +25,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
+import {
+  EMPTY_FORM,
+  ProductForm,
+  formFromProduct,
+  payloadFromForm,
+  type FormState,
+} from "@/components/admin/ProductForm";
 import { supabase } from "@/integrations/supabase/client";
 import {
   allProductsQuery,
   categoriesQuery,
   subcategoriesQuery,
-  COLOUR_OPTIONS,
-  DECORATION_METHODS,
-  INVENTORY_SOURCES,
   imageSrc,
   productImage,
-  slugify,
+  specValue,
   type Product,
 } from "@/lib/catalog";
 
+const searchSchema = z.object({
+  q: fallback(z.string(), "").default(""),
+  cat: fallback(z.string(), "all").default("all"),
+  status: fallback(z.string(), "all").default("all"),
+  nophoto: fallback(z.boolean(), false).default(false),
+  page: fallback(z.number().int(), 1).default(1),
+});
+
+const PAGE_SIZE = 50;
+
 export const Route = createFileRoute("/_authenticated/admin/products")({
+  validateSearch: zodValidator(searchSchema),
   head: () => ({
     meta: [
       { title: "Products | Vibrand Admin" },
@@ -46,146 +71,69 @@ export const Route = createFileRoute("/_authenticated/admin/products")({
   component: AdminProducts,
 });
 
-type FormState = {
-  name: string;
-  sku: string;
-  moq: string;
-  production_days: string;
-  colour_option: string;
-  decoration_methods: string[];
-  inventory_source: string;
-  material: string;
-  size: string;
-  capacity: string;
-  weight: string;
-  features: string;
-  category_id: string;
-  subcategory_id: string;
-  description: string;
-  details: string;
-  price: string;
-  show_price: boolean;
-  is_active: boolean;
-  is_featured: boolean;
-  images: string[];
-};
-
-const EMPTY: FormState = {
-  name: "",
-  sku: "",
-  moq: "",
-  production_days: "",
-  colour_option: "Fully Customised",
-  decoration_methods: [],
-  inventory_source: "Factory Direct",
-  material: "",
-  size: "",
-  capacity: "",
-  weight: "",
-  features: "",
-  category_id: "",
-  subcategory_id: "",
-  description: "",
-  details: "",
-  price: "",
-  show_price: true,
-  is_active: true,
-  is_featured: false,
-  images: [],
-};
-
 function AdminProducts() {
+  const navigate = useNavigate({ from: Route.fullPath });
+  const search = Route.useSearch();
   const queryClient = useQueryClient();
   const products = useQuery(allProductsQuery);
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
-  const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY);
-  const [uploading, setUploading] = useState(false);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [tableSearch, setTableSearch] = useState("");
-  const [missingPhotosOnly, setMissingPhotosOnly] = useState(false);
+
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [creating, setCreating] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Product | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
 
-  const visibleProducts = useMemo(() => {
-    const term = tableSearch.trim().toLowerCase();
+  const setSearch = (patch: Partial<typeof search>) =>
+    void navigate({ search: (prev) => ({ ...prev, page: 1, ...patch }) });
+
+  const categoryName = useMemo(
+    () => new Map((categories.data ?? []).map((c) => [c.id, c.name] as const)),
+    [categories.data],
+  );
+  const subName = useMemo(
+    () => new Map((subcategories.data ?? []).map((s) => [s.id, s.name] as const)),
+    [subcategories.data],
+  );
+
+  const filtered = useMemo(() => {
+    const term = search.q.trim().toLowerCase();
     return (products.data ?? []).filter((product) => {
-      if (missingPhotosOnly && (product.images ?? []).length > 0) return false;
+      if (search.nophoto && (product.images ?? []).length > 0) return false;
+      if (search.cat !== "all" && product.category_id !== search.cat) return false;
+      if (search.status === "active" && !product.is_active) return false;
+      if (search.status === "hidden" && product.is_active) return false;
       if (!term) return true;
       return (
         product.name.toLowerCase().includes(term) ||
         (product.sku ?? "").toLowerCase().includes(term)
       );
     });
-  }, [products.data, tableSearch, missingPhotosOnly]);
+  }, [products.data, search]);
 
-  function startEdit(product: Product) {
-    setEditing(product.id);
-    setForm({
-      name: product.name,
-      sku: product.sku ?? "",
-      moq: product.moq == null ? "" : String(product.moq),
-      production_days: product.production_days == null ? "" : String(product.production_days),
-      colour_option: product.colour_option ?? "Fully Customised",
-      decoration_methods: product.decoration_methods ?? [],
-      inventory_source: product.inventory_source ?? "Factory Direct",
-      material: product.material ?? "",
-      size: product.size ?? "",
-      capacity: product.capacity ?? "",
-      weight: product.weight ?? "",
-      features: product.features ?? "",
-      category_id: product.category_id ?? "",
-      subcategory_id: product.subcategory_id ?? "",
-      description: product.description ?? "",
-      details: product.details ?? "",
-      price: product.price == null ? "" : String(product.price),
-      show_price: product.show_price,
-      is_active: product.is_active,
-      is_featured: product.is_featured,
-      images: product.images ?? [],
-    });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const page = Math.min(Math.max(1, search.page), totalPages);
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const save = useMutation({
-    mutationFn: async () => {
-      const payload = {
-        name: form.name,
-        sku: form.sku.trim(),
-        moq: form.moq.trim() ? Number(form.moq) : null,
-        production_days: form.production_days.trim() ? Number(form.production_days) : null,
-        colour_option: form.colour_option,
-        decoration_methods: form.decoration_methods,
-        inventory_source: form.inventory_source,
-        material: form.material || null,
-        size: form.size || null,
-        capacity: form.capacity || null,
-        weight: form.weight || null,
-        features: form.features || null,
-        slug: slugify(form.name),
-        category_id: form.category_id || null,
-        subcategory_id: form.subcategory_id,
-        description: form.description || null,
-        details: form.details || null,
-        price: form.price ? Number(form.price) : null,
-        show_price: form.show_price,
-        is_active: form.is_active,
-        is_featured: form.is_featured,
-        images: form.images,
-      };
-      if (editing) {
-        const { error } = await supabase.from("products").update(payload).eq("id", editing);
+    mutationFn: async ({ id, values }: { id: string | null; values: FormState }) => {
+      const payload = payloadFromForm(values);
+      if (id) {
+        const { error } = await supabase.from("products").update(payload).eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("products").insert(payload);
         if (error) throw error;
       }
     },
-    onSuccess: () => {
-      toast.success(editing ? "Product updated" : "Product created");
-      setEditing(null);
-      setForm(EMPTY);
+    onSuccess: (_result, variables) => {
+      toast.success(variables.id ? "Product updated" : "Product created");
+      setEditingId(null);
+      setCreating(false);
+      setForm(EMPTY_FORM);
       void invalidate();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -198,460 +146,353 @@ function AdminProducts() {
     },
     onSuccess: () => {
       toast.success("Product deleted");
+      setPendingDelete(null);
+      setOpenId(null);
       void invalidate();
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
-  async function handleUpload(file: File) {
-    setUploading(true);
-    try {
-      const path = `${crypto.randomUUID()}-${file.name.replace(/[^\w.-]+/g, "_")}`;
-      const { error } = await supabase.storage.from("product-images").upload(path, file);
-      if (error) throw error;
-      setForm((prev) => ({ ...prev, images: [...prev.images, path] }));
-      toast.success("Image uploaded");
-    } catch (error) {
-      console.error(error);
-      toast.error("Upload failed");
-    } finally {
-      setUploading(false);
-    }
+  function startEdit(product: Product) {
+    setForm(formFromProduct(product));
+    setEditingId(product.id);
   }
+
+  function startDuplicate(product: Product) {
+    setForm({ ...formFromProduct(product), name: `Copy of ${product.name}`, sku: "" });
+    setEditingId(null);
+    setCreating(true);
+    toast.info("Give the copy a new SKU before saving.");
+  }
+
+  const noPhotoCount = (products.data ?? []).filter((p) => (p.images ?? []).length === 0).length;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Products</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Products</h1>
+        <Button
+          onClick={() => {
+            setForm(EMPTY_FORM);
+            setEditingId(null);
+            setCreating(true);
+          }}
+        >
+          <Plus className="size-4" />
+          New product
+        </Button>
+      </div>
 
-      <form
-        className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-6"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!form.name.trim()) {
-            toast.error("Product name is required");
-            return;
-          }
-          if (!form.sku.trim()) {
-            toast.error("SKU is required");
-            return;
-          }
-          if (!form.subcategory_id) {
-            toast.error("Subcategory is required");
-            return;
-          }
-          save.mutate();
-        }}
-      >
-        <h2 className="font-semibold">{editing ? "Edit product" : "New product"}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="p-name">Name</Label>
-            <Input
-              id="p-name"
-              value={form.name}
-              onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-            />
-          </div>
-          <div>
-            <Label>Category</Label>
-            <Select
-              value={form.category_id}
-              onValueChange={(value) =>
-                setForm((prev) => ({ ...prev, category_id: value, subcategory_id: "" }))
-              }
-            >
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {(categories.data ?? []).map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Subcategory</Label>
-            <Select
-              value={form.subcategory_id}
-              disabled={!form.category_id}
-              onValueChange={(value) => setForm((prev) => ({ ...prev, subcategory_id: value }))}
-            >
-              <SelectTrigger className="mt-1.5">
-                <SelectValue
-                  placeholder={form.category_id ? "Select subcategory" : "Pick a category first"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {(subcategories.data ?? [])
-                  .filter((sub) => sub.category_id === form.category_id)
-                  .map((sub) => (
-                    <SelectItem key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="p-price">Indicative price (USD)</Label>
-            <Input
-              id="p-price"
-              type="number"
-              step="0.01"
-              value={form.price}
-              onChange={(event) => setForm((prev) => ({ ...prev, price: event.target.value }))}
-            />
-          </div>
-          <div>
-            <Label htmlFor="p-sku">SKU (product code)</Label>
-            <Input
-              id="p-sku"
-              value={form.sku}
-              onChange={(event) => setForm((prev) => ({ ...prev, sku: event.target.value }))}
-              placeholder="e.g. 102009"
-            />
-          </div>
-          <div>
-            <Label htmlFor="p-moq">Minimum order quantity (MOQ)</Label>
-            <Input
-              id="p-moq"
-              type="number"
-              min={1}
-              value={form.moq}
-              onChange={(event) => setForm((prev) => ({ ...prev, moq: event.target.value }))}
-              placeholder="Leave blank for On request"
-            />
-          </div>
-          <div>
-            <Label htmlFor="p-days">Production time (days)</Label>
-            <Input
-              id="p-days"
-              type="number"
-              min={1}
-              value={form.production_days}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, production_days: event.target.value }))
-              }
-              placeholder="Leave blank for On request"
-            />
-          </div>
-          <div>
-            <Label htmlFor="p-material">Material</Label>
-            <Input
-              id="p-material"
-              value={form.material}
-              onChange={(event) => setForm((prev) => ({ ...prev, material: event.target.value }))}
-              placeholder="e.g. 18/8 Stainless Steel"
-            />
-          </div>
-          <div>
-            <Label htmlFor="p-size">Size</Label>
-            <Input
-              id="p-size"
-              value={form.size}
-              onChange={(event) => setForm((prev) => ({ ...prev, size: event.target.value }))}
-              placeholder="e.g. 1.5cm x 35cm"
-            />
-          </div>
-          <div>
-            <Label htmlFor="p-capacity">Capacity</Label>
-            <Input
-              id="p-capacity"
-              value={form.capacity}
-              onChange={(event) => setForm((prev) => ({ ...prev, capacity: event.target.value }))}
-              placeholder="e.g. 500ml"
-            />
-          </div>
-          <div>
-            <Label htmlFor="p-weight">Weight</Label>
-            <Input
-              id="p-weight"
-              value={form.weight}
-              onChange={(event) => setForm((prev) => ({ ...prev, weight: event.target.value }))}
-              placeholder="e.g. 242g"
-            />
-          </div>
-          <div>
-            <Label htmlFor="p-features">Features</Label>
-            <Input
-              id="p-features"
-              value={form.features}
-              onChange={(event) => setForm((prev) => ({ ...prev, features: event.target.value }))}
-              placeholder="e.g. Handle & Pouch"
-            />
-          </div>
-          <div>
-            <Label>Colour options</Label>
-            <Select
-              value={form.colour_option}
-              onValueChange={(value) => setForm((prev) => ({ ...prev, colour_option: value }))}
-            >
-              <SelectTrigger className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {COLOUR_OPTIONS.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Inventory source</Label>
-            <Select
-              value={form.inventory_source}
-              onValueChange={(value) => setForm((prev) => ({ ...prev, inventory_source: value }))}
-            >
-              <SelectTrigger className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {INVENTORY_SOURCES.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Decoration methods</Label>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {DECORATION_METHODS.map((method) => (
-                <label key={method} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={form.decoration_methods.includes(method)}
-                    onCheckedChange={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        decoration_methods: prev.decoration_methods.includes(method)
-                          ? prev.decoration_methods.filter((value) => value !== method)
-                          : [...prev.decoration_methods, method],
-                      }))
-                    }
-                  />
-                  {method}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-6 pt-6">
-            <label className="flex items-center gap-2 text-sm">
-              <Switch
-                checked={form.show_price}
-                onCheckedChange={(value) => setForm((prev) => ({ ...prev, show_price: value }))}
-              />
-              Show price
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Switch
-                checked={form.is_active}
-                onCheckedChange={(value) => setForm((prev) => ({ ...prev, is_active: value }))}
-              />
-              Active
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Switch
-                checked={form.is_featured}
-                onCheckedChange={(value) => setForm((prev) => ({ ...prev, is_featured: value }))}
-              />
-              Featured
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <Label htmlFor="p-desc">Short description</Label>
-          <Textarea
-            id="p-desc"
-            rows={2}
-            value={form.description}
-            onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
-          />
-        </div>
-        <div>
-          <Label htmlFor="p-details">Details / specifications</Label>
-          <Textarea
-            id="p-details"
-            rows={4}
-            value={form.details}
-            onChange={(event) => setForm((prev) => ({ ...prev, details: event.target.value }))}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="p-image">Images</Label>
-          <label
-            htmlFor="p-image"
-            className="mt-1.5 flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground hover:border-primary"
-          >
-            <Upload className="size-4" />
-            {uploading ? "Uploading…" : "Upload an image"}
-          </label>
-          <input
-            id="p-image"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void handleUpload(file);
-            }}
-          />
-          {form.images.length ? (
-            <>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Drag an image to reorder. The first image is the cover shown on the product card.
-            </p>
-            <div className="mt-2 flex flex-wrap gap-3">
-              {form.images.map((image, index) => (
-                <div
-                  key={image}
-                  draggable
-                  onDragStart={() => setDragIndex(index)}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    if (dragIndex === null || dragIndex === index) return;
-                    setForm((prev) => {
-                      const next = [...prev.images];
-                      const moved = next.splice(dragIndex, 1)[0];
-                      if (moved === undefined) return prev;
-                      next.splice(index, 0, moved);
-                      return { ...prev, images: next };
-                    });
-                    setDragIndex(null);
-                  }}
-                  onDragEnd={() => setDragIndex(null)}
-                  className={`relative cursor-grab active:cursor-grabbing ${
-                    dragIndex === index ? "opacity-50" : ""
-                  }`}
-                >
-                  <img
-                    src={imageSrc(image)}
-                    alt=""
-                    loading="lazy"
-                    className="size-20 rounded-lg border border-border object-cover"
-                  />
-                  {index === 0 ? (
-                    <span className="absolute bottom-0 left-0 right-0 rounded-b-lg bg-charcoal/80 py-0.5 text-center text-[10px] font-semibold uppercase text-white">
-                      Cover
-                    </span>
-                  ) : null}
-                  <button
-                    type="button"
-                    aria-label="Remove image"
-                    onClick={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        images: prev.images.filter((value) => value !== image),
-                      }))
-                    }
-                    className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground"
-                  >
-                    <Trash2 className="size-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            </>
-          ) : null}
-        </div>
-
-        <div className="flex gap-3">
-          <Button type="submit" disabled={save.isPending}>
-            {editing ? "Save changes" : "Create product"}
-          </Button>
-          {editing ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setEditing(null);
-                setForm(EMPTY);
-              }}
-            >
-              Cancel
-            </Button>
-          ) : null}
-        </div>
-      </form>
-
-      <div className="mt-8 flex flex-wrap items-center gap-3">
+      <div className="mt-5 flex flex-wrap items-center gap-3">
         <Input
-          value={tableSearch}
-          onChange={(event) => setTableSearch(event.target.value)}
+          value={search.q}
+          onChange={(event) => setSearch({ q: event.target.value })}
           placeholder="Search by name or SKU"
-          className="max-w-xs"
+          className="w-full max-w-xs"
         />
+        <Select value={search.cat} onValueChange={(value) => setSearch({ cat: value })}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All categories</SelectItem>
+            {(categories.data ?? []).map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={search.status} onValueChange={(value) => setSearch({ status: value })}>
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="hidden">Hidden</SelectItem>
+          </SelectContent>
+        </Select>
         <label className="flex items-center gap-2 text-sm">
-          <Switch checked={missingPhotosOnly} onCheckedChange={setMissingPhotosOnly} />
+          <Switch
+            checked={search.nophoto}
+            onCheckedChange={(value) => setSearch({ nophoto: value })}
+          />
           Missing photos only
         </label>
-        <p className="text-sm text-muted-foreground">
-          {visibleProducts.length} of {(products.data ?? []).length} products ·{" "}
-          {(products.data ?? []).filter((p) => (p.images ?? []).length === 0).length} without photos
-        </p>
       </div>
+
+      <p className="mt-3 text-sm text-muted-foreground">
+        {filtered.length} of {(products.data ?? []).length} products · {noPhotoCount} without photos
+      </p>
 
       <div className="mt-4 space-y-2">
         {products.isLoading
-          ? Array.from({ length: 5 }).map((_, index) => (
-              <Skeleton key={index} className="h-20 rounded-xl" />
+          ? Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} className="h-16 rounded-xl" />
             ))
-          : visibleProducts.map((product) => (
-              <div
-                key={product.id}
-                className="flex items-center gap-4 rounded-xl border border-border bg-card p-3"
-              >
-                {productImage(product) ? (
-                  <img
-                    src={productImage(product) ?? ""}
-                    alt={product.name}
-                    loading="lazy"
-                    className="size-14 rounded-lg object-cover"
-                  />
-                ) : (
-                  <ProductPlaceholder className="size-14 shrink-0 rounded-lg" />
-                )}
-                <div className="flex-1">
-                  <p className="font-medium">
-                    {product.name}
-                    {(product.images ?? []).length === 0 ? (
-                      <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                        No photo
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {product.sku ? `${product.sku} · ` : ""}
-                    {product.is_active ? "Active" : "Hidden"}
-                    {product.is_featured ? " · Featured" : ""}
-                  </p>
+          : pageItems.map((product) => {
+              const isOpen = openId === product.id;
+              const isEditing = isOpen && editingId === product.id;
+              const cover = productImage(product);
+              return (
+                <div
+                  key={product.id}
+                  className="overflow-hidden rounded-xl border border-border bg-card"
+                >
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-3 p-3 text-left hover:bg-secondary/50"
+                    aria-expanded={isOpen}
+                    onClick={() => {
+                      setOpenId(isOpen ? null : product.id);
+                      setEditingId(null);
+                    }}
+                  >
+                    {cover ? (
+                      <img
+                        src={cover}
+                        alt={product.name}
+                        loading="lazy"
+                        className="size-12 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <ProductPlaceholder className="size-12 shrink-0 rounded-lg" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{product.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {product.sku ? `${product.sku} · ` : ""}
+                        {categoryName.get(product.category_id ?? "") ?? "—"}
+                        {product.subcategory_id
+                          ? ` › ${subName.get(product.subcategory_id) ?? ""}`
+                          : ""}
+                      </p>
+                    </div>
+                    <div className="hidden shrink-0 gap-1.5 sm:flex">
+                      {!product.is_active ? <Badge>Hidden</Badge> : null}
+                      {(product.images ?? []).length === 0 ? <Badge>No photo</Badge> : null}
+                      {product.is_featured ? <Badge>Featured</Badge> : null}
+                    </div>
+                    <ChevronDown
+                      className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isOpen ? (
+                    <div className="animate-in fade-in slide-in-from-top-1 border-t border-border p-4">
+                      {isEditing ? (
+                        <ProductForm
+                          form={form}
+                          setForm={setForm}
+                          categories={categories.data ?? []}
+                          subcategories={subcategories.data ?? []}
+                          saving={save.isPending}
+                          submitLabel="Save changes"
+                          idPrefix={`edit-${product.id}`}
+                          onSubmit={() => save.mutate({ id: product.id, values: form })}
+                          onCancel={() => setEditingId(null)}
+                        />
+                      ) : (
+                        <ProductSummary
+                          product={product}
+                          onEdit={() => startEdit(product)}
+                          onDuplicate={() => startDuplicate(product)}
+                          onDelete={() => setPendingDelete(product)}
+                        />
+                      )}
+                    </div>
+                  ) : null}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Edit ${product.name}`}
-                  onClick={() => startEdit(product)}
-                >
-                  <Pencil className="size-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Delete ${product.name}`}
-                  onClick={() => remove.mutate(product.id)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
-            ))}
+              );
+            })}
+        {!products.isLoading && pageItems.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+            No products match these filters.
+          </p>
+        ) : null}
+      </div>
+
+      {totalPages > 1 ? (
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <Button
+            variant="outline"
+            disabled={page <= 1}
+            onClick={() => void navigate({ search: (prev) => ({ ...prev, page: page - 1 }) })}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            disabled={page >= totalPages}
+            onClick={() => void navigate({ search: (prev) => ({ ...prev, page: page + 1 }) })}
+          >
+            Next
+          </Button>
+        </div>
+      ) : null}
+
+      <Sheet
+        open={creating}
+        onOpenChange={(open) => {
+          setCreating(open);
+          if (!open) setForm(EMPTY_FORM);
+        }}
+      >
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>New product</SheetTitle>
+          </SheetHeader>
+          <div className="px-4 pb-8">
+            <ProductForm
+              form={form}
+              setForm={setForm}
+              categories={categories.data ?? []}
+              subcategories={subcategories.data ?? []}
+              saving={save.isPending}
+              submitLabel="Create product"
+              idPrefix="new"
+              onSubmit={() => save.mutate({ id: null, values: form })}
+              onCancel={() => {
+                setCreating(false);
+                setForm(EMPTY_FORM);
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this product?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{pendingDelete?.name}" will be removed from the catalogue for good. This can't be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDelete) remove.mutate(pendingDelete.id);
+              }}
+            >
+              Delete product
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function Badge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+      {children}
+    </span>
+  );
+}
+
+function Spec({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="text-sm">{value || "—"}</p>
+    </div>
+  );
+}
+
+function ProductSummary({
+  product,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}: {
+  product: Product;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="space-y-5">
+      {(product.images ?? []).length ? (
+        <div className="flex flex-wrap gap-2">
+          {product.images.map((image) => (
+            <img
+              key={image}
+              src={imageSrc(image)}
+              alt=""
+              loading="lazy"
+              className="size-16 rounded-lg border border-border object-cover"
+            />
+          ))}
+        </div>
+      ) : (
+        <ProductPlaceholder className="size-16 rounded-lg" />
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <Spec label="MOQ" value={specValue(product.moq)} />
+        <Spec label="Production" value={specValue(product.production_days, "days")} />
+        <Spec label="Colour options" value={product.colour_option ?? ""} />
+        <Spec label="Inventory source" value={product.inventory_source} />
+        <Spec label="Material" value={product.material ?? ""} />
+        <Spec label="Size" value={product.size ?? ""} />
+        <Spec label="Capacity" value={product.capacity ?? ""} />
+        <Spec label="Weight" value={product.weight ?? ""} />
+        <Spec label="Features" value={product.features ?? ""} />
+        <Spec
+          label="Price"
+          value={product.price == null ? "" : `$${Number(product.price).toFixed(2)}`}
+        />
+      </div>
+
+      <Spec label="Decoration methods" value={(product.decoration_methods ?? []).join(", ")} />
+
+      {product.description ? (
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Short description
+          </p>
+          <p className="mt-1 whitespace-pre-line text-sm">{product.description}</p>
+        </div>
+      ) : null}
+      {product.details ? (
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Details
+          </p>
+          <p className="mt-1 whitespace-pre-line text-sm">{product.details}</p>
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={onEdit}>
+          <Pencil className="size-4" />
+          Edit
+        </Button>
+        <Button size="sm" variant="outline" onClick={onDuplicate}>
+          <Copy className="size-4" />
+          Duplicate
+        </Button>
+        <Button size="sm" variant="outline" onClick={onDelete}>
+          <Trash2 className="size-4" />
+          Delete
+        </Button>
       </div>
     </div>
   );
