@@ -1,6 +1,6 @@
 import {
+  AIR_LEAD_BUCKETS,
   MOQ_BUCKETS,
-  PRODUCTION_BUCKETS,
   matchesBuckets,
   type Category,
   type Product,
@@ -46,7 +46,7 @@ export const GROUP_LABELS: Record<FilterGroupId, string> = {
   cat: "Category",
   sub: "Subcategory",
   moq: "MOQ Range",
-  prod: "Production Time",
+  prod: "Lead time (air)",
   colour: "Colour Options",
   deco: "Decoration Method",
   src: "Inventory Source",
@@ -95,7 +95,7 @@ export function groupMatchers({ categories, subcategories }: Taxonomy) {
     sub: (product, values) =>
       values.length === 0 || values.includes(subById.get(product.subcategory_id ?? "")?.slug ?? ""),
     moq: (product, values) => matchesBuckets(product.moq, values, MOQ_BUCKETS),
-    prod: (product, values) => matchesBuckets(product.production_days, values, PRODUCTION_BUCKETS),
+    prod: (product, values) => matchesBuckets(product.air_lead_min, values, AIR_LEAD_BUCKETS),
     colour: (product, values) =>
       values.length === 0 || values.includes(product.colour_option ?? ""),
     deco: (product, values) =>

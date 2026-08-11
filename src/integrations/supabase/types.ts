@@ -64,6 +64,8 @@ export type Database = {
       }
       products: {
         Row: {
+          air_lead_max: number | null
+          air_lead_min: number | null
           capacity: string | null
           category_id: string | null
           colour_option: string | null
@@ -82,6 +84,8 @@ export type Database = {
           name: string
           price: number | null
           production_days: number | null
+          sea_lead_max: number | null
+          sea_lead_min: number | null
           show_price: boolean
           size: string | null
           sku: string | null
@@ -91,6 +95,8 @@ export type Database = {
           weight: string | null
         }
         Insert: {
+          air_lead_max?: number | null
+          air_lead_min?: number | null
           capacity?: string | null
           category_id?: string | null
           colour_option?: string | null
@@ -109,6 +115,8 @@ export type Database = {
           name: string
           price?: number | null
           production_days?: number | null
+          sea_lead_max?: number | null
+          sea_lead_min?: number | null
           show_price?: boolean
           size?: string | null
           sku?: string | null
@@ -118,6 +126,8 @@ export type Database = {
           weight?: string | null
         }
         Update: {
+          air_lead_max?: number | null
+          air_lead_min?: number | null
           capacity?: string | null
           category_id?: string | null
           colour_option?: string | null
@@ -136,6 +146,8 @@ export type Database = {
           name?: string
           price?: number | null
           production_days?: number | null
+          sea_lead_max?: number | null
+          sea_lead_min?: number | null
           show_price?: boolean
           size?: string | null
           sku?: string | null

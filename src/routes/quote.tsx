@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { QuantityStepper } from "@/components/site/QuantityStepper";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuoteList } from "@/lib/quote-list";
 import { submitQuoteRequest } from "@/lib/quote-submit.functions";
@@ -192,16 +193,10 @@ function QuotePage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Label className="text-xs text-n-500">Qty</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={item.quantity}
-                        onChange={(event) =>
-                          updateItem(item.productId, {
-                            quantity: Math.max(1, Number(event.target.value) || 1),
-                          })
-                        }
-                        className="h-9 w-24"
+                      <QuantityStepper
+                        quantity={item.quantity}
+                        moq={item.moq ?? null}
+                        onChange={(value) => updateItem(item.productId, { quantity: value })}
                       />
                     </div>
                     <Textarea

@@ -1,11 +1,10 @@
-import { Check, Pencil, Plus } from "lucide-react";
+import { Pencil, Plane, Ship } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
-import { formatPrice, productImage, specValue, type Product } from "@/lib/catalog";
-import { useQuoteList } from "@/lib/quote-list";
+import { airLead, formatPrice, seaLead, specValue, type Product } from "@/lib/catalog";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
+import { AddToQuoteRow } from "@/components/site/AddToQuoteRow";
 import { useStaffSession } from "@/lib/staff-session";
 import { ProductQuickEdit } from "@/components/site/ProductQuickEdit";
 
@@ -29,18 +28,23 @@ function FlagBadge({ source }: { source: string }) {
   );
 }
 
-function SpecValue({ value }: { value: string }) {
+function SpecLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="whitespace-nowrap text-[10px] font-normal uppercase leading-3 tracking-[0.06em] text-n-500">
+      {children}
+    </p>
+  );
+}
+
+function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | null }) {
   return (
     <p
-      className={`mt-0.5 truncate font-bold leading-5 tabular-nums text-navy-700 ${
-        value.length > 8
-          ? "text-[clamp(5.5px,1.9vw,12px)]"
-          : value.length > 5
-            ? "text-[clamp(9px,2.9vw,14px)]"
-            : "text-[clamp(11px,3.4vw,14px)]"
+      className={`flex items-center gap-1.5 truncate text-[12px] leading-4 tabular-nums ${
+        value ? "font-medium text-n-700" : "font-normal text-n-500"
       }`}
     >
-      {value}
+      <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+      <span className="truncate">{value ?? "On request"}</span>
     </p>
   );
 }
@@ -52,30 +56,12 @@ export function ProductCard({
   product: Product;
   coverOnly?: boolean;
 }) {
-  const { addItem, items } = useQuoteList();
-  const inQuote = items.some((item) => item.productId === product.id);
   const price = product.show_price ? formatPrice(product.price) : null;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = product.images ?? [];
   const { editMode } = useStaffSession();
   const [quickEditOpen, setQuickEditOpen] = useState(false);
   const hidden = editMode && !product.is_active;
-
-  const addToQuote = () => {
-    addItem({
-      productId: product.id,
-      slug: product.slug,
-      name: product.name,
-      image: productImage(product),
-      quantity: product.moq ?? 1,
-      notes: "",
-    });
-    toast.success(
-      product.moq
-        ? `${product.name} added at MOQ ${product.moq}`
-        : `${product.name} added — MOQ on request`,
-    );
-  };
 
   return (
     <article
@@ -120,41 +106,25 @@ export function ProductCard({
           {price ?? "\u00a0"}
         </p>
 
-        <div className="mt-auto grid grid-cols-2 border-t border-n-200 pt-3 text-center">
-          <div className="min-w-0 pl-1 pr-2 sm:pr-3">
-            <p className="whitespace-nowrap text-[clamp(5.5px,1.7vw,9px)] font-semibold uppercase leading-3 tracking-[-0.04em] text-n-500">
-              MOQ
+        <div className="mt-auto flex h-[3.25rem] items-start border-t border-n-200 pt-2.5">
+          <div className="min-w-0 shrink-0 basis-[38%] pr-2">
+            <SpecLabel>MOQ</SpecLabel>
+            <p className="mt-0.5 truncate text-[13px] font-medium leading-4 tabular-nums text-n-700">
+              {specValue(product.moq)}
             </p>
-            <SpecValue value={specValue(product.moq)} />
           </div>
-          <div className="min-w-0 border-l border-n-200 pl-2 pr-1 sm:pl-3">
-            <p className="whitespace-nowrap text-[clamp(5.5px,1.7vw,9px)] font-semibold uppercase leading-3 tracking-[-0.04em] text-n-500">
-              Production
-            </p>
-            <SpecValue value={specValue(product.production_days, "days")} />
+          <div className="min-w-0 flex-1 border-l border-n-200 pl-2.5">
+            <SpecLabel>Lead time</SpecLabel>
+            <div className="mt-0.5 space-y-0.5">
+              <LeadRow icon={Plane} value={airLead(product)} />
+              <LeadRow icon={Ship} value={seaLead(product)} />
+            </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          disabled={inQuote}
-          onClick={addToQuote}
-          className={`mt-3 inline-flex h-9 w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-[10px] font-bold uppercase leading-none tracking-wide sm:text-[11px] transition-colors ${
-            inQuote
-              ? "border-lime-500 bg-lime-500 text-n-700"
-              : "border-navy-700 bg-navy-700 text-white hover:bg-navy-800 active:bg-navy-900"
-          }`}
-        >
-          {inQuote ? (
-            <>
-              <Check className="size-3.5" /> In Quote
-            </>
-          ) : (
-            <>
-              <Plus className="size-3.5" /> Add to Quote
-            </>
-          )}
-        </button>
+        <div className="mt-3 shrink-0">
+          <AddToQuoteRow product={product} />
+        </div>
       </div>
 
       {lightboxIndex !== null ? (
@@ -169,26 +139,9 @@ export function ProductCard({
                 <p className="truncate text-sm font-semibold text-white">{product.name}</p>
                 <p className="text-xs text-white/60">{product.sku ?? "—"}</p>
               </div>
-              <button
-                type="button"
-                disabled={inQuote}
-                onClick={addToQuote}
-                className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-[11px] font-bold uppercase tracking-wide transition-colors ${
-                  inQuote
-                    ? "border-lime-500 bg-lime-500 text-n-700"
-                    : "border-white/40 text-white hover:border-lime-500 hover:bg-lime-500 hover:text-n-700"
-                }`}
-              >
-                {inQuote ? (
-                  <>
-                    <Check className="size-3.5" /> In Quote
-                  </>
-                ) : (
-                  <>
-                    <Plus className="size-3.5" /> Add to Quote
-                  </>
-                )}
-              </button>
+              <div className="w-[15rem] shrink-0">
+                <AddToQuoteRow product={product} tone="dark" />
+              </div>
             </div>
           }
         />
