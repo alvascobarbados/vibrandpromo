@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCsvRecords } from "@/lib/csv";
-import { categoriesQuery, subcategoriesQuery, slugify } from "@/lib/catalog";
+import { categoriesQuery, subcategoriesQuery, slugify, leadRange } from "@/lib/catalog";
 
 export const Route = createFileRoute("/_authenticated/admin/import")({
   beforeLoad: ({ context }) => requirePage(context.access, "import"),
