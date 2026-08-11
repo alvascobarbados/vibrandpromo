@@ -1,8 +1,9 @@
 import { Check, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-import { formatPrice, productImage, type Product } from "@/lib/catalog";
+import { formatPrice, productImage, PRODUCT_FALLBACK_IMAGE, type Product } from "@/lib/catalog";
 import { useQuoteList } from "@/lib/quote-list";
+import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 
 function FlagBadge({ source }: { source: string }) {
   const usa = source === "USA Inventory";
@@ -31,15 +32,12 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-      <div className="relative aspect-square overflow-hidden bg-muted">
-        <img
-          src={productImage(product)}
-          alt={product.name}
-          loading="lazy"
-          className="size-full object-cover"
-        />
+      <ProductImageCarousel
+        images={product.images?.length ? product.images : [PRODUCT_FALLBACK_IMAGE]}
+        alt={product.name}
+      >
         <FlagBadge source={product.inventory_source} />
-      </div>
+      </ProductImageCarousel>
 
       <div className="flex flex-1 flex-col p-3">
         <p className="text-xs font-medium text-muted-foreground">{product.sku ?? "—"}</p>
