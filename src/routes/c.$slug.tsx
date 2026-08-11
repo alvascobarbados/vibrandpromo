@@ -60,8 +60,6 @@ function CategoryPage() {
   const category = (categories.data ?? []).find((c) => c.slug === slug);
   const loading = products.isLoading || categories.isLoading || subcategories.isLoading;
 
-  if (!loading && !category) throw notFound();
-
   const sections = useMemo(() => {
     if (!category) return [] as { id: string; slug: string; name: string; items: Product[] }[];
     const inCategory = (products.data ?? []).filter((p) => p.category_id === category.id);
@@ -111,6 +109,8 @@ function CategoryPage() {
   }
 
   const total = sections.reduce((sum, section) => sum + section.items.length, 0);
+
+  if (!loading && !category) throw notFound();
 
   return (
     <SiteLayout>
