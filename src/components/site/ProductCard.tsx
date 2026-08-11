@@ -31,7 +31,7 @@ function SpecValue({ value }: { value: string }) {
   return (
     <p
       className={`mt-0.5 truncate font-bold leading-5 tabular-nums text-foreground ${
-        value.length > 8 ? "text-xs" : "text-sm"
+        value.length > 8 ? "text-[10px] sm:text-xs" : "text-sm"
       }`}
     >
       {value}
@@ -91,14 +91,14 @@ export function ProductCard({
         </p>
 
         <div className="mt-auto grid grid-cols-2 border-t border-border pt-3 text-center">
-          <div className="min-w-0 px-3">
-            <p className="truncate text-[9px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground">
+          <div className="min-w-0 pl-1.5 pr-3">
+            <p className="whitespace-nowrap text-[8px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground sm:text-[9px]">
               MOQ
             </p>
             <SpecValue value={specValue(product.moq)} />
           </div>
-          <div className="min-w-0 border-l border-border px-3">
-            <p className="truncate text-[9px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground">
+          <div className="min-w-0 border-l border-border pl-3 pr-1.5">
+            <p className="whitespace-nowrap text-[8px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground sm:text-[9px]">
               Production
             </p>
             <SpecValue value={specValue(product.production_days, "days")} />
@@ -109,7 +109,7 @@ export function ProductCard({
           type="button"
           disabled={inQuote}
           onClick={addToQuote}
-          className={`mt-3 inline-flex h-9 w-full shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 text-[11px] font-bold uppercase leading-none tracking-wide transition-colors ${
+          className={`mt-3 inline-flex h-9 w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-[10px] font-bold uppercase leading-none tracking-wide sm:text-[11px] transition-colors ${
             inQuote
               ? "border-lime bg-lime text-lime-foreground"
               : "border-charcoal bg-charcoal text-charcoal-foreground hover:bg-charcoal/90"
