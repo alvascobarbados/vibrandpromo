@@ -1,0 +1,144 @@
+import { Link } from "@tanstack/react-router";
+import { Menu, Mail, Phone, MapPin, ClipboardList } from "lucide-react";
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useQuoteList } from "@/lib/quote-list";
+import { COMPANY } from "@/lib/territories";
+
+const NAV = [
+  { to: "/", label: "Home" },
+  { to: "/products", label: "Products" },
+  { to: "/about", label: "About Us" },
+  { to: "/contact", label: "Contact" },
+] as const;
+
+function QuoteButton({ onNavigate }: { onNavigate?: () => void }) {
+  const { count } = useQuoteList();
+  return (
+    <Button asChild size="sm" className="gap-2">
+      <Link to="/quote" onClick={onNavigate}>
+        <ClipboardList className="size-4" />
+        Quote List
+        <span className="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-primary-foreground/20 px-1.5 text-xs font-semibold">
+          {count}
+        </span>
+      </Link>
+    </Button>
+  );
+}
+
+function Logo() {
+  return (
+    <Link to="/" className="flex items-baseline gap-1">
+      <span className="font-display text-2xl font-bold tracking-tight text-charcoal">Alvasco</span>
+      <span className="size-2 rounded-full bg-primary" />
+    </Link>
+  );
+}
+
+export function SiteLayout({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          <Logo />
+          <nav className="hidden items-center gap-1 md:flex">
+            {NAV.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                activeOptions={{ exact: item.to === "/" }}
+                activeProps={{ className: "text-primary" }}
+                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="flex items-center gap-2">
+            <QuoteButton />
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                  <Menu className="size-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <nav className="mt-10 flex flex-col gap-1">
+                  {NAV.map((item) => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-3 py-3 text-base font-medium text-foreground hover:bg-muted"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1">{children}</main>
+
+      <footer className="border-t border-border bg-charcoal text-charcoal-foreground">
+        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-3">
+          <div>
+            <p className="font-display text-2xl font-bold">Alvasco</p>
+            <p className="mt-3 max-w-sm text-sm text-charcoal-foreground/70">
+              Premium promotional products for businesses across 24 Caribbean territories. Caribbean
+              focus, global standards.
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Explore</p>
+            <ul className="mt-4 space-y-2 text-sm text-charcoal-foreground/75">
+              {NAV.map((item) => (
+                <li key={item.to}>
+                  <Link to={item.to} className="hover:text-primary">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <Link to="/quote" className="hover:text-primary">
+                  Request a Quote
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Get in touch</p>
+            <ul className="mt-4 space-y-3 text-sm text-charcoal-foreground/75">
+              <li className="flex items-center gap-2">
+                <Mail className="size-4 text-primary" /> {COMPANY.email}
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone className="size-4 text-primary" /> {COMPANY.phone}
+              </li>
+              <li className="flex items-center gap-2">
+                <MapPin className="size-4 text-primary" /> {COMPANY.location}
+              </li>
+              <li className="text-charcoal-foreground/55">{COMPANY.hours}</li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-white/10">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-charcoal-foreground/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p>© {new Date().getFullYear()} {COMPANY.name} All rights reserved.</p>
+            <Link to="/auth" className="hover:text-primary">
+              Staff Login
+            </Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
