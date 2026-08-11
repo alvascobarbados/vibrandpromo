@@ -44,46 +44,67 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
+          colour_option: string
           created_at: string
+          decoration_methods: string[]
           description: string | null
           details: string | null
           id: string
           images: string[]
+          inventory_source: string
           is_active: boolean
           is_featured: boolean
+          material: string | null
+          moq: number
           name: string
           price: number | null
+          production_days: number
           show_price: boolean
+          sku: string | null
           slug: string
           updated_at: string
         }
         Insert: {
           category_id?: string | null
+          colour_option?: string
           created_at?: string
+          decoration_methods?: string[]
           description?: string | null
           details?: string | null
           id?: string
           images?: string[]
+          inventory_source?: string
           is_active?: boolean
           is_featured?: boolean
+          material?: string | null
+          moq?: number
           name: string
           price?: number | null
+          production_days?: number
           show_price?: boolean
+          sku?: string | null
           slug: string
           updated_at?: string
         }
         Update: {
           category_id?: string | null
+          colour_option?: string
           created_at?: string
+          decoration_methods?: string[]
           description?: string | null
           details?: string | null
           id?: string
           images?: string[]
+          inventory_source?: string
           is_active?: boolean
           is_featured?: boolean
+          material?: string | null
+          moq?: number
           name?: string
           price?: number | null
+          production_days?: number
           show_price?: boolean
+          sku?: string | null
           slug?: string
           updated_at?: string
         }
