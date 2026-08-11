@@ -59,7 +59,7 @@ export function ProductImageCarousel({
         className={`flex size-full snap-x snap-mandatory scroll-smooth ${
           multiple ? "overflow-x-auto" : "overflow-hidden"
         } overflow-y-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
-        style={{ touchAction: "pan-y pinch-zoom" }}
+        style={{ touchAction: multiple ? "pan-x pan-y pinch-zoom" : "pan-y pinch-zoom" }}
       >
         {list.map((src, i) => (
           <div key={`${src}-${i}`} className="relative size-full shrink-0 snap-start">
