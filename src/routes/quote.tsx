@@ -45,6 +45,7 @@ function QuotePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [artwork, setArtwork] = useState<File | null>(null);
+  const [botField, setBotField] = useState("");
   const [form, setForm] = useState({
     customer_name: "",
     company: "",
@@ -82,6 +83,7 @@ function QuotePage() {
         data: {
           ...form,
           artwork_url: artworkUrl,
+          website: botField,
           items: items.map((item) => ({
             product_id: item.productId,
             product_name: item.name,
