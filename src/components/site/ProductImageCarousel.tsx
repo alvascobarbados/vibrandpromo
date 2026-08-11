@@ -8,11 +8,13 @@ export function ProductImageCarousel({
   alt,
   children,
   onImageTap,
+  coverOnly = false,
 }: {
   images: string[];
   alt: string;
   children?: React.ReactNode;
   onImageTap?: (index: number) => void;
+  coverOnly?: boolean;
 }) {
   const list = images;
   const trackRef = useRef<HTMLDivElement>(null);
@@ -59,6 +61,22 @@ export function ProductImageCarousel({
     return (
       <div className="relative aspect-square overflow-hidden">
         <ProductPlaceholder className="size-full" />
+        {children}
+      </div>
+    );
+  }
+
+  if (coverOnly) {
+    return (
+      <div className="relative aspect-square overflow-hidden bg-muted">
+        <img
+          src={list[0]}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          onClick={onImageTap ? () => onImageTap(0) : undefined}
+          className={`size-full object-cover ${onImageTap ? "cursor-zoom-in" : ""}`}
+        />
         {children}
       </div>
     );
