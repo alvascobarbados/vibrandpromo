@@ -79,7 +79,8 @@ export function ProductImageCarousel({
           if (moved) return;
           const node = trackRef.current;
           const current = node ? Math.round(node.scrollLeft / (node.clientWidth || 1)) : index;
-          onImageTap(current);
+          console.log('calling onImageTap', current);
+          try { onImageTap(current); } catch (err) { console.log('tap error', String(err)); }
         }}
         onPointerCancel={() => {
           tapRef.current = null;
