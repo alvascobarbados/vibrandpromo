@@ -61,7 +61,6 @@ export function ImageLightbox({
   }, []);
 
   const finish = useCallback(() => {
-    console.log('finish called', new Error().stack);
     if (closedRef.current) return;
     closedRef.current = true;
     onClose();
@@ -69,8 +68,13 @@ export function ImageLightbox({
 
   // back button closes the lightbox instead of navigating away
   useEffect(() => {
+    const pushedAt = Date.now();
     window.history.pushState({ lovableLightbox: true }, "");
-    const onPop = () => finish();
+    const onPop = () => {
+      // the router echoes a popstate right after our pushState; ignore that one
+      if (Date.now() - pushedAt < 250) return;
+      finish();
+    };
     window.addEventListener("popstate", onPop);
     return () => {
       window.removeEventListener("popstate", onPop);
