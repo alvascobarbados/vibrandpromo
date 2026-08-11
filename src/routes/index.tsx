@@ -63,16 +63,16 @@ function Index() {
 
   return (
     <SiteLayout>
-      <section className="bg-gradient-hero">
+      <section className="bg-gradient-hero text-primary-foreground">
         <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground">
               Barbados · Caribbean-wide delivery
             </span>
             <h1 className="mt-5 text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
               Promotional products your brand deserves
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
+            <p className="mt-5 max-w-xl text-lg text-primary-foreground/80">
               Alvasco supplies premium branded apparel, drinkware, bags, technology and corporate
               gifts to businesses across the region. Build a quote list and we'll price it within 24
               hours.
@@ -83,7 +83,7 @@ function Index() {
                   Browse catalogue <ArrowRight className="size-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline">
+              <Button asChild size="lg" variant="secondary">
                 <Link to="/quote">Request a quote</Link>
               </Button>
             </div>
