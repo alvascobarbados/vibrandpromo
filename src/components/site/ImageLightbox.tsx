@@ -31,6 +31,7 @@ export function ImageLightbox({
   const lastTapRef = useRef(0);
   const closedRef = useRef(false);
   const poppedRef = useRef(false);
+  const pushedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -77,6 +78,7 @@ export function ImageLightbox({
       window.scrollTo(0, scrollY);
       requestAnimationFrame(() => window.scrollTo(0, scrollY));
       setTimeout(() => window.scrollTo(0, scrollY), 80);
+      setTimeout(() => window.scrollTo(0, scrollY), 260);
     };
     return restore;
   }, []);
@@ -91,7 +93,10 @@ export function ImageLightbox({
   useEffect(() => {
     const history = router.history;
     const loc = history.location;
-    history.push(`${loc.pathname}${loc.searchStr ?? ""}#photo`);
+    if (!pushedRef.current) {
+      pushedRef.current = true;
+      history.push(`${loc.pathname}${loc.searchStr ?? ""}#photo`);
+    }
     const unsub = history.subscribe(() => {
       if (history.location.hash !== "photo") {
         poppedRef.current = true;
