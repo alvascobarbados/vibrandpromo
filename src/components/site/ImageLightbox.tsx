@@ -29,6 +29,7 @@ export function ImageLightbox({
   const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
   const lastTapRef = useRef(0);
   const closedRef = useRef(false);
+  const poppedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const markLoaded = useCallback((i: number) => {
@@ -73,12 +74,13 @@ export function ImageLightbox({
     const onPop = () => {
       // the router echoes a popstate right after our pushState; ignore that one
       if (Date.now() - pushedAt < 250) return;
+      poppedRef.current = true;
       finish();
     };
     window.addEventListener("popstate", onPop);
     return () => {
       window.removeEventListener("popstate", onPop);
-      if (window.history.state?.lovableLightbox) window.history.back();
+      if (!poppedRef.current && window.history.state?.lovableLightbox) window.history.back();
     };
   }, [finish]);
 
