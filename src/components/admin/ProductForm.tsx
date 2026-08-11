@@ -488,7 +488,7 @@ export function ProductForm({
                     className="size-20 rounded-lg border border-border object-cover"
                   />
                   {index === 0 ? (
-                    <span className="absolute bottom-0 left-0 right-0 rounded-b-lg bg-charcoal/80 py-0.5 text-center text-[10px] font-semibold uppercase text-white">
+                    <span className="absolute bottom-0 left-0 right-0 rounded-b-lg bg-n-900/80 py-0.5 text-center text-[10px] font-semibold uppercase text-white">
                       Cover
                     </span>
                   ) : null}

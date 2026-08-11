@@ -93,7 +93,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "theme-color", content: "#54565A" },
+      { name: "theme-color", content: "#BFD730" },
       { name: "twitter:title", content: "Promotional Products by Category | Vibrand Barbados" },
       { name: "twitter:description", content: "Browse Vibrand promotional products by category — apparel, bags, drinkware, barware, display, technology and more. Add items to your quote list." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/58b5491e9b90232a2252796c0b978f62/id-preview-22af9e6e--9718e7a0-249f-44b3-a20a-e74f1aa526fd.lovable.app-1786430492163.png" },

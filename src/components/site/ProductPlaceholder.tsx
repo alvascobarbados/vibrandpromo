@@ -16,7 +16,7 @@ export function ProductPlaceholder({
     >
       <span
         className={`select-none font-display text-[clamp(1.5rem,22%,6rem)] font-bold leading-none tracking-tight ${
-          variant === "dark" ? "text-white/20" : "text-charcoal/15"
+          variant === "dark" ? "text-white/20" : "text-n-700/15"
         }`}
       >
         V!
