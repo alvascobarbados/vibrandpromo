@@ -14,10 +14,7 @@ export function pageLabel(key: AdminPageKey) {
   return ADMIN_PAGES.find((page) => page.key === key)?.label ?? key;
 }
 
-export function canUsePage(
-  access: { isAdmin: boolean; lockedPages: string[] },
-  key: AdminPageKey,
-) {
+export function canUsePage(access: { isAdmin: boolean; lockedPages: string[] }, key: AdminPageKey) {
   if (access.isAdmin) return true;
   return !access.lockedPages.includes(key);
 }

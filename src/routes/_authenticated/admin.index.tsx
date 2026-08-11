@@ -9,7 +9,10 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
     meta: [
       { title: "Admin Dashboard | Vibrand Staff" },
-      { name: "description", content: "Overview of Vibrand products, categories and quote requests." },
+      {
+        name: "description",
+        content: "Overview of Vibrand products, categories and quote requests.",
+      },
       { property: "og:title", content: "Admin Dashboard | Vibrand Staff" },
       { property: "og:description", content: "Vibrand staff dashboard." },
       { name: "robots", content: "noindex" },

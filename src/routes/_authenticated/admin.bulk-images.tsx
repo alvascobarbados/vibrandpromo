@@ -72,9 +72,7 @@ function BulkImages() {
         const urls: string[] = [];
         for (const entry of sorted) {
           const path = `${crypto.randomUUID()}-${entry.file.name.replace(/[^\w.-]+/g, "_")}`;
-          const { error } = await supabase.storage
-            .from("product-images")
-            .upload(path, entry.file);
+          const { error } = await supabase.storage.from("product-images").upload(path, entry.file);
           if (error) throw error;
           urls.push(path);
         }
@@ -146,7 +144,9 @@ function BulkImages() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">No matching product code ({report.unmatched.length} files)</p>
+            <p className="font-semibold">
+              No matching product code ({report.unmatched.length} files)
+            </p>
             {report.unmatched.length ? (
               <ul className="mt-2 space-y-1 text-muted-foreground">
                 {report.unmatched.map((name) => (

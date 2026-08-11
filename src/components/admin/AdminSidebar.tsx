@@ -48,9 +48,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
   },
   {
     label: "Sales",
-    items: [
-      { to: "/admin/quotes", label: "Quote Requests", icon: ClipboardList, page: "quotes" },
-    ],
+    items: [{ to: "/admin/quotes", label: "Quote Requests", icon: ClipboardList, page: "quotes" }],
   },
   {
     label: "Admin",
@@ -175,9 +173,7 @@ export function AdminSidebar({
         </nav>
 
         <div className="border-t border-white/10 px-2 py-3">
-          <div
-            className={`flex items-center gap-3 px-1 pb-3 ${collapsed ? "justify-center" : ""}`}
-          >
+          <div className={`flex items-center gap-3 px-1 pb-3 ${collapsed ? "justify-center" : ""}`}>
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-lime text-sm font-bold text-lime-foreground">
               {initials(access.displayName, access.email)}
             </span>

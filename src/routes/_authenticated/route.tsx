@@ -1,9 +1,4 @@
-import {
-  createFileRoute,
-  Outlet,
-  redirect,
-  useRouterState,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -66,11 +61,7 @@ function AdminLayout() {
           collapsed ? "w-[4.5rem]" : "w-64"
         }`}
       >
-        <AdminSidebar
-          access={access}
-          collapsed={collapsed}
-          onToggleCollapsed={toggleCollapsed}
-        />
+        <AdminSidebar access={access} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
       </aside>
 
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>

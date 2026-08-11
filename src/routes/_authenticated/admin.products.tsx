@@ -324,7 +324,9 @@ function AdminProducts() {
           <Button
             variant="outline"
             disabled={page <= 1}
-            onClick={() => void navigate({ search: (prev: ProductSearch) => ({ ...prev, page: page - 1 }) })}
+            onClick={() =>
+              void navigate({ search: (prev: ProductSearch) => ({ ...prev, page: page - 1 }) })
+            }
           >
             Previous
           </Button>
@@ -334,7 +336,9 @@ function AdminProducts() {
           <Button
             variant="outline"
             disabled={page >= totalPages}
-            onClick={() => void navigate({ search: (prev: ProductSearch) => ({ ...prev, page: page + 1 }) })}
+            onClick={() =>
+              void navigate({ search: (prev: ProductSearch) => ({ ...prev, page: page + 1 }) })
+            }
           >
             Next
           </Button>

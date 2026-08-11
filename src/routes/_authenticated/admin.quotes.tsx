@@ -13,11 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  QUOTE_STATUSES,
-  quoteRequestItemsQuery,
-  quoteRequestsQuery,
-} from "@/lib/admin";
+import { QUOTE_STATUSES, quoteRequestItemsQuery, quoteRequestsQuery } from "@/lib/admin";
 
 export const Route = createFileRoute("/_authenticated/admin/quotes")({
   beforeLoad: ({ context }) => requirePage(context.access, "quotes"),

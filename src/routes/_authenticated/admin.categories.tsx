@@ -168,7 +168,8 @@ function AdminCategories() {
   }
 
   function askDelete(kind: PendingDelete["kind"], id: string, name: string) {
-    const count = kind === "category" ? counts.byCategory.get(id) ?? 0 : counts.bySub.get(id) ?? 0;
+    const count =
+      kind === "category" ? (counts.byCategory.get(id) ?? 0) : (counts.bySub.get(id) ?? 0);
     if (kind === "category") {
       const subs = subsByCategory.get(id) ?? [];
       if (subs.length > 0) {
