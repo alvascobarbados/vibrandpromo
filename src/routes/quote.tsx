@@ -18,6 +18,7 @@ import {
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuoteList } from "@/lib/quote-list";
+import { submitQuoteRequest } from "@/lib/quote-submit.functions";
 import { TERRITORIES } from "@/lib/territories";
 
 export const Route = createFileRoute("/quote")({
@@ -77,23 +78,18 @@ function QuotePage() {
         artworkUrl = path;
       }
 
-      const { data, error } = await supabase
-        .from("quote_requests")
-        .insert({ ...form, artwork_url: artworkUrl })
-        .select("id")
-        .single();
-      if (error) throw error;
-
-      const { error: itemsError } = await supabase.from("quote_request_items").insert(
-        items.map((item) => ({
-          quote_request_id: data.id,
-          product_id: item.productId,
-          product_name: item.name,
-          quantity: item.quantity,
-          notes: item.notes || null,
-        })),
-      );
-      if (itemsError) throw itemsError;
+      await submitQuoteRequest({
+        data: {
+          ...form,
+          artwork_url: artworkUrl,
+          items: items.map((item) => ({
+            product_id: item.productId,
+            product_name: item.name,
+            quantity: item.quantity,
+            notes: item.notes || null,
+          })),
+        },
+      });
 
       clear();
       setSubmitted(true);
