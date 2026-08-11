@@ -31,7 +31,11 @@ function SpecValue({ value }: { value: string }) {
   return (
     <p
       className={`mt-0.5 truncate font-bold leading-5 tabular-nums text-foreground ${
-        value.length > 8 ? "text-[9px] sm:text-xs" : "text-[13px] sm:text-sm"
+        value.length > 8
+          ? "text-[8px] sm:text-xs"
+          : value.length > 5
+            ? "text-[10px] sm:text-sm"
+            : "text-[13px] sm:text-sm"
       }`}
     >
       {value}
