@@ -51,7 +51,7 @@ export function ProductCard({ product }: { product: Product }) {
       <ProductImageCarousel
         images={images}
         alt={product.name}
-        onImageTap={(i) => { console.log('open lightbox', i); setLightboxIndex(i); }}
+        onImageTap={(i) => setLightboxIndex(i)}
       >
         <FlagBadge source={product.inventory_source} />
       </ProductImageCarousel>
