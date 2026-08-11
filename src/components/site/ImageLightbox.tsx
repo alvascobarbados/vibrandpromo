@@ -53,7 +53,6 @@ export function ImageLightbox({
   useEffect(() => {
     const body = document.body;
     const scrollY = scrollRef.current;
-    console.log("lock at", scrollY);
     const prev = {
       position: body.style.position,
       top: body.style.top,
@@ -76,7 +75,6 @@ export function ImageLightbox({
       body.style.width = prev.width;
       body.style.overflow = prev.overflow;
       window.scrollTo(0, scrollY);
-      console.log("restored to", scrollY, "now", window.scrollY, document.documentElement.scrollHeight);
       requestAnimationFrame(() => window.scrollTo(0, scrollY));
       setTimeout(() => window.scrollTo(0, scrollY), 80);
       setTimeout(() => window.scrollTo(0, scrollY), 260);
