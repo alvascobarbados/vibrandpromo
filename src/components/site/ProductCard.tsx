@@ -30,7 +30,7 @@ function FlagBadge({ source }: { source: string }) {
 function SpecValue({ value }: { value: string }) {
   return (
     <p
-      className={`mt-0.5 truncate font-bold leading-5 tabular-nums text-foreground ${
+      className={`mt-0.5 truncate font-bold leading-5 tabular-nums text-navy-700 ${
         value.length > 8
           ? "text-[clamp(5.5px,1.9vw,12px)]"
           : value.length > 5
@@ -73,7 +73,7 @@ export function ProductCard({
   };
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-n-200 bg-white shadow-card">
       <ProductImageCarousel
         images={images}
         alt={product.name}
