@@ -165,8 +165,8 @@ function CatalogPage() {
                 variant="outline"
                 className={`h-10 shrink-0 gap-2 rounded-full px-4 text-sm font-semibold lg:hidden ${
                   activeFilterCount(search)
-                    ? "border-lime bg-lime text-lime-foreground hover:bg-lime/90 hover:text-lime-foreground"
-                    : "border-charcoal text-charcoal hover:bg-charcoal/5 hover:text-charcoal"
+                    ? "border-lime-500 bg-lime-500 text-n-700 hover:bg-lime-300 hover:text-n-700"
+                    : "border-navy-700 text-navy-700 hover:bg-navy-50 hover:text-navy-700"
                 }`}
                 onClick={() => setFiltersOpen(true)}
               >
@@ -196,9 +196,9 @@ function CatalogPage() {
                     key={`${chip.group}-${chip.value}`}
                     type="button"
                     onClick={() => toggle(chip.group, chip.value)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-lime px-3 py-1.5 text-xs font-medium text-lime-foreground hover:bg-lime/90"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-lime-500 px-3 py-1.5 text-xs font-medium text-n-700 hover:bg-lime-300"
                   >
-                    <span className="text-lime-foreground/70">{GROUP_LABELS[chip.group]}:</span>
+                    <span className="text-n-700/70">{GROUP_LABELS[chip.group]}:</span>
                     {chip.label}
                     <X className="size-3" />
                   </button>
@@ -206,7 +206,7 @@ function CatalogPage() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-xs font-semibold text-charcoal hover:underline"
+                  className="text-xs font-semibold text-navy-500 hover:text-navy-700 hover:underline"
                 >
                   Clear all
                 </button>
