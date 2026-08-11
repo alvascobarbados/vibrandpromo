@@ -208,8 +208,7 @@ function AdminProducts() {
       const path = `${crypto.randomUUID()}-${file.name.replace(/[^\w.-]+/g, "_")}`;
       const { error } = await supabase.storage.from("product-images").upload(path, file);
       if (error) throw error;
-      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-      setForm((prev) => ({ ...prev, images: [...prev.images, data.publicUrl] }));
+      setForm((prev) => ({ ...prev, images: [...prev.images, path] }));
       toast.success("Image uploaded");
     } catch (error) {
       console.error(error);
