@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
-import { validateLeadTimes } from "@/components/admin/ProductForm";
 import type { Product } from "@/lib/catalog";
+import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 
 export function ProductQuickEdit({
   product,
@@ -24,17 +24,20 @@ export function ProductQuickEdit({
   const queryClient = useQueryClient();
   const [name, setName] = useState(product.name);
   const [moq, setMoq] = useState(product.moq == null ? "" : String(product.moq));
-  const [lead, setLead] = useState({
-    air_lead_min: product.air_lead_min == null ? "" : String(product.air_lead_min),
-    air_lead_max: product.air_lead_max == null ? "" : String(product.air_lead_max),
-    sea_lead_min: product.sea_lead_min == null ? "" : String(product.sea_lead_min),
-    sea_lead_max: product.sea_lead_max == null ? "" : String(product.sea_lead_max),
-  });
+  const [productionDays, setProductionDays] = useState(
+    product.production_days == null ? "" : String(product.production_days),
+  );
   const [price, setPrice] = useState(product.price == null ? "" : String(product.price));
   const [showPrice, setShowPrice] = useState(product.show_price);
   const [isActive, setIsActive] = useState(product.is_active);
   const [isFeatured, setIsFeatured] = useState(product.is_featured);
   const [saving, setSaving] = useState(false);
+  const shipping = useShippingSettings();
+  const parsedProduction = productionDays.trim() ? Number(productionDays) : null;
+  const preview = {
+    production_days: Number.isFinite(parsedProduction as number) ? parsedProduction : null,
+    inventory_source: product.inventory_source,
+  };
 
   function numberOrNull(value: string) {
     const trimmed = value.trim();
@@ -48,11 +51,6 @@ export function ProductQuickEdit({
       toast.error("Name is required.");
       return;
     }
-    const leadProblem = validateLeadTimes(lead);
-    if (leadProblem) {
-      toast.error(leadProblem);
-      return;
-    }
     setSaving(true);
     // Writes go through the user's own authenticated client, so the staff-only
     // RLS policies on public.products are the enforcement point.
@@ -61,10 +59,7 @@ export function ProductQuickEdit({
       .update({
         name: name.trim(),
         moq: numberOrNull(moq),
-        air_lead_min: numberOrNull(lead.air_lead_min),
-        air_lead_max: numberOrNull(lead.air_lead_max),
-        sea_lead_min: numberOrNull(lead.sea_lead_min),
-        sea_lead_max: numberOrNull(lead.sea_lead_max),
+        production_days: numberOrNull(productionDays),
         price: numberOrNull(price),
         show_price: showPrice,
         is_active: isActive,
@@ -108,30 +103,19 @@ export function ProductQuickEdit({
           </div>
 
           <div>
-            <Label>Lead time (days)</Label>
-            <div className="mt-1.5 grid grid-cols-2 gap-3">
-              {(
-                [
-                  ["air_lead_min", "Air — fastest"],
-                  ["air_lead_max", "Air — slowest"],
-                  ["sea_lead_min", "Sea — fastest"],
-                  ["sea_lead_max", "Sea — slowest"],
-                ] as const
-              ).map(([key, label]) => (
-                <div key={key}>
-                  <Label htmlFor={`qe-${key}`} className="text-xs text-muted-foreground">
-                    {label}
-                  </Label>
-                  <Input
-                    id={`qe-${key}`}
-                    inputMode="numeric"
-                    value={lead[key]}
-                    placeholder="On request"
-                    onChange={(e) => setLead((prev) => ({ ...prev, [key]: e.target.value }))}
-                  />
-                </div>
-              ))}
-            </div>
+            <Label htmlFor="qe-production">Production time (days)</Label>
+            <Input
+              id="qe-production"
+              inputMode="numeric"
+              value={productionDays}
+              placeholder="On request"
+              onChange={(e) => setProductionDays(e.target.value)}
+            />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Lead time shown to customers: air{" "}
+              {airLeadLabel(preview, shipping) ?? "On request"} · sea{" "}
+              {seaLeadLabel(preview, shipping) ?? "On request"}
+            </p>
           </div>
 
           <div>
