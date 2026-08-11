@@ -129,5 +129,7 @@ export function useStaffSession() {
  */
 export function useCatalogProducts() {
   const { editMode } = useStaffSession();
-  return useQuery<Product[]>(editMode ? allProductsQuery : publicProductsQuery);
+  const staffView = useQuery({ ...allProductsQuery, enabled: editMode });
+  const publicView = useQuery({ ...publicProductsQuery, enabled: !editMode });
+  return editMode ? staffView : publicView;
 }
