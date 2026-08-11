@@ -16,8 +16,10 @@ const NAV = [
 function Logo() {
   return (
     <Link to="/" search={{}} className="flex items-baseline gap-1">
-      <span className="font-display text-2xl font-bold tracking-tight text-charcoal">Vibrand</span>
-      <span className="size-2 rounded-full bg-primary" />
+      <span className="font-display text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
+        Vibrand
+      </span>
+      <span className="size-1.5 rounded-full bg-primary sm:size-2" />
     </Link>
   );
 }
@@ -34,17 +36,22 @@ export function SiteLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-          <div className="flex h-16 items-center gap-2 sm:gap-3">
-            <Logo />
+        <div className="mx-auto w-full max-w-7xl px-2 sm:px-6">
+          <div className="flex h-14 flex-nowrap items-center gap-1.5 sm:h-16 sm:gap-3">
+            <div className="shrink-0">
+              <Logo />
+            </div>
             {headerSlot ? (
-              <div className="hidden min-w-0 flex-1 md:block">{headerSlot}</div>
-            ) : null}
-            <div className={headerSlot ? "flex-1 md:hidden" : "flex-1"} />
-            <QuoteBasketButton />
+              <div className="min-w-0 flex-1">{headerSlot}</div>
+            ) : (
+              <div className="flex-1" />
+            )}
+            <div className="shrink-0">
+              <QuoteBasketButton />
+            </div>
             <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu">
+              <Button variant="ghost" size="icon" aria-label="Open menu" className="shrink-0">
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
@@ -71,7 +78,6 @@ export function SiteLayout({
             </SheetContent>
             </Sheet>
           </div>
-          {headerSlot ? <div className="pb-3 md:hidden">{headerSlot}</div> : null}
         </div>
       </header>
 

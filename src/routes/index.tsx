@@ -76,6 +76,15 @@ function CatalogPage() {
   const products = useQuery(publicProductsQuery);
   const categories = useQuery(categoriesQuery);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [isNarrow, setIsNarrow] = useState(true);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 420px)");
+    const sync = () => setIsNarrow(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const allProducts = products.data ?? [];
   const allCategories = categories.data ?? [];
