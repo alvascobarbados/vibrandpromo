@@ -84,25 +84,25 @@ export function ProductCard({
       </ProductImageCarousel>
 
       <div className="flex flex-1 flex-col p-3">
-        <p className="truncate text-xs font-medium leading-4 text-muted-foreground">
+        <p className="truncate text-xs font-medium leading-4 text-n-500">
           {product.sku ?? "—"}
         </p>
-        <h3 className="mt-0.5 line-clamp-2 h-[2.5rem] text-sm font-semibold leading-5 text-foreground">
+        <h3 className="mt-0.5 line-clamp-2 h-[2.5rem] text-sm font-semibold leading-5 text-n-900">
           {product.name}
         </h3>
-        <p className="mt-1 h-[1.25rem] truncate text-sm font-semibold leading-5 text-charcoal">
+        <p className="mt-1 h-[1.25rem] truncate text-sm font-semibold leading-5 text-n-700">
           {price ?? "\u00a0"}
         </p>
 
-        <div className="mt-auto grid grid-cols-2 border-t border-border pt-3 text-center">
+        <div className="mt-auto grid grid-cols-2 border-t border-n-200 pt-3 text-center">
           <div className="min-w-0 pl-1 pr-2 sm:pr-3">
-            <p className="whitespace-nowrap text-[clamp(5.5px,1.7vw,9px)] font-semibold uppercase leading-3 tracking-[-0.04em] text-muted-foreground">
+            <p className="whitespace-nowrap text-[clamp(5.5px,1.7vw,9px)] font-semibold uppercase leading-3 tracking-[-0.04em] text-n-500">
               MOQ
             </p>
             <SpecValue value={specValue(product.moq)} />
           </div>
-          <div className="min-w-0 border-l border-border pl-2 pr-1 sm:pl-3">
-            <p className="whitespace-nowrap text-[clamp(5.5px,1.7vw,9px)] font-semibold uppercase leading-3 tracking-[-0.04em] text-muted-foreground">
+          <div className="min-w-0 border-l border-n-200 pl-2 pr-1 sm:pl-3">
+            <p className="whitespace-nowrap text-[clamp(5.5px,1.7vw,9px)] font-semibold uppercase leading-3 tracking-[-0.04em] text-n-500">
               Production
             </p>
             <SpecValue value={specValue(product.production_days, "days")} />
@@ -115,8 +115,8 @@ export function ProductCard({
           onClick={addToQuote}
           className={`mt-3 inline-flex h-9 w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-[10px] font-bold uppercase leading-none tracking-wide sm:text-[11px] transition-colors ${
             inQuote
-              ? "border-lime bg-lime text-lime-foreground"
-              : "border-charcoal bg-charcoal text-charcoal-foreground hover:bg-charcoal/90"
+              ? "border-lime-500 bg-lime-500 text-n-700"
+              : "border-navy-700 bg-navy-700 text-white hover:bg-navy-800 active:bg-navy-900"
           }`}
         >
           {inQuote ? (
@@ -138,7 +138,7 @@ export function ProductCard({
           startIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           footer={
-            <div className="flex items-center gap-3 border-t border-white/10 bg-charcoal/80 px-4 py-3 backdrop-blur-sm">
+            <div className="flex items-center gap-3 border-t border-white/10 bg-n-900/80 px-4 py-3 backdrop-blur-sm">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-white">{product.name}</p>
                 <p className="text-xs text-white/60">{product.sku ?? "—"}</p>
@@ -149,8 +149,8 @@ export function ProductCard({
                 onClick={addToQuote}
                 className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-[11px] font-bold uppercase tracking-wide transition-colors ${
                   inQuote
-                    ? "border-lime bg-lime text-lime-foreground"
-                    : "border-white/40 text-white hover:border-lime hover:text-lime"
+                    ? "border-lime-500 bg-lime-500 text-n-700"
+                    : "border-white/40 text-white hover:border-lime-500 hover:bg-lime-500 hover:text-n-700"
                 }`}
               >
                 {inQuote ? (
