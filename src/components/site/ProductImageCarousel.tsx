@@ -7,15 +7,18 @@ export function ProductImageCarousel({
   images,
   alt,
   children,
+  onImageTap,
 }: {
   images: string[];
   alt: string;
   children?: React.ReactNode;
+  onImageTap?: (index: number) => void;
 }) {
   const list = images.length > 0 ? images : [PRODUCT_FALLBACK_IMAGE];
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState<number[]>([0]);
+  const tapRef = useRef<{ x: number; y: number; scroll: number } | null>(null);
 
   const markLoaded = useCallback((i: number) => {
     setLoaded((prev) => (prev.includes(i) ? prev : [...prev, i]));
@@ -56,9 +59,32 @@ export function ProductImageCarousel({
     <div className="group relative aspect-square overflow-hidden bg-muted">
       <div
         ref={trackRef}
+        onPointerDown={(e) => {
+          tapRef.current = {
+            x: e.clientX,
+            y: e.clientY,
+            scroll: trackRef.current?.scrollLeft ?? 0,
+          };
+        }}
+        onPointerUp={(e) => {
+          const start = tapRef.current;
+          tapRef.current = null;
+          if (!start || !onImageTap) return;
+          const moved =
+            Math.abs(e.clientX - start.x) > 8 ||
+            Math.abs(e.clientY - start.y) > 8 ||
+            Math.abs((trackRef.current?.scrollLeft ?? 0) - start.scroll) > 4;
+          if (moved) return;
+          const node = trackRef.current;
+          const current = node ? Math.round(node.scrollLeft / (node.clientWidth || 1)) : index;
+          onImageTap(current);
+        }}
+        onPointerCancel={() => {
+          tapRef.current = null;
+        }}
         className={`flex size-full snap-x snap-mandatory scroll-smooth ${
           multiple ? "overflow-x-auto" : "overflow-hidden"
-        } overflow-y-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
+        } overflow-y-hidden ${onImageTap ? "cursor-zoom-in" : ""} [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
         style={{ touchAction: multiple ? "pan-x pan-y pinch-zoom" : "pan-y pinch-zoom" }}
       >
         {list.map((src, i) => (
