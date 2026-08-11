@@ -120,7 +120,7 @@ function CategoryPage() {
             <Link
               to="/"
               aria-label="Back to categories"
-              className="rounded-full p-1.5 text-charcoal hover:bg-muted"
+              className="rounded-full p-1.5 text-navy-700 hover:bg-navy-50"
             >
               <ArrowLeft className="size-5" />
             </Link>
@@ -144,8 +144,8 @@ function CategoryPage() {
                   aria-current={activeChip === chip.slug}
                   className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                     activeChip === chip.slug
-                      ? "border-lime bg-lime text-lime-foreground"
-                      : "border-border bg-card text-charcoal hover:bg-muted"
+                      ? "border-lime-500 bg-lime-500 text-n-700"
+                      : "border-n-200 bg-white text-n-700 hover:bg-n-50"
                   }`}
                 >
                   {chip.name}

@@ -90,8 +90,8 @@ function HomePage() {
                   aria-current={activeChip === chip.slug}
                   className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                     activeChip === chip.slug
-                      ? "border-lime bg-lime text-lime-foreground"
-                      : "border-border bg-card text-charcoal hover:bg-muted"
+                      ? "border-lime-500 bg-lime-500 text-n-700"
+                      : "border-n-200 bg-white text-n-700 hover:bg-n-50"
                   }`}
                 >
                   {chip.name}
@@ -151,7 +151,7 @@ function HomePage() {
                     <Link
                       to="/c/$slug"
                       params={{ slug: category.slug }}
-                      className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-charcoal hover:underline"
+                      className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-navy-500 hover:text-navy-700 hover:underline"
                     >
                       See all <ArrowRight className="size-4" />
                     </Link>
@@ -175,7 +175,7 @@ function HomePage() {
         <div className="mt-12 flex justify-center">
           <Link
             to="/products"
-            className="inline-flex items-center gap-2 rounded-full bg-charcoal px-6 py-3 text-sm font-bold uppercase tracking-wide text-charcoal-foreground hover:bg-charcoal/90"
+            className="inline-flex items-center gap-2 rounded-full bg-navy-700 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white hover:bg-navy-800 active:bg-navy-900"
           >
             Browse all products <ArrowRight className="size-4" />
           </Link>

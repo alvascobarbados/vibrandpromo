@@ -208,7 +208,7 @@ export function ImageLightbox({
       style={{ touchAction: "none" }}
     >
       <div
-        className="absolute inset-0 bg-charcoal/95 transition-opacity duration-200"
+        className="absolute inset-0 bg-n-900/95 transition-opacity duration-200"
         style={{ opacity: entered ? Math.max(0, 1 - dragY / 400) : 0 }}
         onClick={finish}
       />
@@ -277,7 +277,7 @@ export function ImageLightbox({
               <span
                 key={`lb-dot-${src}-${i}`}
                 className={`size-1.5 rounded-full transition-colors ${
-                  i === index ? "bg-lime" : "bg-white/40"
+                  i === index ? "bg-lime-500" : "bg-white/40"
                 }`}
               />
             ))}

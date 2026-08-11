@@ -100,12 +100,12 @@ function OptionRow({
   return (
     <label
       className={`flex cursor-pointer items-center gap-3 rounded-full px-2.5 py-2.5 text-sm transition-colors ${
-        checked ? "bg-lime text-lime-foreground" : "hover:bg-muted"
+        checked ? "bg-lime-500 text-n-700" : "text-n-700 hover:bg-n-50"
       } ${indent ? "ml-5" : ""}`}
     >
       <Checkbox checked={checked} onCheckedChange={onChange} />
       <span className="flex-1">{label}</span>
-      <span className={`text-xs ${checked ? "text-lime-foreground/70" : "text-muted-foreground"}`}>
+      <span className={`text-xs ${checked ? "text-n-700/70" : "text-n-500"}`}>
         ({count})
       </span>
     </label>
@@ -169,7 +169,7 @@ export function FilterPanel({
                         : [...prev, category.id],
                     )
                   }
-                  className="shrink-0 rounded-full p-1.5 text-charcoal hover:bg-muted"
+                  className="shrink-0 rounded-full p-1.5 text-navy-700 hover:bg-navy-50"
                 >
                   {open ? (
                     <ChevronDown className="size-4" />
@@ -202,7 +202,7 @@ export function FilterPanel({
         {PANEL_GROUPS.map((group) =>
           options[group].length === 0 ? null : (
             <div key={group}>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs font-bold uppercase tracking-wide text-navy-700">
                 {GROUP_LABELS[group]}
               </p>
               <div className="mt-1.5 max-h-72 overflow-y-auto">
@@ -221,7 +221,11 @@ export function FilterPanel({
             </div>
           ),
         )}
-        <Button variant="outline" className="w-full" onClick={onClear}>
+        <Button
+          variant="outline"
+          className="w-full border-n-200 text-navy-500 hover:bg-navy-50 hover:text-navy-700"
+          onClick={onClear}
+        >
           Clear Filters
         </Button>
       </div>
@@ -230,12 +234,12 @@ export function FilterPanel({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border px-4 py-3">
-        <p className="font-display text-lg font-bold">Filters</p>
+      <div className="border-b border-n-200 px-4 py-3">
+        <p className="font-display text-lg font-bold text-n-900">Filters</p>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[42%_58%]">
-        <div className="overflow-y-auto border-r border-border bg-secondary">
+        <div className="overflow-y-auto border-r border-n-200 bg-navy-50">
           {PANEL_GROUPS.map((group) => {
             const selected = group === "cat" ? search.cat.length + search.sub.length : search[group].length;
             return (
@@ -245,14 +249,14 @@ export function FilterPanel({
                 onClick={() => setActiveGroup(group)}
                 className={`flex w-full items-center justify-between gap-1 px-4 py-4 text-left text-sm font-medium ${
                   activeGroup === group
-                    ? "border-l-4 border-lime bg-background text-foreground"
-                    : "text-foreground hover:bg-background/60"
+                    ? "border-l-4 border-lime-500 bg-white text-navy-700"
+                    : "text-n-700 hover:bg-white/60"
                 }`}
               >
                 <span>
                   {GROUP_LABELS[group]}
                   {selected ? (
-                    <span className="ml-1.5 rounded-full bg-lime px-1.5 py-0.5 text-[10px] font-bold text-lime-foreground">
+                    <span className="ml-1.5 rounded-full bg-lime-500 px-1.5 py-0.5 text-[10px] font-bold text-n-700">
                       {selected}
                     </span>
                   ) : null}
@@ -267,7 +271,7 @@ export function FilterPanel({
           {activeGroup === "cat" ? (
             renderCategoryTree()
           ) : options[activeGroup].length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">No options available.</p>
+            <p className="p-4 text-sm text-n-500">No options available.</p>
           ) : (
             options[activeGroup].map((option) => (
               <OptionRow
@@ -282,12 +286,16 @@ export function FilterPanel({
         </div>
       </div>
 
-      <div className="flex gap-3 border-t border-border bg-background p-4">
-        <Button variant="outline" className="flex-1" onClick={onClear}>
+      <div className="flex gap-3 border-t border-n-200 bg-white p-4">
+        <Button
+          variant="outline"
+          className="flex-1 border-n-200 text-navy-500 hover:bg-navy-50 hover:text-navy-700"
+          onClick={onClear}
+        >
           Clear Filters
         </Button>
         <Button
-          className="flex-1 bg-lime text-lime-foreground hover:bg-lime/90"
+          className="flex-1 bg-lime-500 text-n-700 hover:bg-lime-300"
           onClick={onClose}
         >
           Show {resultCount} Results

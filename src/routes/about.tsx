@@ -50,13 +50,13 @@ const VALUES = [
 function AboutPage() {
   return (
     <SiteLayout>
-      <section className="bg-charcoal text-charcoal-foreground">
+      <section className="bg-navy-900 text-white">
         <div className="mx-auto w-full max-w-4xl px-4 py-20 sm:px-6">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">About us</p>
           <h1 className="mt-4 text-4xl font-bold sm:text-5xl">
             Branded merchandise, built for Caribbean business
           </h1>
-          <p className="mt-6 text-lg text-charcoal-foreground/75">
+          <p className="mt-6 text-lg text-navy-100">
             Vibrand Caribbean Inc. has spent decades helping Caribbean organisations put their brand
             into people's hands — from staff uniforms and conference giveaways to executive gifts and
             large-format display.
@@ -77,9 +77,9 @@ function AboutPage() {
           ))}
         </div>
 
-        <div className="mt-16 rounded-3xl bg-gradient-hero p-10 text-charcoal-foreground">
+        <div className="mt-16 rounded-3xl bg-gradient-hero p-10 text-white">
           <h2 className="text-2xl font-bold sm:text-3xl">Let's talk about your next project</h2>
-          <p className="mt-3 max-w-xl text-charcoal-foreground/75">
+          <p className="mt-3 max-w-xl text-navy-100">
             Build a quote list from our catalogue and our team will respond within 24 hours with
             pricing, options and lead times.
           </p>

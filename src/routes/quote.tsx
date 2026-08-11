@@ -148,17 +148,17 @@ function QuotePage() {
   return (
     <SiteLayout>
       <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-        <h1 className="text-3xl font-bold sm:text-4xl">Your Quote List</h1>
-        <p className="mt-3 text-muted-foreground">
+        <h1 className="text-3xl font-bold text-n-900 sm:text-4xl">Your Quote List</h1>
+        <p className="mt-3 text-n-500">
           Nothing is being purchased here. Send us your list and we'll reply with a formal quote.
         </p>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_1fr]">
           <div className="space-y-4">
             {items.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border p-10 text-center">
-                <p className="text-muted-foreground">Your quote list is empty.</p>
-                <Button asChild className="mt-5">
+              <div className="rounded-2xl border border-dashed border-n-200 p-10 text-center">
+                <p className="text-n-500">Your quote list is empty.</p>
+                <Button asChild className="mt-5 bg-navy-700 text-white hover:bg-navy-800">
                   <Link to="/">Browse products</Link>
                 </Button>
               </div>
@@ -166,7 +166,7 @@ function QuotePage() {
               items.map((item) => (
                 <div
                   key={item.productId}
-                  className="flex gap-4 rounded-2xl border border-border bg-card p-4 shadow-card"
+                  className="flex gap-4 rounded-2xl border border-n-200 bg-white p-4 shadow-card"
                 >
                   {item.image ? (
                     <img
@@ -180,7 +180,7 @@ function QuotePage() {
                   )}
                   <div className="flex-1 space-y-2">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="font-semibold">{item.name}</p>
+                      <p className="font-semibold text-n-900">{item.name}</p>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -191,7 +191,7 @@ function QuotePage() {
                       </Button>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Label className="text-xs text-muted-foreground">Qty</Label>
+                      <Label className="text-xs text-n-500">Qty</Label>
                       <Input
                         type="number"
                         min={1}
@@ -218,9 +218,9 @@ function QuotePage() {
 
           <form
             onSubmit={handleSubmit}
-            className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-card"
+            className="space-y-4 rounded-2xl border border-n-200 bg-lime-50 p-6 shadow-card"
           >
-            <h2 className="text-xl font-bold">Request a quote</h2>
+            <h2 className="text-xl font-bold text-n-900">Request a quote</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="customer_name">Name *</Label>
@@ -324,7 +324,7 @@ function QuotePage() {
             <Button
               type="submit"
               size="lg"
-              className="w-full bg-lime text-lime-foreground hover:bg-lime/90"
+              className="w-full bg-navy-700 text-white hover:bg-navy-800"
               disabled={submitting}
             >
               {submitting ? "Sending…" : "Submit Quote Request"}

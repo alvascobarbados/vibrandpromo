@@ -55,9 +55,9 @@ function AdminLayout() {
   const title = TITLES[pathname.replace(/\/$/, "") || "/admin"] ?? "Admin";
 
   return (
-    <div className="min-h-screen bg-secondary">
+    <div className="min-h-screen bg-navy-50">
       <aside
-        className={`fixed inset-y-0 left-0 z-30 hidden border-r border-white/10 md:block ${
+        className={`fixed inset-y-0 left-0 z-30 hidden border-r border-navy-800 md:block ${
           collapsed ? "w-[4.5rem]" : "w-64"
         }`}
       >
@@ -65,7 +65,7 @@ function AdminLayout() {
       </aside>
 
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent side="left" className="w-64 border-white/10 bg-charcoal p-0">
+        <SheetContent side="left" className="w-64 border-navy-800 bg-navy-900 p-0">
           <SheetTitle className="sr-only">Admin navigation</SheetTitle>
           <AdminSidebar
             access={access}
@@ -77,16 +77,16 @@ function AdminLayout() {
       </Sheet>
 
       <div className={`flex min-h-screen flex-col ${collapsed ? "md:pl-[4.5rem]" : "md:pl-64"}`}>
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card px-4 py-3 sm:px-6">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-n-200 bg-white px-4 py-3 sm:px-6">
           <button
             type="button"
             aria-label="Open navigation"
             onClick={() => setDrawerOpen(true)}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary md:hidden"
+            className="rounded-lg p-1.5 text-n-500 hover:bg-navy-50 md:hidden"
           >
             <Menu className="size-5" />
           </button>
-          <h1 className="truncate font-display text-lg font-bold">{title}</h1>
+          <h1 className="truncate font-display text-lg font-bold text-n-900">{title}</h1>
         </header>
         <main className="w-full flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <Outlet />

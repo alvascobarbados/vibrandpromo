@@ -153,12 +153,12 @@ export function ProductImageCarousel({
             <ChevronRight className="size-4" />
           </button>
 
-          <div className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-charcoal/55 px-2 py-1 backdrop-blur-sm">
+          <div className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-n-700/55 px-2 py-1 backdrop-blur-sm">
             {list.map((src, i) => (
               <span
                 key={`dot-${src}-${i}`}
                 className={`size-1.5 rounded-full transition-colors ${
-                  i === index ? "bg-lime" : "bg-white/70"
+                  i === index ? "bg-lime-500" : "bg-white/70"
                 }`}
               />
             ))}
