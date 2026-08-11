@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   allProductsQuery,
   categoriesQuery,
+  subcategoriesQuery,
   COLOUR_OPTIONS,
   DECORATION_METHODS,
   INVENTORY_SOURCES,
@@ -53,6 +54,7 @@ type FormState = {
   inventory_source: string;
   material: string;
   category_id: string;
+  subcategory_id: string;
   description: string;
   details: string;
   price: string;
@@ -72,6 +74,7 @@ const EMPTY: FormState = {
   inventory_source: "Factory Direct",
   material: "",
   category_id: "",
+  subcategory_id: "",
   description: "",
   details: "",
   price: "",
@@ -85,6 +88,7 @@ function AdminProducts() {
   const queryClient = useQueryClient();
   const products = useQuery(allProductsQuery);
   const categories = useQuery(categoriesQuery);
+  const subcategories = useQuery(subcategoriesQuery);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [uploading, setUploading] = useState(false);
@@ -104,6 +108,7 @@ function AdminProducts() {
       inventory_source: product.inventory_source ?? "Factory Direct",
       material: product.material ?? "",
       category_id: product.category_id ?? "",
+      subcategory_id: product.subcategory_id ?? "",
       description: product.description ?? "",
       details: product.details ?? "",
       price: product.price == null ? "" : String(product.price),
@@ -128,6 +133,7 @@ function AdminProducts() {
         material: form.material || null,
         slug: slugify(form.name),
         category_id: form.category_id || null,
+        subcategory_id: form.subcategory_id || null,
         description: form.description || null,
         details: form.details || null,
         price: form.price ? Number(form.price) : null,
@@ -198,6 +204,10 @@ function AdminProducts() {
             toast.error("SKU is required");
             return;
           }
+          if (!form.subcategory_id) {
+            toast.error("Subcategory is required");
+            return;
+          }
           save.mutate();
         }}
       >
@@ -215,7 +225,9 @@ function AdminProducts() {
             <Label>Category</Label>
             <Select
               value={form.category_id}
-              onValueChange={(value) => setForm((prev) => ({ ...prev, category_id: value }))}
+              onValueChange={(value) =>
+                setForm((prev) => ({ ...prev, category_id: value, subcategory_id: "" }))
+              }
             >
               <SelectTrigger className="mt-1.5">
                 <SelectValue placeholder="Select category" />
@@ -226,6 +238,29 @@ function AdminProducts() {
                     {category.name}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Subcategory</Label>
+            <Select
+              value={form.subcategory_id}
+              disabled={!form.category_id}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, subcategory_id: value }))}
+            >
+              <SelectTrigger className="mt-1.5">
+                <SelectValue
+                  placeholder={form.category_id ? "Select subcategory" : "Pick a category first"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {(subcategories.data ?? [])
+                  .filter((sub) => sub.category_id === form.category_id)
+                  .map((sub) => (
+                    <SelectItem key={sub.id} value={sub.id}>
+                      {sub.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
