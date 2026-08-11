@@ -55,7 +55,7 @@ export const Route = createFileRoute("/")({
 });
 
 function CatalogPage() {
-  const search = Route.useSearch();
+  const search = Route.useSearch() as CatalogSearch & { page: number };
   const navigate = useNavigate({ from: "/" });
   const products = useQuery(publicProductsQuery);
   const categories = useQuery(categoriesQuery);
@@ -77,7 +77,7 @@ function CatalogPage() {
 
   function update(patch: Partial<CatalogSearch & { page: number }>, replace = false) {
     void navigate({
-      search: (prev) => ({ ...prev, page: 1, ...patch }),
+      search: (prev: Record<string, unknown>) => ({ ...prev, page: 1, ...patch }),
       replace,
       resetScroll: false,
     });
@@ -86,7 +86,7 @@ function CatalogPage() {
   function toggle(group: FilterGroupId, value: string) {
     const current = search[group];
     const next = current.includes(value)
-      ? current.filter((item) => item !== value)
+      ? current.filter((item: string) => item !== value)
       : [...current, value];
     update({ [group]: next } as Partial<CatalogSearch>);
   }
@@ -97,7 +97,7 @@ function CatalogPage() {
 
   const chips = (["cat", "moq", "prod", "colour", "deco", "src", "mat"] as FilterGroupId[]).flatMap(
     (group) =>
-      search[group].map((value) => ({
+      search[group].map((value: string) => ({
         group,
         value,
         label:
