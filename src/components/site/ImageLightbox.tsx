@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const CLOSE_DRAG = 110;
@@ -31,6 +32,7 @@ export function ImageLightbox({
   const closedRef = useRef(false);
   const poppedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const markLoaded = useCallback((i: number) => {
     setLoaded((prev) => (prev.includes(i) || i < 0 || i >= images.length ? prev : [...prev, i]));
@@ -67,22 +69,22 @@ export function ImageLightbox({
     onClose();
   }, [onClose]);
 
-  // back button closes the lightbox instead of navigating away
+  // back button / gesture closes the lightbox instead of leaving the catalog
   useEffect(() => {
-    const pushedAt = Date.now();
-    window.history.pushState({ lovableLightbox: true }, "");
-    const onPop = () => {
-      // the router echoes a popstate right after our pushState; ignore that one
-      if (Date.now() - pushedAt < 250) return;
-      poppedRef.current = true;
-      finish();
-    };
-    window.addEventListener("popstate", onPop);
+    const history = router.history;
+    const loc = history.location;
+    history.push(`${loc.pathname}${loc.searchStr ?? ""}#photo`);
+    const unsub = history.subscribe(() => {
+      if (history.location.hash !== "photo") {
+        poppedRef.current = true;
+        finish();
+      }
+    });
     return () => {
-      window.removeEventListener("popstate", onPop);
-      if (!poppedRef.current && window.history.state?.lovableLightbox) window.history.back();
+      unsub();
+      if (!poppedRef.current && history.location.hash === "photo") history.back();
     };
-  }, [finish]);
+  }, [finish, router]);
 
   const resetZoom = () => {
     setZoom(1);
