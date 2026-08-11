@@ -226,6 +226,11 @@
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--lime-500);
+    outline-offset: 2px;
+  }
 }
 
 @utility bg-gradient-hero {
