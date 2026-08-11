@@ -27,6 +27,7 @@ import {
   COLOUR_OPTIONS,
   DECORATION_METHODS,
   INVENTORY_SOURCES,
+  imageSrc,
   productImage,
   slugify,
   type Product,
@@ -532,7 +533,7 @@ function AdminProducts() {
                   }`}
                 >
                   <img
-                    src={image}
+                    src={imageSrc(image)}
                     alt=""
                     loading="lazy"
                     className="size-20 rounded-lg border border-border object-cover"
