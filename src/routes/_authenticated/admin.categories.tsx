@@ -1,17 +1,44 @@
+import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  GripVertical,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { categoriesQuery, slugify } from "@/lib/catalog";
+import {
+  allProductsQuery,
+  categoriesQuery,
+  slugify,
+  subcategoriesQuery,
+  type Category,
+  type Subcategory,
+} from "@/lib/catalog";
 
 export const Route = createFileRoute("/_authenticated/admin/categories")({
+  beforeLoad: ({ context }) => requirePage(context.access, "categories"),
   head: () => ({
     meta: [
       { title: "Categories | Vibrand Admin" },
@@ -24,96 +51,464 @@ export const Route = createFileRoute("/_authenticated/admin/categories")({
   component: AdminCategories,
 });
 
+type PendingDelete = {
+  kind: "category" | "subcategory";
+  id: string;
+  name: string;
+};
+
 function AdminCategories() {
   const queryClient = useQueryClient();
   const categories = useQuery(categoriesQuery);
-  const [name, setName] = useState("");
-  const [sortOrder, setSortOrder] = useState("0");
+  const subcategories = useQuery(subcategoriesQuery);
+  const products = useQuery(allProductsQuery);
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["categories"] });
+  const [expanded, setExpanded] = useState<string[]>([]);
+  const [editing, setEditing] = useState<{ id: string; value: string } | null>(null);
+  const [newCategory, setNewCategory] = useState("");
+  const [newSub, setNewSub] = useState<{ categoryId: string; value: string } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [dragging, setDragging] = useState<{ kind: string; id: string } | null>(null);
 
-  const create = useMutation({
-    mutationFn: async () => {
+  const invalidate = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["categories"] }),
+      queryClient.invalidateQueries({ queryKey: ["subcategories"] }),
+      queryClient.invalidateQueries({ queryKey: ["products"] }),
+    ]);
+  };
+
+  const counts = useMemo(() => {
+    const byCategory = new Map<string, number>();
+    const bySub = new Map<string, number>();
+    for (const product of products.data ?? []) {
+      if (product.category_id)
+        byCategory.set(product.category_id, (byCategory.get(product.category_id) ?? 0) + 1);
+      if (product.subcategory_id)
+        bySub.set(product.subcategory_id, (bySub.get(product.subcategory_id) ?? 0) + 1);
+    }
+    return { byCategory, bySub };
+  }, [products.data]);
+
+  const subsByCategory = useMemo(() => {
+    const map = new Map<string, Subcategory[]>();
+    for (const sub of subcategories.data ?? []) {
+      map.set(sub.category_id, [...(map.get(sub.category_id) ?? []), sub]);
+    }
+    for (const list of map.values()) list.sort((a, b) => a.sort_order - b.sort_order);
+    return map;
+  }, [subcategories.data]);
+
+  const useRowMutation = <T,>(fn: (input: T) => Promise<void>, success: string) =>
+    useMutation({
+      mutationFn: fn,
+      onSuccess: async () => {
+        toast.success(success);
+        await invalidate();
+      },
+      onError: (error: Error) => toast.error(error.message),
+    });
+
+  const addCategory = useRowMutation(async (name: string) => {
+    const sortOrder = (categories.data ?? []).length;
+    const { error } = await supabase
+      .from("categories")
+      .insert({ name, slug: slugify(name), sort_order: sortOrder });
+    if (error) throw new Error(error.message);
+  }, "Category added");
+
+  const addSubcategory = useRowMutation(async (input: { categoryId: string; name: string }) => {
+    const sortOrder = (subsByCategory.get(input.categoryId) ?? []).length;
+    const { error } = await supabase.from("subcategories").insert({
+      name: input.name,
+      slug: slugify(input.name),
+      category_id: input.categoryId,
+      sort_order: sortOrder,
+    });
+    if (error) throw new Error(error.message);
+  }, "Subcategory added");
+
+  const renameRow = useRowMutation(
+    async (input: { table: "categories" | "subcategories"; id: string; name: string }) => {
       const { error } = await supabase
-        .from("categories")
-        .insert({ name, slug: slugify(name), sort_order: Number(sortOrder) || 0 });
-      if (error) throw error;
+        .from(input.table)
+        .update({ name: input.name, slug: slugify(input.name) })
+        .eq("id", input.id);
+      if (error) throw new Error(error.message);
     },
-    onSuccess: () => {
-      setName("");
-      toast.success("Category added");
-      void invalidate();
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
+    "Name updated",
+  );
 
-  const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("categories").delete().eq("id", id);
-      if (error) throw error;
+  const reorder = useRowMutation(
+    async (input: {
+      table: "categories" | "subcategories";
+      rows: { id: string; sort_order: number }[];
+    }) => {
+      for (const row of input.rows) {
+        const { error } = await supabase
+          .from(input.table)
+          .update({ sort_order: row.sort_order })
+          .eq("id", row.id);
+        if (error) throw new Error(error.message);
+      }
     },
-    onSuccess: () => {
-      toast.success("Category deleted");
-      void invalidate();
+    "Order saved",
+  );
+
+  const removeRow = useRowMutation(
+    async (input: { table: "categories" | "subcategories"; id: string }) => {
+      const { error } = await supabase.from(input.table).delete().eq("id", input.id);
+      if (error) throw new Error(error.message);
     },
-    onError: (error: Error) => toast.error(error.message),
-  });
+    "Deleted",
+  );
+
+  function toggle(id: string) {
+    setExpanded((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  function askDelete(kind: PendingDelete["kind"], id: string, name: string) {
+    const count =
+      kind === "category" ? (counts.byCategory.get(id) ?? 0) : (counts.bySub.get(id) ?? 0);
+    if (kind === "category") {
+      const subs = subsByCategory.get(id) ?? [];
+      if (subs.length > 0) {
+        toast.error(
+          `"${name}" still has ${subs.length} subcategor${subs.length === 1 ? "y" : "ies"}. Delete or move those first.`,
+        );
+        return;
+      }
+    }
+    if (count > 0) {
+      toast.error(
+        `"${name}" still has ${count} product${count === 1 ? "" : "s"}. Move those products to another ${kind === "category" ? "category" : "subcategory"} first.`,
+      );
+      return;
+    }
+    setPendingDelete({ kind, id, name });
+  }
+
+  function handleDrop(
+    table: "categories" | "subcategories",
+    list: { id: string }[],
+    targetId: string,
+  ) {
+    if (!dragging || dragging.id === targetId) return;
+    const from = list.findIndex((row) => row.id === dragging.id);
+    const to = list.findIndex((row) => row.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...list];
+    const [moved] = next.splice(from, 1);
+    if (moved) next.splice(to, 0, moved);
+    setDragging(null);
+    reorder.mutate({
+      table,
+      rows: next.map((row, index) => ({ id: row.id, sort_order: index })),
+    });
+  }
+
+  const loading = categories.isLoading || subcategories.isLoading;
+  const categoryList: Category[] = [...(categories.data ?? [])].sort(
+    (a, b) => a.sort_order - b.sort_order,
+  );
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Categories</h1>
+    <div className="max-w-4xl">
+      <p className="text-sm text-muted-foreground">
+        Drag the handles to reorder. Expand a category to manage the subcategories underneath it.
+      </p>
 
       <form
-        className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-5"
+        className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!name.trim()) return;
-          create.mutate();
+          if (!newCategory.trim()) return;
+          addCategory.mutate(newCategory.trim());
+          setNewCategory("");
         }}
       >
-        <div className="min-w-56 flex-1">
-          <Label htmlFor="name">Category name</Label>
-          <Input id="name" value={name} onChange={(event) => setName(event.target.value)} />
-        </div>
-        <div className="w-28">
-          <Label htmlFor="sort">Sort</Label>
-          <Input
-            id="sort"
-            type="number"
-            value={sortOrder}
-            onChange={(event) => setSortOrder(event.target.value)}
-          />
-        </div>
-        <Button type="submit" disabled={create.isPending}>
-          Add category
+        <Input
+          className="min-w-48 flex-1"
+          placeholder="New category name"
+          value={newCategory}
+          onChange={(event) => setNewCategory(event.target.value)}
+        />
+        <Button type="submit" className="gap-2" disabled={addCategory.isPending}>
+          <Plus className="size-4" /> Add category
         </Button>
       </form>
 
-      <div className="mt-6 space-y-2">
-        {categories.isLoading
-          ? Array.from({ length: 5 }).map((_, index) => (
+      <div className="mt-5 space-y-2">
+        {loading
+          ? Array.from({ length: 6 }).map((_, index) => (
               <Skeleton key={index} className="h-14 rounded-xl" />
             ))
-          : (categories.data ?? []).map((category) => (
-              <div
-                key={category.id}
-                className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3"
-              >
-                <div>
-                  <p className="font-medium">{category.name}</p>
-                  <p className="text-xs text-muted-foreground">/{category.slug}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Delete ${category.name}`}
-                  onClick={() => remove.mutate(category.id)}
+          : categoryList.map((category) => {
+              const subs = subsByCategory.get(category.id) ?? [];
+              const isOpen = expanded.includes(category.id);
+              const isEditing = editing?.id === category.id;
+              return (
+                <div
+                  key={category.id}
+                  className="overflow-hidden rounded-xl border border-border bg-card"
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => handleDrop("categories", categoryList, category.id)}
                 >
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-2 px-3 py-3">
+                    <span
+                      draggable
+                      onDragStart={() => setDragging({ kind: "category", id: category.id })}
+                      className="cursor-grab text-muted-foreground"
+                      aria-label={`Reorder ${category.name}`}
+                    >
+                      <GripVertical className="size-4" />
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggle(category.id)}
+                      className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-secondary"
+                      aria-label={isOpen ? "Collapse" : "Expand"}
+                    >
+                      {isOpen ? (
+                        <ChevronDown className="size-4" />
+                      ) : (
+                        <ChevronRight className="size-4" />
+                      )}
+                    </button>
+
+                    {isEditing ? (
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <Input
+                          autoFocus
+                          value={editing.value}
+                          onChange={(event) =>
+                            setEditing({ id: category.id, value: event.target.value })
+                          }
+                        />
+                        <Button
+                          size="icon"
+                          aria-label="Save name"
+                          onClick={() => {
+                            if (!editing.value.trim()) return;
+                            renameRow.mutate({
+                              table: "categories",
+                              id: category.id,
+                              name: editing.value.trim(),
+                            });
+                            setEditing(null);
+                          }}
+                        >
+                          <Check className="size-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Cancel rename"
+                          onClick={() => setEditing(null)}
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => toggle(category.id)}
+                          className="min-w-0 flex-1 text-left"
+                        >
+                          <span className="block truncate font-semibold">{category.name}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {counts.byCategory.get(category.id) ?? 0} products · {subs.length}{" "}
+                            subcategories
+                          </span>
+                        </button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`Rename ${category.name}`}
+                          onClick={() => setEditing({ id: category.id, value: category.name })}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`Delete ${category.name}`}
+                          onClick={() => askDelete("category", category.id, category.name)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+
+                  {isOpen ? (
+                    <div className="border-t border-border bg-secondary/40 py-2 pl-10 pr-3">
+                      <ul className="space-y-1 border-l border-border pl-4">
+                        {subs.map((sub) => {
+                          const subEditing = editing?.id === sub.id;
+                          return (
+                            <li
+                              key={sub.id}
+                              className="flex items-center gap-2 rounded-lg bg-card px-3 py-2"
+                              onDragOver={(event) => event.preventDefault()}
+                              onDrop={() => handleDrop("subcategories", subs, sub.id)}
+                            >
+                              <span
+                                draggable
+                                onDragStart={() => setDragging({ kind: "sub", id: sub.id })}
+                                className="cursor-grab text-muted-foreground"
+                                aria-label={`Reorder ${sub.name}`}
+                              >
+                                <GripVertical className="size-4" />
+                              </span>
+                              {subEditing ? (
+                                <>
+                                  <Input
+                                    autoFocus
+                                    value={editing.value}
+                                    onChange={(event) =>
+                                      setEditing({ id: sub.id, value: event.target.value })
+                                    }
+                                  />
+                                  <Button
+                                    size="icon"
+                                    aria-label="Save name"
+                                    onClick={() => {
+                                      if (!editing.value.trim()) return;
+                                      renameRow.mutate({
+                                        table: "subcategories",
+                                        id: sub.id,
+                                        name: editing.value.trim(),
+                                      });
+                                      setEditing(null);
+                                    }}
+                                  >
+                                    <Check className="size-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    aria-label="Cancel rename"
+                                    onClick={() => setEditing(null)}
+                                  >
+                                    <X className="size-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium">{sub.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {counts.bySub.get(sub.id) ?? 0} products
+                                    </p>
+                                  </div>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    aria-label={`Rename ${sub.name}`}
+                                    onClick={() => setEditing({ id: sub.id, value: sub.name })}
+                                  >
+                                    <Pencil className="size-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    aria-label={`Delete ${sub.name}`}
+                                    onClick={() => askDelete("subcategory", sub.id, sub.name)}
+                                  >
+                                    <Trash2 className="size-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </li>
+                          );
+                        })}
+                        {subs.length === 0 ? (
+                          <li className="px-3 py-2 text-sm text-muted-foreground">
+                            No subcategories yet.
+                          </li>
+                        ) : null}
+                      </ul>
+
+                      {newSub?.categoryId === category.id ? (
+                        <form
+                          className="mt-2 flex items-center gap-2 pl-4"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            if (!newSub.value.trim()) return;
+                            addSubcategory.mutate({
+                              categoryId: category.id,
+                              name: newSub.value.trim(),
+                            });
+                            setNewSub(null);
+                          }}
+                        >
+                          <Input
+                            autoFocus
+                            placeholder="Subcategory name"
+                            value={newSub.value}
+                            onChange={(event) =>
+                              setNewSub({ categoryId: category.id, value: event.target.value })
+                            }
+                          />
+                          <Button type="submit" size="sm">
+                            Add
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setNewSub(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </form>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-4 mt-2 gap-2"
+                          onClick={() => setNewSub({ categoryId: category.id, value: "" })}
+                        >
+                          <Plus className="size-4" /> Add subcategory
+                        </Button>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
       </div>
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete “{pendingDelete?.name}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone. It is empty, so no products will be affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingDelete) return;
+                removeRow.mutate({
+                  table: pendingDelete.kind === "category" ? "categories" : "subcategories",
+                  id: pendingDelete.id,
+                });
+                setPendingDelete(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

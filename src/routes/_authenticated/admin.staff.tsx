@@ -19,9 +19,12 @@ import {
   createStaffUser,
   deleteStaffUser,
   listStaffUsers,
+  setPageLock,
   setStaffRole,
   type StaffRole,
 } from "@/lib/staff.functions";
+import { Switch } from "@/components/ui/switch";
+import { ADMIN_PAGES, type AdminPageKey } from "@/lib/page-access";
 
 export const Route = createFileRoute("/_authenticated/admin/staff")({
   beforeLoad: ({ context }) => {
@@ -44,6 +47,7 @@ function StaffPage() {
   const addUser = useServerFn(createStaffUser);
   const changeRole = useServerFn(setStaffRole);
   const removeUser = useServerFn(deleteStaffUser);
+  const togglePage = useServerFn(setPageLock);
 
   const users = useQuery({ queryKey: ["admin", "staff-users"], queryFn: () => fetchUsers() });
   const [form, setForm] = useState({
@@ -78,6 +82,16 @@ function StaffPage() {
     mutationFn: (userId: string) => removeUser({ data: { user_id: userId } }),
     onSuccess: async () => {
       toast.success("User removed");
+      await invalidate();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const lockMutation = useMutation({
+    mutationFn: (input: { user_id: string; page: AdminPageKey; locked: boolean }) =>
+      togglePage({ data: input }),
+    onSuccess: async () => {
+      toast.success("Page access updated");
       await invalidate();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -152,20 +166,21 @@ function StaffPage() {
       </form>
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-card">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Added</th>
+              <th className="px-4 py-3">Page access</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {users.isLoading ? (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={5}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
                   Loading…
                 </td>
               </tr>
@@ -197,6 +212,34 @@ function StaffPage() {
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {new Date(user.created_at).toLocaleDateString()}
+                </td>
+                <td className="px-4 py-3">
+                  {user.role === "admin" ? (
+                    <span className="text-xs text-muted-foreground">All pages</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-x-4 gap-y-2">
+                      {ADMIN_PAGES.map((page) => (
+                        <label
+                          key={page.key}
+                          className="flex items-center gap-2 whitespace-nowrap text-xs"
+                        >
+                          <Switch
+                            checked={!user.locked_pages.includes(page.key)}
+                            disabled={lockMutation.isPending}
+                            onCheckedChange={(checked) =>
+                              lockMutation.mutate({
+                                user_id: user.id,
+                                page: page.key,
+                                locked: !checked,
+                              })
+                            }
+                            aria-label={`${page.label} access for ${user.display_name || user.email}`}
+                          />
+                          {page.label}
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <Button

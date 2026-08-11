@@ -1,3 +1,4 @@
+import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileSpreadsheet, Upload } from "lucide-react";
@@ -11,6 +12,7 @@ import { parseCsvRecords } from "@/lib/csv";
 import { categoriesQuery, subcategoriesQuery, slugify } from "@/lib/catalog";
 
 export const Route = createFileRoute("/_authenticated/admin/import")({
+  beforeLoad: ({ context }) => requirePage(context.access, "import"),
   head: () => ({
     meta: [
       { title: "Import Products | Vibrand Admin" },
@@ -83,8 +85,8 @@ function AdminImport() {
 
     records.forEach((row, i) => {
       const line = i + 2;
-      const sku = (row['sku'] ?? "").trim();
-      const name = (row['name'] ?? "").trim();
+      const sku = (row["sku"] ?? "").trim();
+      const name = (row["name"] ?? "").trim();
       if (!sku) {
         found.push({ line, sku: "—", reason: "No product code (SKU) in this row" });
         return;
@@ -98,23 +100,23 @@ function AdminImport() {
         return;
       }
       const match = subIndex.get(
-        `${(row['category'] ?? "").trim().toLowerCase()}||${(row['subcategory'] ?? "").trim().toLowerCase()}`,
+        `${(row["category"] ?? "").trim().toLowerCase()}||${(row["subcategory"] ?? "").trim().toLowerCase()}`,
       );
       if (!match) {
         found.push({
           line,
           sku,
-          reason: `Category "${row['category'] ?? ""}" / subcategory "${row['subcategory'] ?? ""}" was not found in the catalogue`,
+          reason: `Category "${row["category"] ?? ""}" / subcategory "${row["subcategory"] ?? ""}" was not found in the catalogue`,
         });
         return;
       }
       seen.add(sku.toLowerCase());
-      const methods = (row['decoration_methods'] ?? "")
+      const methods = (row["decoration_methods"] ?? "")
         .split("|")
         .map((value) => value.trim())
         .filter(Boolean);
-      const moq = (row['moq'] ?? "").trim();
-      const days = (row['production_days'] ?? "").trim();
+      const moq = (row["moq"] ?? "").trim();
+      const days = (row["production_days"] ?? "").trim();
       prepared.push({
         sku,
         payload: {
@@ -123,17 +125,17 @@ function AdminImport() {
           slug: `${slugify(name)}-${slugify(sku)}`,
           category_id: match.category_id,
           subcategory_id: match.id,
-          inventory_source: (row['inventory_source'] ?? "").trim() || "Factory Direct",
+          inventory_source: (row["inventory_source"] ?? "").trim() || "Factory Direct",
           moq: moq ? Number(moq) : null,
           production_days: days ? Number(days) : null,
-          colour_option: (row['colour_option'] ?? "").trim() || null,
+          colour_option: (row["colour_option"] ?? "").trim() || null,
           decoration_methods: methods,
-          material: (row['material'] ?? "").trim() || null,
-          size: (row['size'] ?? "").trim() || null,
-          capacity: (row['capacity'] ?? "").trim() || null,
-          weight: (row['weight'] ?? "").trim() || null,
-          features: (row['features'] ?? "").trim() || null,
-          is_active: (row['is_active'] ?? "").trim().toLowerCase() !== "false",
+          material: (row["material"] ?? "").trim() || null,
+          size: (row["size"] ?? "").trim() || null,
+          capacity: (row["capacity"] ?? "").trim() || null,
+          weight: (row["weight"] ?? "").trim() || null,
+          features: (row["features"] ?? "").trim() || null,
+          is_active: (row["is_active"] ?? "").trim().toLowerCase() !== "false",
         },
       });
     });
@@ -174,12 +176,10 @@ function AdminImport() {
 
       for (let i = 0; i < ready.length; i += 50) {
         const batch = ready.slice(i, i + 50);
-        const { error } = await supabase
-          .from("products")
-          .upsert(
-            batch.map((item) => item.payload as never),
-            { onConflict: "sku" },
-          );
+        const { error } = await supabase.from("products").upsert(
+          batch.map((item) => item.payload as never),
+          { onConflict: "sku" },
+        );
         if (error) {
           for (const item of batch) {
             failed.push({ line: 0, sku: item.sku, reason: error.message });
@@ -252,8 +252,8 @@ function AdminImport() {
 
           {missingColumns.length ? (
             <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-              These column headings are missing: {missingColumns.join(", ")}. Please fix the file and
-              upload again.
+              These column headings are missing: {missingColumns.join(", ")}. Please fix the file
+              and upload again.
             </p>
           ) : (
             <>
@@ -278,17 +278,19 @@ function AdminImport() {
                       {ready.slice(0, 5).map((item) => (
                         <tr key={item.sku} className="border-t border-border">
                           <td className="py-2 pr-4 font-medium">{item.sku}</td>
-                          <td className="py-2 pr-4">{String(item.payload['name'])}</td>
+                          <td className="py-2 pr-4">{String(item.payload["name"])}</td>
                           <td className="py-2 pr-4">
-                            {item.payload['moq'] == null ? "On request" : String(item.payload['moq'])}
-                          </td>
-                          <td className="py-2 pr-4">
-                            {item.payload['production_days'] == null
+                            {item.payload["moq"] == null
                               ? "On request"
-                              : `${String(item.payload['production_days'])} days`}
+                              : String(item.payload["moq"])}
                           </td>
                           <td className="py-2 pr-4">
-                            {item.payload['is_active'] ? "Yes" : "Hidden"}
+                            {item.payload["production_days"] == null
+                              ? "On request"
+                              : `${String(item.payload["production_days"])} days`}
+                          </td>
+                          <td className="py-2 pr-4">
+                            {item.payload["is_active"] ? "Yes" : "Hidden"}
                           </td>
                         </tr>
                       ))}

@@ -1,3 +1,4 @@
+import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImageUp } from "lucide-react";
@@ -9,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { allProductsQuery } from "@/lib/catalog";
 
 export const Route = createFileRoute("/_authenticated/admin/bulk-images")({
+  beforeLoad: ({ context }) => requirePage(context.access, "bulk_images"),
   head: () => ({
     meta: [
       { title: "Bulk Image Upload | Vibrand Admin" },
@@ -70,9 +72,7 @@ function BulkImages() {
         const urls: string[] = [];
         for (const entry of sorted) {
           const path = `${crypto.randomUUID()}-${entry.file.name.replace(/[^\w.-]+/g, "_")}`;
-          const { error } = await supabase.storage
-            .from("product-images")
-            .upload(path, entry.file);
+          const { error } = await supabase.storage.from("product-images").upload(path, entry.file);
           if (error) throw error;
           urls.push(path);
         }
@@ -144,7 +144,9 @@ function BulkImages() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">No matching product code ({report.unmatched.length} files)</p>
+            <p className="font-semibold">
+              No matching product code ({report.unmatched.length} files)
+            </p>
             {report.unmatched.length ? (
               <ul className="mt-2 space-y-1 text-muted-foreground">
                 {report.unmatched.map((name) => (

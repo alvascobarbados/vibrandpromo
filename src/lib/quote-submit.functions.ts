@@ -11,7 +11,13 @@ const quoteSchema = z.object({
   phone: z.string().trim().max(40).optional().or(z.literal("")),
   territory: trimmed(120),
   message: z.string().trim().max(2000).optional().or(z.literal("")),
-  artwork_url: z.string().trim().max(500).regex(/^[\w./-]+$/).nullable().optional(),
+  artwork_url: z
+    .string()
+    .trim()
+    .max(500)
+    .regex(/^[\w./-]+$/)
+    .nullable()
+    .optional(),
   // Honeypot: real customers never see or fill this.
   website: z.string().max(200).optional(),
   items: z
@@ -43,10 +49,11 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
 
     // Basic abuse guard: at most 5 submissions per hour per visitor.
     const forwarded = getRequestHeader("x-forwarded-for") ?? "";
-    const ip = (forwarded.split(",")[0] ?? "").trim() || getRequestHeader("cf-connecting-ip") || "unknown";
-    const ipHash = [...new Uint8Array(
-      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip)),
-    )]
+    const ip =
+      (forwarded.split(",")[0] ?? "").trim() || getRequestHeader("cf-connecting-ip") || "unknown";
+    const ipHash = [
+      ...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip))),
+    ]
       .map((byte) => byte.toString(16).padStart(2, "0"))
       .join("");
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();

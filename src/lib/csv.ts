@@ -42,7 +42,10 @@ export function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((value) => value.trim() !== ""));
 }
 
-export function parseCsvRecords(text: string): { headers: string[]; records: Record<string, string>[] } {
+export function parseCsvRecords(text: string): {
+  headers: string[];
+  records: Record<string, string>[];
+} {
   const rows = parseCsv(text);
   const headers = (rows[0] ?? []).map((h) => h.trim().toLowerCase());
   const records = rows.slice(1).map((row) => {

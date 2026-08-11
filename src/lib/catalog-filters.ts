@@ -7,15 +7,7 @@ import {
   type Subcategory,
 } from "@/lib/catalog";
 
-export type FilterGroupId =
-  | "cat"
-  | "sub"
-  | "moq"
-  | "prod"
-  | "colour"
-  | "deco"
-  | "src"
-  | "mat";
+export type FilterGroupId = "cat" | "sub" | "moq" | "prod" | "colour" | "deco" | "src" | "mat";
 
 export type CatalogSearch = {
   q: string;
@@ -69,16 +61,16 @@ function toArray(value: unknown): string[] {
 
 export function parseCatalogSearch(raw: Record<string, unknown>): CatalogSearch {
   return {
-    q: typeof raw['q'] === "string" ? raw['q'] : "",
-    sort: typeof raw['sort'] === "string" ? raw['sort'] : "default",
-    cat: toArray(raw['cat']),
-    sub: toArray(raw['sub']),
-    moq: toArray(raw['moq']),
-    prod: toArray(raw['prod']),
-    colour: toArray(raw['colour']),
-    deco: toArray(raw['deco']),
-    src: toArray(raw['src']),
-    mat: toArray(raw['mat']),
+    q: typeof raw["q"] === "string" ? raw["q"] : "",
+    sort: typeof raw["sort"] === "string" ? raw["sort"] : "default",
+    cat: toArray(raw["cat"]),
+    sub: toArray(raw["sub"]),
+    moq: toArray(raw["moq"]),
+    prod: toArray(raw["prod"]),
+    colour: toArray(raw["colour"]),
+    deco: toArray(raw["deco"]),
+    src: toArray(raw["src"]),
+    mat: toArray(raw["mat"]),
   };
 }
 
@@ -86,8 +78,7 @@ function matchesSearchTerm(product: Product, q: string) {
   const term = q.trim().toLowerCase();
   if (!term) return true;
   return (
-    product.name.toLowerCase().includes(term) ||
-    (product.sku ?? "").toLowerCase().includes(term)
+    product.name.toLowerCase().includes(term) || (product.sku ?? "").toLowerCase().includes(term)
   );
 }
 
@@ -102,8 +93,7 @@ export function groupMatchers({ categories, subcategories }: Taxonomy) {
       values.length === 0 ||
       values.includes(categoryById.get(product.category_id ?? "")?.slug ?? ""),
     sub: (product, values) =>
-      values.length === 0 ||
-      values.includes(subById.get(product.subcategory_id ?? "")?.slug ?? ""),
+      values.length === 0 || values.includes(subById.get(product.subcategory_id ?? "")?.slug ?? ""),
     moq: (product, values) => matchesBuckets(product.moq, values, MOQ_BUCKETS),
     prod: (product, values) => matchesBuckets(product.production_days, values, PRODUCTION_BUCKETS),
     colour: (product, values) =>
@@ -145,9 +135,7 @@ export function sortProducts(products: Product[], sort: string) {
       (a, b) => (a.moq ?? Number.POSITIVE_INFINITY) - (b.moq ?? Number.POSITIVE_INFINITY),
     );
   if (sort === "newest")
-    return list.sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    );
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   return list.sort((a, b) => (a.sku ?? "").localeCompare(b.sku ?? ""));
 }
 

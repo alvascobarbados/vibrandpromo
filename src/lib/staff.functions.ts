@@ -13,6 +13,7 @@ export type StaffUser = {
   display_name: string;
   role: StaffRole | null;
   created_at: string;
+  locked_pages: string[];
 };
 
 export type MyAccess = {
@@ -21,6 +22,7 @@ export type MyAccess = {
   displayName: string;
   isStaff: boolean;
   isAdmin: boolean;
+  lockedPages: string[];
 };
 
 export const getMyAccess = createServerFn({ method: "GET" })
@@ -28,9 +30,10 @@ export const getMyAccess = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<MyAccess> => {
     const { supabase, userId } = context;
 
-    const [{ data: roles }, { data: profile }] = await Promise.all([
+    const [{ data: roles }, { data: profile }, { data: locks }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
       supabase.from("profiles").select("display_name, email").eq("id", userId).maybeSingle(),
+      supabase.from("page_access_locks").select("page").eq("user_id", userId),
     ]);
 
     const roleList = (roles ?? []).map((row) => row.role);
@@ -41,6 +44,7 @@ export const getMyAccess = createServerFn({ method: "GET" })
       displayName: profile?.display_name ?? "",
       isStaff: roleList.length > 0,
       isAdmin: roleList.includes("admin"),
+      lockedPages: (locks ?? []).map((row) => row.page),
     };
   });
 
@@ -73,13 +77,18 @@ export const listStaffUsers = createServerFn({ method: "GET" })
     const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 200 });
     if (error) throw new Error(error.message);
 
-    const [{ data: roles }, { data: profiles }] = await Promise.all([
+    const [{ data: roles }, { data: profiles }, { data: locks }] = await Promise.all([
       supabaseAdmin.from("user_roles").select("user_id, role"),
       supabaseAdmin.from("profiles").select("id, display_name, email"),
+      supabaseAdmin.from("page_access_locks").select("user_id, page"),
     ]);
 
     const roleByUser = new Map((roles ?? []).map((row) => [row.user_id, row.role as StaffRole]));
     const profileByUser = new Map((profiles ?? []).map((row) => [row.id, row]));
+    const locksByUser = new Map<string, string[]>();
+    for (const lock of locks ?? []) {
+      locksByUser.set(lock.user_id, [...(locksByUser.get(lock.user_id) ?? []), lock.page]);
+    }
 
     return list.users
       .map((user) => ({
@@ -91,6 +100,7 @@ export const listStaffUsers = createServerFn({ method: "GET" })
           "",
         role: roleByUser.get(user.id) ?? null,
         created_at: user.created_at,
+        locked_pages: locksByUser.get(user.id) ?? [],
       }))
       .sort((a, b) => a.created_at.localeCompare(b.created_at));
   });
@@ -190,6 +200,38 @@ export const deleteStaffUser = createServerFn({ method: "POST" })
 
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
     if (deleteError) throw new Error(deleteError.message);
+
+    return { ok: true as const };
+  });
+
+export const setPageLock = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        page: z.enum(["products", "categories", "bulk_images", "import", "quotes"]),
+        locked: z.boolean(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase as SupabaseClient<Database>, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (data.locked) {
+      const { error } = await supabaseAdmin
+        .from("page_access_locks")
+        .upsert({ user_id: data.user_id, page: data.page }, { onConflict: "user_id,page" });
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin
+        .from("page_access_locks")
+        .delete()
+        .eq("user_id", data.user_id)
+        .eq("page", data.page);
+      if (error) throw new Error(error.message);
+    }
 
     return { ok: true as const };
   });

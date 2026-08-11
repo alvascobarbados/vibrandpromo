@@ -1,3 +1,4 @@
+import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -55,9 +56,12 @@ const searchSchema = z.object({
   page: fallback(z.number().int(), 1).default(1),
 });
 
+type ProductSearch = z.infer<typeof searchSchema>;
+
 const PAGE_SIZE = 50;
 
 export const Route = createFileRoute("/_authenticated/admin/products")({
+  beforeLoad: ({ context }) => requirePage(context.access, "products"),
   validateSearch: zodValidator(searchSchema),
   head: () => ({
     meta: [
@@ -88,7 +92,7 @@ function AdminProducts() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
 
   const setSearch = (patch: Partial<typeof search>) =>
-    void navigate({ search: (prev) => ({ ...prev, page: 1, ...patch }) });
+    void navigate({ search: (prev: ProductSearch) => ({ ...prev, page: 1, ...patch }) });
 
   const categoryName = useMemo(
     () => new Map((categories.data ?? []).map((c) => [c.id, c.name] as const)),
@@ -320,7 +324,9 @@ function AdminProducts() {
           <Button
             variant="outline"
             disabled={page <= 1}
-            onClick={() => void navigate({ search: (prev) => ({ ...prev, page: page - 1 }) })}
+            onClick={() =>
+              void navigate({ search: (prev: ProductSearch) => ({ ...prev, page: page - 1 }) })
+            }
           >
             Previous
           </Button>
@@ -330,7 +336,9 @@ function AdminProducts() {
           <Button
             variant="outline"
             disabled={page >= totalPages}
-            onClick={() => void navigate({ search: (prev) => ({ ...prev, page: page + 1 }) })}
+            onClick={() =>
+              void navigate({ search: (prev: ProductSearch) => ({ ...prev, page: page + 1 }) })
+            }
           >
             Next
           </Button>

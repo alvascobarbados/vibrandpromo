@@ -1,20 +1,11 @@
-import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  LayoutDashboard,
-  LogOut,
-  Package,
-  Tags,
-  ClipboardList,
-  FileSpreadsheet,
-  ImageUp,
-} from "lucide-react";
+import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
+import { Menu } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyAccess } from "@/lib/staff.functions";
-import logoMark from "@/assets/vibrand-mark.png";
-import { Users, UserCog } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -30,65 +21,77 @@ export const Route = createFileRoute("/_authenticated")({
   component: AdminLayout,
 });
 
-const NAV = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/admin/products", label: "Products", icon: Package },
-  { to: "/admin/categories", label: "Categories", icon: Tags },
-  { to: "/admin/quotes", label: "Quote requests", icon: ClipboardList },
-  { to: "/admin/import", label: "Import products", icon: FileSpreadsheet },
-  { to: "/admin/bulk-images", label: "Bulk images", icon: ImageUp },
-  { to: "/admin/staff", label: "Staff", icon: Users, adminOnly: true },
-  { to: "/admin/account", label: "My account", icon: UserCog },
-] as const;
+const TITLES: Record<string, string> = {
+  "/admin": "Dashboard",
+  "/admin/products": "Products",
+  "/admin/categories": "Categories",
+  "/admin/bulk-images": "Bulk Images",
+  "/admin/import": "Import Products",
+  "/admin/quotes": "Quote Requests",
+  "/admin/staff": "Staff",
+  "/admin/account": "My Account",
+};
+
+const COLLAPSE_KEY = "vibrand.admin.sidebar.collapsed";
 
 function AdminLayout() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { access } = Route.useRouteContext();
-  const nav = NAV.filter((item) => !("adminOnly" in item && item.adminOnly) || access.isAdmin);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [collapsed, setCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  async function signOut() {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+  useEffect(() => {
+    setCollapsed(window.localStorage.getItem(COLLAPSE_KEY) === "1");
+  }, []);
+
+  function toggleCollapsed() {
+    setCollapsed((previous) => {
+      const next = !previous;
+      window.localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
+      return next;
+    });
   }
+
+  const title = TITLES[pathname.replace(/\/$/, "") || "/admin"] ?? "Admin";
 
   return (
     <div className="min-h-screen bg-secondary">
-      <header className="border-b border-white/10 bg-charcoal text-charcoal-foreground">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold">
-            <img src={logoMark} alt="Vibrand" className="h-7 w-auto" />
-            <span>Admin</span>
-          </Link>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 border-white/30 bg-transparent text-charcoal-foreground hover:bg-white/10 hover:text-charcoal-foreground"
-            onClick={signOut}
+      <aside
+        className={`fixed inset-y-0 left-0 z-30 hidden border-r border-white/10 md:block ${
+          collapsed ? "w-[4.5rem]" : "w-64"
+        }`}
+      >
+        <AdminSidebar access={access} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
+      </aside>
+
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <SheetContent side="left" className="w-64 border-white/10 bg-charcoal p-0">
+          <SheetTitle className="sr-only">Admin navigation</SheetTitle>
+          <AdminSidebar
+            access={access}
+            collapsed={false}
+            onToggleCollapsed={toggleCollapsed}
+            onNavigate={() => setDrawerOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+
+      <div className={`flex min-h-screen flex-col ${collapsed ? "md:pl-[4.5rem]" : "md:pl-64"}`}>
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card px-4 py-3 sm:px-6">
+          <button
+            type="button"
+            aria-label="Open navigation"
+            onClick={() => setDrawerOpen(true)}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary md:hidden"
           >
-            <LogOut className="size-4" /> Sign out
-          </Button>
-        </div>
-        <nav className="mx-auto flex w-full max-w-7xl gap-1 overflow-x-auto px-4 pb-2 sm:px-6">
-          {nav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeOptions={{ exact: item.to === "/admin" }}
-              activeProps={{ className: "bg-lime text-lime-foreground" }}
-              className="inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-charcoal-foreground/70 transition-colors hover:text-charcoal-foreground"
-            >
-              <item.icon className="size-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </header>
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-        <Outlet />
-      </main>
+            <Menu className="size-5" />
+          </button>
+          <h1 className="truncate font-display text-lg font-bold">{title}</h1>
+        </header>
+        <main className="w-full flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -12,13 +13,10 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  QUOTE_STATUSES,
-  quoteRequestItemsQuery,
-  quoteRequestsQuery,
-} from "@/lib/admin";
+import { QUOTE_STATUSES, quoteRequestItemsQuery, quoteRequestsQuery } from "@/lib/admin";
 
 export const Route = createFileRoute("/_authenticated/admin/quotes")({
+  beforeLoad: ({ context }) => requirePage(context.access, "quotes"),
   head: () => ({
     meta: [
       { title: "Quote Requests | Vibrand Admin" },
