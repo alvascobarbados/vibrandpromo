@@ -17,10 +17,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import {
   allProductsQuery,
   categoriesQuery,
+  COLOUR_OPTIONS,
+  DECORATION_METHODS,
+  INVENTORY_SOURCES,
   productImage,
   slugify,
   type Product,
