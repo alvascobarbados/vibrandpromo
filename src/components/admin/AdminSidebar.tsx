@@ -10,6 +10,7 @@ import {
   LogOut,
   Package,
   Tags,
+  Truck,
   UserCog,
   Users,
 } from "lucide-react";
@@ -52,7 +53,10 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
   },
   {
     label: "Admin",
-    items: [{ to: "/admin/staff", label: "Staff", icon: Users, adminOnly: true }],
+    items: [
+      { to: "/admin/shipping", label: "Shipping Times", icon: Truck, adminOnly: true },
+      { to: "/admin/staff", label: "Staff", icon: Users, adminOnly: true },
+    ],
   },
 ];
 
