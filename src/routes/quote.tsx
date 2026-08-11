@@ -281,7 +281,12 @@ function QuotePage() {
               />
             </div>
 
-            <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full bg-lime text-lime-foreground hover:bg-lime/90"
+              disabled={submitting}
+            >
               {submitting ? "Sending…" : "Submit Quote Request"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
