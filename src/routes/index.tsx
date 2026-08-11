@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Promotional Products by Category | Vibrand Barbados" },
       {
         property: "og:description",
-        content: "Discover branded merchandise category by category and build a quote in minutes.",
+        content: "Browse Vibrand promotional products by category — apparel, bags, drinkware, barware, display, technology and more. Add items to your quote list.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
