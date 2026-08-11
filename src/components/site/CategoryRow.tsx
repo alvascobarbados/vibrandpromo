@@ -6,7 +6,7 @@ import { ProductCard } from "@/components/site/ProductCard";
 import type { Product } from "@/lib/catalog";
 
 const CARD_WIDTH =
-  "w-[calc((100%-1.5rem)/2.25)] sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]";
+  "w-[calc((100%-1.5rem)/2.1)] sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]";
 
 export function CategoryRow({
   items,

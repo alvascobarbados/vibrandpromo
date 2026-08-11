@@ -31,7 +31,7 @@ function SpecValue({ value }: { value: string }) {
   return (
     <p
       className={`mt-0.5 truncate font-bold leading-5 tabular-nums text-foreground ${
-        value.length > 8 ? "text-[10px] sm:text-xs" : "text-sm"
+        value.length > 8 ? "text-[9px] sm:text-xs" : "text-[13px] sm:text-sm"
       }`}
     >
       {value}
@@ -91,14 +91,14 @@ export function ProductCard({
         </p>
 
         <div className="mt-auto grid grid-cols-2 border-t border-border pt-3 text-center">
-          <div className="min-w-0 pl-1.5 pr-3">
-            <p className="whitespace-nowrap text-[8px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground sm:text-[9px]">
+          <div className="min-w-0 pl-1 pr-3">
+            <p className="whitespace-nowrap text-[7px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground sm:text-[9px]">
               MOQ
             </p>
             <SpecValue value={specValue(product.moq)} />
           </div>
-          <div className="min-w-0 border-l border-border pl-3 pr-1.5">
-            <p className="whitespace-nowrap text-[8px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground sm:text-[9px]">
+          <div className="min-w-0 border-l border-border pl-3 pr-1">
+            <p className="whitespace-nowrap text-[7px] font-semibold uppercase leading-3 tracking-tight text-muted-foreground sm:text-[9px]">
               Production
             </p>
             <SpecValue value={specValue(product.production_days, "days")} />

@@ -114,7 +114,7 @@ function HomePage() {
                   {Array.from({ length: 4 }).map((__, i) => (
                     <div
                       key={i}
-                      className="w-[calc((100%-1.5rem)/2.25)] shrink-0 sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]"
+                      className="w-[calc((100%-1.5rem)/2.1)] shrink-0 sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]"
                     >
                       <Skeleton className="aspect-square rounded-t-2xl" />
                       <Skeleton className="mt-0.5 h-[199px] rounded-b-2xl" />
