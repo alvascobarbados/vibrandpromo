@@ -56,8 +56,8 @@ function AdminQuotes() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Quote requests</h1>
-          <p className="mt-2 text-muted-foreground">{visible.length} shown</p>
+          <h1 className="text-2xl font-bold text-n-900">Quote requests</h1>
+          <p className="mt-2 text-n-500">{visible.length} shown</p>
         </div>
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-48">
@@ -81,7 +81,7 @@ function AdminQuotes() {
           ))}
         </div>
       ) : visible.length === 0 ? (
-        <p className="mt-10 text-muted-foreground">No requests match this filter.</p>
+        <p className="mt-10 text-n-500">No requests match this filter.</p>
       ) : (
         <div className="mt-6 space-y-4">
           {visible.map((quote) => {
@@ -90,20 +90,27 @@ function AdminQuotes() {
             );
             const isOpen = open === quote.id;
             return (
-              <div key={quote.id} className="rounded-2xl border border-border bg-card p-5">
+              <div key={quote.id} className="rounded-2xl border border-n-200 bg-white p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="font-semibold">{quote.company}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-n-900">{quote.company}</p>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${STATUS_BADGE[quote.status] ?? "bg-n-500 text-white"}`}
+                      >
+                        {quote.status.replace("_", " ")}
+                      </span>
+                    </div>
+                    <p className="text-sm text-n-500">
                       {quote.customer_name} · {quote.territory}
                     </p>
                     <p className="mt-1 text-sm">
-                      <a href={`mailto:${quote.email}`} className="text-primary hover:underline">
+                      <a href={`mailto:${quote.email}`} className="text-navy-500 hover:text-navy-700 hover:underline">
                         {quote.email}
                       </a>
                       {quote.phone ? ` · ${quote.phone}` : ""}
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="mt-1 text-xs text-n-500">
                       {new Date(quote.created_at).toLocaleString()}
                     </p>
                   </div>
