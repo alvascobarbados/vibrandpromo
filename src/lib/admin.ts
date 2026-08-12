@@ -12,6 +12,9 @@ export type QuoteRequest = {
   artwork_url: string | null;
   status: string;
   created_at: string;
+  internal_notes: string | null;
+  internal_notes_updated_by_name: string | null;
+  internal_notes_updated_at: string | null;
 };
 
 export type QuoteRequestItem = {
@@ -44,5 +47,21 @@ export const quoteRequestItemsQuery = queryOptions({
     const { data, error } = await supabase.from("quote_request_items").select("*");
     if (error) throw error;
     return (data ?? []) as QuoteRequestItem[];
+  },
+});
+
+export type QuoteProductMeta = {
+  id: string;
+  sku: string | null;
+  rush_enabled: boolean;
+};
+
+/** SKU + rush flags for products referenced by quote items. */
+export const quoteProductsQuery = queryOptions({
+  queryKey: ["admin", "quote_products"],
+  queryFn: async (): Promise<QuoteProductMeta[]> => {
+    const { data, error } = await supabase.from("products").select("id, sku, rush_enabled");
+    if (error) throw error;
+    return (data ?? []) as QuoteProductMeta[];
   },
 });
