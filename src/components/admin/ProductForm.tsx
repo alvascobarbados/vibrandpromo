@@ -28,6 +28,7 @@ import {
   type Subcategory,
 } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import { RushChip } from "@/components/site/RushChip";
 
 export type FormState = {
   name: string;
@@ -211,8 +212,9 @@ function RushPreview({
     inventory_source: source,
   };
   return (
-    <p className="mt-1.5 text-xs text-muted-foreground">
-      Rush lead time shown to customers: {rushLeadLabel(value, shipping) ?? "—"}
+    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+      Rush lead time shown to customers: <RushChip size="static" />
+      <span className="text-n-700">{rushLeadLabel(value, shipping) ?? "—"}</span>
     </p>
   );
 }

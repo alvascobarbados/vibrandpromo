@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { SHIPPING_METHOD_OPTIONS, type Product } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import { RushChip } from "@/components/site/RushChip";
 
 export function ProductQuickEdit({
   product,
@@ -267,8 +268,9 @@ export function ProductQuickEdit({
                 <p className="mt-1.5 text-xs text-muted-foreground">
                   Enter one number for a fixed time, or both for a range.
                 </p>
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  Rush lead time shown to customers: {rushPreview ?? "—"}
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  Rush lead time shown to customers: <RushChip size="static" />
+                  <span className="text-n-700">{rushPreview ?? "—"}</span>
                 </p>
               </div>
             ) : null}
