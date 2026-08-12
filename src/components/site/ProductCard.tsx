@@ -69,9 +69,8 @@ export function ProductCard({
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = product.images ?? [];
-  const { editMode } = useStaffSession();
+  const { editMode, isStaff } = useStaffSession();
   const viewMode = useViewMode();
-  const { isStaff } = useStaffSession();
   const shipping = useShippingSettings();
   const [quickEditOpen, setQuickEditOpen] = useState(false);
   const hidden = editMode && !product.is_active;
