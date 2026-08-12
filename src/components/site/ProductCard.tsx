@@ -112,7 +112,7 @@ export function ProductCard({
           {product.name}
         </h3>
 
-        <div className="relative mt-3 flex h-[69px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
+        <div className="relative mt-3 flex h-[89px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
             <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
               <div className="min-w-0 text-left">
                 <SpecLabel>MOQ</SpecLabel>
