@@ -115,8 +115,8 @@ function ShippingPage() {
             sea_min_weeks: Number(values["sea_min_weeks"] ?? 0),
             sea_max_weeks: Number(values["sea_max_weeks"] ?? 0),
           };
-          const air = airLeadDays(example, parsed);
-          const sea = seaLeadWeeks(example, parsed);
+          const air = airLeadDays(example, null, parsed);
+          const sea = seaLeadWeeks(example, null, parsed);
           return (
             <section key={source} className="rounded-xl border border-border p-4">
               <h2 className="font-semibold">{source}</h2>
