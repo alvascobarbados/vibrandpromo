@@ -35,7 +35,7 @@ function SpecLabel({ children }: { children: React.ReactNode }) {
 
 function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | null }) {
   return (
-    <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:179px)]:text-[13px]">
+    <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:199px)]:text-[13px]">
       <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
       <span className="whitespace-nowrap">{value ?? "On request"}</span>
     </p>
@@ -48,7 +48,7 @@ const EMPTY_PHRASE = "Quoted per order";
 function QuotedPerOrder({ className = "" }: { className?: string }) {
   return (
     <p
-      className={`card-value !whitespace-normal leading-tight !text-n-500 [@container(max-width:179px)]:text-[13px] ${className}`}
+      className={`card-value !whitespace-normal leading-tight !text-n-500 [@container(max-width:199px)]:text-[13px] ${className}`}
     >
       {EMPTY_PHRASE}
     </p>
@@ -125,7 +125,7 @@ export function ProductCard({
             <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
               <div className="min-w-0 text-left">
                 <SpecLabel>MOQ</SpecLabel>
-                <p className="card-value mt-1 h-[18px] [@container(max-width:179px)]:text-[13px]">
+                <p className="card-value mt-1 h-[18px] [@container(max-width:199px)]:text-[13px]">
                   {hasMoq ? specValue(product.moq) : "—"}
                 </p>
               </div>
