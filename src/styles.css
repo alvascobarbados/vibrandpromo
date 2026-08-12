@@ -48,6 +48,8 @@
   --color-n-900: var(--n-900);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-source-usa: var(--source-usa);
+  --color-source-factory: var(--source-factory);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --radius-sm: calc(var(--radius) - 4px);
