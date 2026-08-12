@@ -22,9 +22,16 @@ import {
   EMAIL_TYPE_LABELS,
   emailLogQuery,
   emailSettingsQuery,
+  emailTemplatesQuery,
+  TEMPLATE_DESCRIPTIONS,
+  TEMPLATE_LABELS,
+  type EmailLogRow,
   type EmailSettingsRow,
+  type TemplateType,
 } from "@/lib/email-settings";
 import { getEmailStatus, sendTestEmail, updateEmailSettings } from "@/lib/email.functions";
+import { EmailTemplateEditor } from "@/components/admin/EmailTemplateEditor";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/admin/email")({
   beforeLoad: ({ context }) => {
@@ -61,6 +68,9 @@ function EmailSettingsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const templates = useQuery(emailTemplatesQuery);
+  const [editing, setEditing] = useState<TemplateType | null>(null);
+  const [openLog, setOpenLog] = useState<EmailLogRow | null>(null);
 
   useEffect(() => {
     if (settings.data) setDraft(settings.data);
@@ -168,6 +178,7 @@ function EmailSettingsPage() {
       <Tabs defaultValue="settings" className="mt-6">
         <TabsList>
           <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="log">Email log</TabsTrigger>
         </TabsList>
 
