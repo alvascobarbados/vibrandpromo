@@ -112,14 +112,14 @@ function OptionRow({
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-center gap-2.5 rounded-md px-1.5 py-2 text-[13px] leading-[1.5] transition-colors duration-[150ms] ease-out lg:text-sm ${
+      className={`flex min-h-10 cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-[13px] leading-[1.25] transition-colors duration-[150ms] ease-out lg:min-h-8 ${
         checked ? "font-medium text-n-900" : "text-n-700"
       } hover:bg-n-50 ${indent ? "ml-4" : ""}`}
     >
-      <Checkbox checked={checked} onCheckedChange={onChange} />
+      <Checkbox checked={checked} onCheckedChange={onChange} className="mt-px size-4 shrink-0" />
       {dot}
       <span className="min-w-0 flex-1">{label}</span>
-      <span className="shrink-0 text-[11px] text-n-500">({count})</span>
+      <span className="shrink-0 text-right text-[12px] leading-5 text-n-400">({count})</span>
     </label>
   );
 }
@@ -140,9 +140,9 @@ function GroupBlock({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 py-1.5 text-left"
+        className="flex w-full items-center justify-between gap-2 text-left"
       >
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-n-500">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-n-400">
           {label}
         </span>
         {open ? (
@@ -151,7 +151,7 @@ function GroupBlock({
           <ChevronRight className="size-4 shrink-0 text-n-500" />
         )}
       </button>
-      {open ? <div className="mt-1">{children}</div> : null}
+      {open ? <div className="mt-2">{children}</div> : null}
     </div>
   );
 }
@@ -249,7 +249,7 @@ export function FilterPanel({
   }
 
   const groups = (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {PANEL_GROUPS.map((group) => {
         if (group === "cat") {
           const rows = renderCategoryTree();
@@ -282,7 +282,7 @@ export function FilterPanel({
   if (variant === "sidebar") {
     return (
       <div>
-        <div className="flex items-center justify-between gap-2 pb-3">
+        <div className="flex items-center justify-between gap-2 pb-4">
           <p className="text-sm font-semibold text-n-900">Filters</p>
           {activeCount ? (
             <button
