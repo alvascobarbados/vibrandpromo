@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { allProductsQuery } from "@/lib/catalog";
 
@@ -37,33 +38,43 @@ function BulkImages() {
   const products = useQuery(allProductsQuery);
   const [busy, setBusy] = useState(false);
   const [report, setReport] = useState<Report | null>(null);
+  const [replaceMode, setReplaceMode] = useState(false);
 
   async function handleFiles(files: File[]) {
     if (!files.length) return;
-    setBusy(true);
-    setReport(null);
-    try {
-      const bySku = new Map(
+    const bySku = new Map(
         (products.data ?? [])
           .filter((product) => product.sku)
           .map((product) => [product.sku!.toLowerCase(), product] as const),
       );
 
-      const groups = new Map<string, { order: number; file: File }[]>();
-      const unmatched: string[] = [];
+    const groups = new Map<string, { order: number; file: File }[]>();
+    const unmatched: string[] = [];
 
-      for (const file of files) {
-        const { sku, order } = parseName(file.name);
-        const key = sku.toLowerCase();
-        if (!bySku.has(key)) {
-          unmatched.push(file.name);
-          continue;
-        }
-        const list = groups.get(key) ?? [];
-        list.push({ order, file });
-        groups.set(key, list);
+    for (const file of files) {
+      const { sku, order } = parseName(file.name);
+      const key = sku.toLowerCase();
+      if (!bySku.has(key)) {
+        unmatched.push(file.name);
+        continue;
       }
+      const list = groups.get(key) ?? [];
+      list.push({ order, file });
+      groups.set(key, list);
+    }
 
+    if (replaceMode && groups.size) {
+      const confirmed = window.confirm(
+        `Replace mode is on. All existing photos will be deleted for ${groups.size} product${
+          groups.size === 1 ? "" : "s"
+        } and replaced with the files you just chose. Continue?`,
+      );
+      if (!confirmed) return;
+    }
+
+    setBusy(true);
+    setReport(null);
+    try {
       const attached: string[] = [];
 
       for (const [key, list] of groups) {
@@ -76,11 +87,18 @@ function BulkImages() {
           if (error) throw error;
           urls.push(path);
         }
+        const previous = (product.images ?? []).filter(
+          (value) => typeof value === "string" && !/^https?:\/\//i.test(value),
+        );
+        const nextImages = replaceMode ? urls : [...(product.images ?? []), ...urls];
         const { error: updateError } = await supabase
           .from("products")
-          .update({ images: urls })
+          .update({ images: nextImages })
           .eq("id", product.id);
         if (updateError) throw updateError;
+        if (replaceMode && previous.length) {
+          await supabase.storage.from("product-images").remove(previous);
+        }
         attached.push(`${product.sku} — ${urls.length} photo${urls.length === 1 ? "" : "s"}`);
       }
 
@@ -103,10 +121,24 @@ function BulkImages() {
       <p className="mt-2 text-sm text-muted-foreground">
         Drop in as many photos as you like. Each photo is attached to the product whose code matches
         the file name — 102006.jpg goes to product 102006. To control the order, number them:
-        102006-1.jpg, 102006-2.jpg, and so on. Uploading photos for a product replaces the photos it
-        already has.
+        102006-1.jpg, 102006-2.jpg, and so on. By default new photos are added to the photos a
+        product already has.
       </p>
       <p className="mt-2 text-sm font-medium">{missingCount} products still have no photos.</p>
+
+      <label className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm">
+        <Switch
+          checked={replaceMode}
+          onCheckedChange={setReplaceMode}
+          aria-label="Replace existing images"
+        />
+        <span>
+          <span className="font-medium">Replace existing images</span>
+          <span className="block text-muted-foreground">
+            Deletes every current photo for each matched product before adding the new ones.
+          </span>
+        </span>
+      </label>
 
       <label
         htmlFor="bulk-files"
