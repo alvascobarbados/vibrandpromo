@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, stripSearchParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +15,13 @@ import {
 import { useCatalogProducts } from "@/lib/staff-session";
 import { FilterPanel } from "@/components/site/FilterPanel";
 import { FilterBar } from "@/components/site/FilterBar";
-import { filterProducts, parseCatalogSearch, type CatalogSearch } from "@/lib/catalog-filters";
+import {
+  GROUP_LABELS,
+  filterProducts,
+  parseCatalogSearch,
+  type CatalogSearch,
+  type FilterGroupId,
+} from "@/lib/catalog-filters";
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
 
@@ -150,6 +156,19 @@ function CategoryPage() {
     node?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  const chips = (
+    ["sub", "moq", "prod", "colour", "deco", "src", "mat"] as FilterGroupId[]
+  ).flatMap((group) =>
+    search[group].map((value: string) => ({
+      group,
+      value,
+      label:
+        group === "sub"
+          ? ((subcategories.data ?? []).find((sub) => sub.slug === value)?.name ?? value)
+          : value,
+    })),
+  );
+
   const total = sections.reduce((sum, section) => sum + section.items.length, 0);
 
   if (!loading && !category) throw notFound();
@@ -220,6 +239,29 @@ function CategoryPage() {
           </aside>
 
           <div className="@container min-w-0 flex-1">
+        {chips.length ? (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {chips.map((chip) => (
+              <button
+                key={`${chip.group}-${chip.value}`}
+                type="button"
+                onClick={() => toggle(chip.group, chip.value)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-lime-500 px-3 py-1.5 text-xs font-medium text-n-700 hover:bg-lime-300"
+              >
+                <span className="text-n-700/70">{GROUP_LABELS[chip.group]}:</span>
+                {chip.label}
+                <X className="size-3" />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={clear}
+              className="text-xs font-semibold text-navy-500 hover:text-navy-700 hover:underline"
+            >
+              Clear all
+            </button>
+          </div>
+        ) : null}
         {loading ? (
           <div className="product-grid">
             {Array.from({ length: 8 }).map((_, index) => (
