@@ -31,31 +31,37 @@ export function ProductQuickEdit({
   const queryClient = useQueryClient();
   const [name, setName] = useState(product.name);
   const [moq, setMoq] = useState(product.moq == null ? "" : String(product.moq));
-  const [productionDays, setProductionDays] = useState(
-    product.production_days == null ? "" : String(product.production_days),
+  const [productionMin, setProductionMin] = useState(
+    product.production_min_days == null ? "" : String(product.production_min_days),
+  );
+  const [productionMax, setProductionMax] = useState(
+    product.production_max_days == null ? "" : String(product.production_max_days),
   );
   const [price, setPrice] = useState(product.price == null ? "" : String(product.price));
   const [showPrice, setShowPrice] = useState(product.show_price);
   const [shippingMethods, setShippingMethods] = useState(product.shipping_methods ?? "air_sea");
   const [rushEnabled, setRushEnabled] = useState(product.rush_enabled ?? false);
-  const [rushDays, setRushDays] = useState(
-    product.rush_production_days == null ? "" : String(product.rush_production_days),
+  const [rushMin, setRushMin] = useState(
+    product.rush_production_min_days == null ? "" : String(product.rush_production_min_days),
+  );
+  const [rushMax, setRushMax] = useState(
+    product.rush_production_max_days == null ? "" : String(product.rush_production_max_days),
   );
   const [isActive, setIsActive] = useState(product.is_active);
   const [isFeatured, setIsFeatured] = useState(product.is_featured);
   const [saving, setSaving] = useState(false);
   const shipping = useShippingSettings();
-  const parsedProduction = productionDays.trim() ? Number(productionDays) : null;
   const preview = {
-    production_days: Number.isFinite(parsedProduction as number) ? parsedProduction : null,
+    production_min_days: numberOrNull(productionMin),
+    production_max_days: numberOrNull(productionMax),
     inventory_source: product.inventory_source,
   };
-  const parsedRush = rushDays.trim() ? Number(rushDays) : null;
   const rushPreview = rushLeadLabel(
     {
-      production_days: null,
+      production_min_days: null,
       rush_enabled: true,
-      rush_production_days: Number.isFinite(parsedRush as number) ? parsedRush : null,
+      rush_production_min_days: numberOrNull(rushMin),
+      rush_production_max_days: numberOrNull(rushMax),
       inventory_source: product.inventory_source,
       shipping_methods: shippingMethods,
     },
@@ -88,22 +94,40 @@ export function ProductQuickEdit({
       toast.error("Name is required.");
       return;
     }
-    const normalProduction = numberOrNull(productionDays);
-    const rushProduction = numberOrNull(rushDays);
+    const normalMin = numberOrNull(productionMin);
+    const normalMax = numberOrNull(productionMax);
+    const rushProductionMin = numberOrNull(rushMin);
+    const rushProductionMax = numberOrNull(rushMax);
+    if (normalMax != null) {
+      if (normalMin == null) {
+        toast.error("Enter a minimum production time before adding a maximum.");
+        return;
+      }
+      if (normalMax < normalMin) {
+        toast.error("The maximum production time must be the same as or longer than the minimum.");
+        return;
+      }
+    }
     if (rushEnabled) {
       if (shippingMethods === "sea_only") {
         toast.error("Rush requires air shipping.");
         return;
       }
-      if (rushProduction == null || rushProduction < 1) {
+      if (rushProductionMin == null || rushProductionMin < 1) {
         toast.error("Please enter the rush production time in days.");
         return;
       }
-      if (normalProduction == null) {
+      if (rushProductionMax != null && rushProductionMax < rushProductionMin) {
+        toast.error(
+          "The maximum rush production time must be the same as or longer than the minimum.",
+        );
+        return;
+      }
+      if (normalMin == null) {
         toast.error("Add a normal production time before offering rush.");
         return;
       }
-      if (rushProduction >= normalProduction) {
+      if (rushProductionMin >= normalMin) {
         toast.error("Rush production time must be shorter than the normal production time.");
         return;
       }
@@ -116,9 +140,11 @@ export function ProductQuickEdit({
       .update({
         name: name.trim(),
         moq: numberOrNull(moq),
-        production_days: normalProduction,
+        production_min_days: normalMin,
+        production_max_days: normalMax,
         rush_enabled: rushEnabled,
-        rush_production_days: rushEnabled ? rushProduction : null,
+        rush_production_min_days: rushEnabled ? rushProductionMin : null,
+        rush_production_max_days: rushEnabled ? rushProductionMax : null,
         price: numberOrNull(price),
         show_price: showPrice,
         shipping_methods: shippingMethods,
@@ -164,13 +190,26 @@ export function ProductQuickEdit({
 
           <div>
             <Label htmlFor="qe-production">Production time (days)</Label>
-            <Input
-              id="qe-production"
-              inputMode="numeric"
-              value={productionDays}
-              placeholder="On request"
-              onChange={(e) => setProductionDays(e.target.value)}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                id="qe-production"
+                inputMode="numeric"
+                value={productionMin}
+                placeholder="min"
+                onChange={(e) => setProductionMin(e.target.value)}
+              />
+              <span className="text-sm text-muted-foreground">–</span>
+              <Input
+                id="qe-production-max"
+                inputMode="numeric"
+                value={productionMax}
+                placeholder="optional"
+                onChange={(e) => setProductionMax(e.target.value)}
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Enter one number for a fixed time, or both for a range.
+            </p>
             <p className="mt-1.5 text-xs text-muted-foreground">
               Lead time shown to customers: air{" "}
               {airLeadLabel(preview, shipping) ?? "On request"} · sea{" "}
@@ -208,13 +247,26 @@ export function ProductQuickEdit({
             ) : rushEnabled ? (
               <div>
                 <Label htmlFor="qe-rush">Rush production time (days)</Label>
-                <Input
-                  id="qe-rush"
-                  inputMode="numeric"
-                  value={rushDays}
-                  placeholder="Less than normal production"
-                  onChange={(e) => setRushDays(e.target.value)}
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="qe-rush"
+                    inputMode="numeric"
+                    value={rushMin}
+                    placeholder="min"
+                    onChange={(e) => setRushMin(e.target.value)}
+                  />
+                  <span className="text-sm text-muted-foreground">–</span>
+                  <Input
+                    id="qe-rush-max"
+                    inputMode="numeric"
+                    value={rushMax}
+                    placeholder="optional"
+                    onChange={(e) => setRushMax(e.target.value)}
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Enter one number for a fixed time, or both for a range.
+                </p>
                 <p className="mt-1.5 text-xs text-muted-foreground">
                   Rush lead time shown to customers: {rushPreview ?? "—"}
                 </p>
