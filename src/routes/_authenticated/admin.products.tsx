@@ -520,7 +520,7 @@ function AdminProducts() {
                             <span
                               aria-hidden
                               className={`size-2 shrink-0 rounded-full ${
-                                product.is_active ? "bg-lime-500" : "bg-n-300"
+                                product.is_active ? "bg-lime-500" : "bg-n-400"
                               }`}
                             />
                             {product.is_active ? "Active" : "Hidden"}
