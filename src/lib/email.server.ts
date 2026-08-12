@@ -446,6 +446,7 @@ export async function sendAndLog(
       type: args.type,
       recipient: args.to,
       subject: args.subject,
+      html: args.html,
       status: ok ? "sent" : "failed",
       error: error ?? null,
       quote_request_id: args.quoteRequestId ?? null,
@@ -470,7 +471,7 @@ export async function sendQuoteEmails(supabaseAdmin: Admin, quote: QuoteEmailPay
     const verified = await isDomainVerified();
 
     if (settings.staff_notify_enabled) {
-      const staff = staffTemplate(quote);
+      const staff = renderEmail("staff", await loadTemplate(supabaseAdmin, "staff"), quote);
       for (const recipient of settings.recipients) {
         await sendAndLog(supabaseAdmin, {
           type: "staff_notification",
@@ -485,7 +486,11 @@ export async function sendQuoteEmails(supabaseAdmin: Admin, quote: QuoteEmailPay
     }
 
     if (settings.customer_confirm_enabled) {
-      const customer = customerTemplate(quote);
+      const customer = renderEmail(
+        "customer",
+        await loadTemplate(supabaseAdmin, "customer"),
+        quote,
+      );
       await sendAndLog(supabaseAdmin, {
         type: "customer_confirmation",
         to: quote.email,
