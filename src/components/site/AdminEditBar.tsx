@@ -10,9 +10,10 @@ export function AdminEditBar({ workspace = "customer" }: { workspace?: Workspace
 
   if (!isStaff) return null;
 
-  // Edit mode belongs to the customer view only; the switcher shows everywhere
-  // a staff session exists, even after the toolbar has been dismissed.
-  const showEditTools = workspace === "customer" && !barDismissed;
+  // Edit mode is one shared staff-session state across the catalog workspaces
+  // (customer + supplier); the admin console has its own editors. The switcher
+  // shows everywhere a staff session exists, even after the bar is dismissed.
+  const showEditTools = workspace !== "admin" && !barDismissed;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-3 z-50 flex justify-center px-3">
