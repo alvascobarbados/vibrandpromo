@@ -4,10 +4,12 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  Contact,
   FileSpreadsheet,
   ImageUp,
   LayoutDashboard,
   LogOut,
+  Mail,
   Package,
   Tags,
   Truck,
@@ -49,11 +51,15 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
   },
   {
     label: "Sales",
-    items: [{ to: "/admin/quotes", label: "Quote Requests", icon: ClipboardList, page: "quotes" }],
+    items: [
+      { to: "/admin/quotes", label: "Quote Requests", icon: ClipboardList, page: "quotes" },
+      { to: "/admin/contacts", label: "Contacts", icon: Contact },
+    ],
   },
   {
     label: "Admin",
     items: [
+      { to: "/admin/email", label: "Email Settings", icon: Mail, adminOnly: true },
       { to: "/admin/shipping", label: "Shipping Times", icon: Truck, adminOnly: true },
       { to: "/admin/staff", label: "Staff", icon: Users, adminOnly: true },
     ],

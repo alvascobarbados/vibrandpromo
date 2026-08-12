@@ -40,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/admin/email")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: EmailSettingsPage;
+  component: EmailSettingsPage,
 });
 
 function EmailSettingsPage() {
