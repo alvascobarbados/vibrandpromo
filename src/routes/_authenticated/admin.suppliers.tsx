@@ -32,7 +32,14 @@ export const Route = createFileRoute("/_authenticated/admin/suppliers")({
   component: AdminSuppliers,
 });
 
-type CellKey = "name" | "code" | "country" | "default_shipping_mode" | "unit_system" | "notes";
+type CellKey =
+  | "name"
+  | "code"
+  | "country"
+  | "default_shipping_mode"
+  | "unit_system"
+  | "contact"
+  | "notes";
 
 const HEAD = "px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground";
 const CELL = "px-3 py-0 align-middle";
@@ -233,6 +240,7 @@ function AdminSuppliers() {
                 <th className={`${HEAD} w-40`}>Country</th>
                 <th className={`${HEAD} w-28`}>Shipping</th>
                 <th className={`${HEAD} w-28`}>Units</th>
+                <th className={`${HEAD} w-40`}>Contact</th>
                 <th className={HEAD}>Notes</th>
                 <th className={`${HEAD} w-24 text-right`}>Products</th>
                 <th className={`${HEAD} w-24 text-right`}>Actions</th>
@@ -267,8 +275,8 @@ function AdminSuppliers() {
                       onChange={(event) => setNewCountry(event.target.value)}
                     />
                   </td>
-                  <td className={`${CELL} text-muted-foreground`} colSpan={4}>
-                    Shipping, units and notes can be set once the row is added.
+                  <td className={`${CELL} text-muted-foreground`} colSpan={5}>
+                    Shipping, units, contact and notes can be set once the row is added.
                   </td>
                   <td className={`${CELL} text-right`}>
                     <div className="flex justify-end gap-1 py-1.5">
@@ -297,6 +305,7 @@ function AdminSuppliers() {
                     {editableCell(supplier, "country")}
                     {choiceCell(supplier, "default_shipping_mode")}
                     {choiceCell(supplier, "unit_system")}
+                    {editableCell(supplier, "contact")}
                     {editableCell(supplier, "notes", "text-muted-foreground")}
                     <td className={`${CELL} text-right tabular-nums`}>{used}</td>
                     <td className={`${CELL} text-right`}>
@@ -339,7 +348,7 @@ function AdminSuppliers() {
 
               {!rows.length && !adding ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-10 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-3 py-10 text-center text-muted-foreground">
                     No suppliers yet. Add your first one to start assigning products.
                   </td>
                 </tr>
