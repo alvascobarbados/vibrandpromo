@@ -3,7 +3,6 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SourceScopeToggle } from "@/components/site/SourceScope";
 import {
   AIR_LEAD_BUCKETS,
   COLOUR_OPTIONS,
@@ -22,15 +21,12 @@ import {
   type CatalogSearch,
   type FilterGroupId,
 } from "@/lib/catalog-filters";
-import type { SourceScope } from "@/lib/use-catalog-filters";
 import { useShippingSettings, type ShippingMap } from "@/lib/shipping";
 
 type Option = { value: string; label: string };
 
-/** The `src` group is surfaced by the segmented scope control instead. */
-const PANEL_GROUPS: FilterGroupId[] = GROUP_IDS.filter(
-  (group) => group !== "sub" && group !== "src",
-);
+/** Subcategories are rendered nested inside the category tree. */
+const PANEL_GROUPS: FilterGroupId[] = GROUP_IDS.filter((group) => group !== "sub");
 
 export function useFilterOptions(
   products: Product[],
@@ -85,8 +81,6 @@ type Props = {
   subcategories: Subcategory[];
   search: CatalogSearch;
   resultCount: number;
-  scope: SourceScope;
-  onScope: (next: SourceScope) => void;
   onToggle: (group: FilterGroupId, value: string) => void;
   onClear: () => void;
   variant: "drawer" | "sidebar";
@@ -161,8 +155,6 @@ export function FilterPanel({
   subcategories,
   search,
   resultCount,
-  scope,
-  onScope,
   onToggle,
   onClear,
   variant,
@@ -251,13 +243,6 @@ export function FilterPanel({
 
   const groups = (
     <div className="space-y-5">
-      <div>
-        <p className="pb-2 text-[11px] font-semibold uppercase tracking-wide text-n-500">
-          {GROUP_LABELS.src}
-        </p>
-        <SourceScopeToggle value={scope} onChange={onScope} />
-      </div>
-
       {PANEL_GROUPS.map((group) => {
         if (group === "cat") {
           const rows = renderCategoryTree();
