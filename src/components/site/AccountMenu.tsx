@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useStaffSession } from "@/lib/staff-session";
 
-export function AccountMenu() {
+export function AccountMenu({ tone = "dark" }: { tone?: "dark" | "light" }) {
   const { hasSession, isStaff, access, signOut } = useStaffSession();
   const navigate = useNavigate();
 
@@ -20,9 +20,11 @@ export function AccountMenu() {
       <Link
         to="/auth"
         aria-label="Staff sign in"
-        className="relative inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-n-700/10"
+        className={`relative inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+          tone === "light" ? "hover:bg-white/10" : "hover:bg-n-700/10"
+        }`}
       >
-        <UserRound className="size-5 text-n-700" />
+        <UserRound className={`size-5 ${tone === "light" ? "text-white" : "text-n-700"}`} />
       </Link>
     );
   }
@@ -31,9 +33,11 @@ export function AccountMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Account menu"
-        className="relative inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-n-700/10"
+        className={`relative inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+          tone === "light" ? "hover:bg-white/10" : "hover:bg-n-700/10"
+        }`}
       >
-        <UserRound className="size-5 text-n-700" />
+        <UserRound className={`size-5 ${tone === "light" ? "text-white" : "text-n-700"}`} />
         {isStaff ? (
           <span className="absolute right-1 top-1 size-2.5 rounded-full border border-white bg-lime-500" />
         ) : null}

@@ -13,8 +13,16 @@ import { useStaffSession } from "@/lib/staff-session";
 import { categoriesQuery } from "@/lib/catalog";
 import { COMPANY } from "@/lib/territories";
 import wordmarkCharcoal from "@/assets/wordmark-charcoal.png";
+import wordmarkLime from "@/assets/wordmark-lime.png";
 import markCharcoal from "@/assets/mark-charcoal.png";
 import markLime from "@/assets/mark-lime.png";
+
+/**
+ * Workspace presentation seam. "customer" is the public site; "supplier" is the
+ * staff-only /team workspace. Today it only flips branding — supplier-specific
+ * UI (cost fields, margin tools) will hang off this prop later.
+ */
+export type ViewMode = "customer" | "supplier";
 
 const NAV = [
   { to: "/", label: "Categories" },
@@ -23,11 +31,30 @@ const NAV = [
   { to: "/contact", label: "Contact" },
 ] as const;
 
-function Logo() {
+function Logo({ viewMode }: { viewMode: ViewMode }) {
+  const supplier = viewMode === "supplier";
   return (
-    <Link to="/" search={{}} aria-label="Vibrand — full catalogue" className="flex items-center">
-      <img src={markCharcoal} alt="Vibrand" className="h-8 w-auto sm:hidden" />
-      <img src={wordmarkCharcoal} alt="Vibrand" className="hidden h-8 w-auto sm:block" />
+    <Link
+      to={supplier ? "/team" : "/"}
+      search={{}}
+      aria-label={supplier ? "Vibrand Supplier — full catalogue" : "Vibrand — full catalogue"}
+      className="flex items-center gap-2"
+    >
+      <img
+        src={supplier ? markLime : markCharcoal}
+        alt="Vibrand"
+        className="h-8 w-auto sm:hidden"
+      />
+      <img
+        src={supplier ? wordmarkLime : wordmarkCharcoal}
+        alt="Vibrand"
+        className="hidden h-8 w-auto sm:block"
+      />
+      {supplier ? (
+        <span className="hidden text-sm font-semibold uppercase tracking-wide text-lime-500 sm:inline">
+          Supplier
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -77,17 +104,24 @@ function HeaderSearch() {
 export function SiteLayout({
   children,
   headerSlot,
+  viewMode = "customer",
 }: {
   children: React.ReactNode;
   headerSlot?: React.ReactNode;
+  viewMode?: ViewMode;
 }) {
+  const supplier = viewMode === "supplier";
   const [open, setOpen] = useState(false);
   const categories = useQuery(categoriesQuery);
   const { isStaff } = useStaffSession();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-40 border-b border-lime-700/20 bg-lime-500">
+      <header
+        className={`sticky top-0 z-40 border-b ${
+          supplier ? "border-black/20 bg-n-700" : "border-lime-700/20 bg-lime-500"
+        }`}
+      >
         <div className="site-container">
           <div className="flex h-16 flex-nowrap items-center gap-2 sm:gap-3">
             <Sheet open={open} onOpenChange={setOpen}>
@@ -96,7 +130,11 @@ export function SiteLayout({
                 variant="ghost"
                 size="icon"
                 aria-label="Open menu"
-                className="shrink-0 text-n-700 hover:bg-n-700/10 hover:text-n-700"
+                className={
+                  supplier
+                    ? "shrink-0 text-white hover:bg-white/10 hover:text-white"
+                    : "shrink-0 text-n-700 hover:bg-n-700/10 hover:text-n-700"
+                }
               >
                 <Menu className="size-5" />
               </Button>
@@ -154,14 +192,14 @@ export function SiteLayout({
             </SheetContent>
             </Sheet>
             <div className="shrink-0">
-              <Logo />
+              <Logo viewMode={viewMode} />
             </div>
             <div className="min-w-0 flex-1">{headerSlot ?? <HeaderSearch />}</div>
             <div className="shrink-0">
-              <QuoteBasketButton />
+              <QuoteBasketButton tone={supplier ? "light" : "dark"} />
             </div>
             <div className="shrink-0">
-              <AccountMenu />
+              <AccountMenu tone={supplier ? "light" : "dark"} />
             </div>
           </div>
         </div>
@@ -169,7 +207,7 @@ export function SiteLayout({
 
       <main className="flex-1">{children}</main>
 
-      <AdminEditBar />
+      <AdminEditBar workspace={viewMode} />
 
       <footer className="border-t border-navy-800 bg-navy-900 text-white">
         <div className="site-container grid gap-10 py-10 md:grid-cols-3 lg:py-16">

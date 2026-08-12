@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminEditBar } from "@/components/site/AdminEditBar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyAccess } from "@/lib/staff.functions";
@@ -95,6 +96,8 @@ function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      <AdminEditBar workspace="admin" />
     </div>
   );
 }
