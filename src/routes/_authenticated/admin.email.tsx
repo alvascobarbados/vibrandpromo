@@ -318,6 +318,46 @@ function EmailSettingsPage() {
           </section>
         </TabsContent>
 
+        <TabsContent value="templates" className="pt-4">
+          {editing ? (
+            <EmailTemplateEditor
+              key={editing}
+              type={editing}
+              row={templates.data?.find((row) => row.template_type === editing)}
+              onBack={() => setEditing(null)}
+            />
+          ) : templates.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading templates…</p>
+          ) : (
+            <ul className="divide-y divide-n-200 overflow-hidden rounded-xl border border-border bg-white">
+              {(["staff", "customer"] as TemplateType[]).map((type) => {
+                const row = templates.data?.find((item) => item.template_type === type);
+                return (
+                  <li key={type} className="flex flex-wrap items-center gap-3 p-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">{TEMPLATE_LABELS[type]}</p>
+                      <p className="text-sm text-muted-foreground">{TEMPLATE_DESCRIPTIONS[type]}</p>
+                      <p className="mt-1 truncate text-sm">
+                        <span className="text-n-500">Subject:</span> {row?.subject ?? "—"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {row
+                          ? `Edited${row.updated_by_name ? ` by ${row.updated_by_name}` : ""} · ${new Date(
+                              row.updated_at,
+                            ).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+                          : "Using the default copy"}
+                      </p>
+                    </div>
+                    <Button variant="outline" onClick={() => setEditing(type)} disabled={!row}>
+                      Edit
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </TabsContent>
+
         <TabsContent value="log" className="pt-4">
           {/* log tab */}
           <div className="flex flex-wrap gap-2">
