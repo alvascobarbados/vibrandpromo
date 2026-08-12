@@ -1,9 +1,10 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, stripSearchParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
 import {
@@ -12,8 +13,31 @@ import {
   type Product,
 } from "@/lib/catalog";
 import { useCatalogProducts } from "@/lib/staff-session";
+import { FilterPanel } from "@/components/site/FilterPanel";
+import { FilterBar } from "@/components/site/FilterBar";
+import { filterProducts, parseCatalogSearch, type CatalogSearch } from "@/lib/catalog-filters";
+import { useCatalogFilters } from "@/lib/use-catalog-filters";
+import { useShippingSettings } from "@/lib/shipping";
 
 export const Route = createFileRoute("/c/$slug")({
+  validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> =>
+    parseCatalogSearch(search),
+  search: {
+    middlewares: [
+      stripSearchParams({
+        q: "",
+        sort: "default",
+        cat: [],
+        sub: [],
+        moq: [],
+        prod: [],
+        colour: [],
+        deco: [],
+        src: [],
+        mat: [],
+      }),
+    ],
+  },
   head: ({ params }) => {
     const name = params.slug
       .split("-")
@@ -54,17 +78,34 @@ function CategoryPage() {
   const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
+  const shipping = useShippingSettings();
+  const { search, scope, setScope, toggle, clear, activeCount } = useCatalogFilters();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeChip, setActiveChip] = useState("all");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const category = (categories.data ?? []).find((c) => c.slug === slug);
   const loading = products.isLoading || categories.isLoading || subcategories.isLoading;
 
+  const inCategory = useMemo(
+    () => (products.data ?? []).filter((p) => p.category_id === category?.id),
+    [products.data, category?.id],
+  );
+
+  const matching = useMemo(
+    () =>
+      filterProducts(inCategory, search, {
+        categories: categories.data ?? [],
+        subcategories: subcategories.data ?? [],
+        shipping,
+      }),
+    [inCategory, search, categories.data, subcategories.data, shipping],
+  );
+
   const sections = useMemo(() => {
     if (!category) return [] as { id: string; slug: string; name: string; items: Product[] }[];
-    const inCategory = (products.data ?? []).filter((p) => p.category_id === category.id);
     const bySub = new Map<string, Product[]>();
-    for (const product of inCategory) {
+    for (const product of matching) {
       const key = product.subcategory_id ?? "none";
       const list = bySub.get(key) ?? [];
       list.push(product);
@@ -79,7 +120,7 @@ function CategoryPage() {
         items: bySub.get(sub.id) ?? [],
       }))
       .filter((section) => section.items.length > 0);
-  }, [category, products.data, subcategories.data]);
+  }, [category, matching, subcategories.data]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -156,7 +197,28 @@ function CategoryPage() {
         </div>
       </div>
 
-      <div id="category-top" className="site-container @container py-6 lg:py-8">
+      <div id="category-top" className="site-container py-6 pb-28 lg:py-8 lg:pb-16">
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+          <aside className="hidden w-[250px] shrink-0 lg:block">
+            <div className="sticky top-40 max-h-[calc(100vh-11rem)] overflow-y-auto pr-2">
+              <FilterPanel
+                variant="sidebar"
+                products={inCategory}
+                categories={categories.data ?? []}
+                subcategories={subcategories.data ?? []}
+                search={search}
+                resultCount={matching.length}
+                scope={scope}
+                onScope={setScope}
+                onToggle={toggle}
+                onClear={clear}
+                activeCount={activeCount}
+                {...(category ? { fixedCategoryId: category.id } : {})}
+              />
+            </div>
+          </aside>
+
+          <div className="@container min-w-0 flex-1">
         {loading ? (
           <div className="product-grid">
             {Array.from({ length: 8 }).map((_, index) => (
@@ -164,9 +226,20 @@ function CategoryPage() {
             ))}
           </div>
         ) : sections.length === 0 ? (
-          <p className="py-16 text-center text-muted-foreground">
-            No products in this category yet.
-          </p>
+          <div className="py-16 text-center">
+            <p className="text-muted-foreground">
+              {activeCount ? "No products match your filters." : "No products in this category yet."}
+            </p>
+            {activeCount ? (
+              <button
+                type="button"
+                onClick={clear}
+                className="mt-4 rounded-full border border-n-200 px-4 py-2 text-sm font-semibold text-navy-700 hover:bg-navy-50"
+              >
+                Clear filters
+              </button>
+            ) : null}
+          </div>
         ) : (
           <div className="space-y-10 lg:space-y-16">
             {sections.map((section) => (
@@ -190,7 +263,37 @@ function CategoryPage() {
             ))}
           </div>
         )}
+          </div>
+        </div>
       </div>
+
+      <FilterBar
+        activeCount={activeCount}
+        scope={scope}
+        onScope={setScope}
+        onOpenFilters={() => setFiltersOpen(true)}
+        suppressed={filtersOpen}
+      />
+
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
+          <FilterPanel
+            variant="drawer"
+            products={inCategory}
+            categories={categories.data ?? []}
+            subcategories={subcategories.data ?? []}
+            search={search}
+            resultCount={matching.length}
+            scope={scope}
+            onScope={setScope}
+            onToggle={toggle}
+            onClear={clear}
+            activeCount={activeCount}
+            {...(category ? { fixedCategoryId: category.id } : {})}
+            onClose={() => setFiltersOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
     </SiteLayout>
   );
 }
