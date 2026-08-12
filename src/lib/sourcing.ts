@@ -149,3 +149,37 @@ export async function createSupplier(input: { name: string; code: string }) {
   if (error) throw error;
   return data as Supplier;
 }
+
+/**
+ * Admin products list row: the product plus its sourcing link and supplier in a
+ * single staff-only query. Public/anonymous catalogue queries (publicProductsQuery)
+ * never select these fields, and `product_sourcing`/`suppliers` are staff-only by RLS.
+ */
+export type AdminProductRow = Product & {
+  product_sourcing: Array<{
+    supplier_id: string | null;
+    supplier_item_no: string | null;
+    suppliers: { id: string; code: string; name: string } | null;
+  }>;
+};
+
+const sel = (s: string): string => s;
+
+export const adminProductRowsQuery = queryOptions({
+  queryKey: ["products", "all", "sourcing"],
+  queryFn: async (): Promise<AdminProductRow[]> => {
+    const { data, error } = await supabase
+      .from("products")
+      .select(
+        sel("*, product_sourcing(supplier_id, supplier_item_no, suppliers(id, code, name))"),
+      )
+      .order("created_at", { ascending: false })
+      .returns<AdminProductRow[]>();
+    if (error) throw error;
+    return data ?? [];
+  },
+});
+
+export function rowSourcing(row: AdminProductRow) {
+  return row.product_sourcing?.[0] ?? null;
+}
