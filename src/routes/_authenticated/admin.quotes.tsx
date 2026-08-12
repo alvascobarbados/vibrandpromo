@@ -1,9 +1,12 @@
 import { requirePage } from "@/lib/admin-guard";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -12,8 +15,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { QuoteDetailDrawer } from "@/components/admin/QuoteDetailDrawer";
+import { useIsDesktop } from "@/hooks/use-desktop";
 import { supabase } from "@/integrations/supabase/client";
-import { QUOTE_STATUSES, quoteRequestItemsQuery, quoteRequestsQuery } from "@/lib/admin";
+import {
+  QUOTE_STATUSES,
+  quoteProductsQuery,
+  quoteRequestItemsQuery,
+  quoteRequestsQuery,
+  type QuoteRequest,
+} from "@/lib/admin";
 
 const STATUS_BADGE: Record<string, string> = {
   new: "bg-lime-500 text-n-700",
@@ -21,6 +32,37 @@ const STATUS_BADGE: Record<string, string> = {
   quoted: "bg-success text-success-foreground",
   closed: "bg-n-500 text-white",
 };
+
+const PAGE_SIZE = 50;
+
+type SortKey = "created_at" | "customer_name" | "company" | "status";
+
+const COLUMNS: { key: SortKey | null; label: string; className?: string }[] = [
+  { key: "created_at", label: "Age", className: "w-16" },
+  { key: "status", label: "Status", className: "w-40" },
+  { key: "customer_name", label: "Customer" },
+  { key: "company", label: "Company" },
+  { key: null, label: "Territory" },
+  { key: null, label: "Items", className: "w-16 text-right" },
+  { key: null, label: "Contact" },
+  { key: "created_at", label: "Submitted", className: "w-40" },
+];
+
+function relativeAge(iso: string) {
+  const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return "now";
+  const minutes = seconds / 60;
+  if (minutes < 60) return `${Math.floor(minutes)}m`;
+  const hours = minutes / 60;
+  if (hours < 24) return `${Math.floor(hours)}h`;
+  const days = hours / 24;
+  if (days < 30) return `${Math.floor(days)}d`;
+  return `${Math.floor(days / 30)}mo`;
+}
+
+function statusLabel(status: string) {
+  return status.replace("_", " ");
+}
 
 export const Route = createFileRoute("/_authenticated/admin/quotes")({
   beforeLoad: ({ context }) => requirePage(context.access, "quotes"),
@@ -40,8 +82,84 @@ function AdminQuotes() {
   const queryClient = useQueryClient();
   const quotes = useQuery(quoteRequestsQuery);
   const items = useQuery(quoteRequestItemsQuery);
-  const [filter, setFilter] = useState("all");
+  const products = useQuery(quoteProductsQuery);
+  const isDesktop = useIsDesktop();
+  const navigate = useNavigate();
+  const raw = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const [open, setOpen] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const search = typeof raw["q"] === "string" ? (raw["q"] as string) : "";
+  const filter = typeof raw["status"] === "string" ? (raw["status"] as string) : "all";
+  const sort = (typeof raw["sort"] === "string" ? raw["sort"] : "created_at") as SortKey;
+  const dir = raw["dir"] === "asc" ? "asc" : "desc";
+  const page = Math.max(1, Number(raw["page"] ?? 1) || 1);
+
+  const go = (patch: Record<string, string | number | undefined>) => {
+    const next: Record<string, unknown> = { ...raw, ...patch };
+    for (const key of Object.keys(next)) {
+      const value = next[key];
+      if (value === undefined || value === "" || value === "all" || value === 1) delete next[key];
+    }
+    void navigate({ search: next as never, replace: true, resetScroll: false } as never);
+  };
+
+  const productsById = useMemo(
+    () => new Map((products.data ?? []).map((product) => [product.id, product])),
+    [products.data],
+  );
+
+  const itemsByQuote = useMemo(() => {
+    const map = new Map<string, typeof items.data extends undefined ? never : NonNullable<typeof items.data>>();
+    for (const item of items.data ?? []) {
+      const list = map.get(item.quote_request_id) ?? [];
+      list.push(item);
+      map.set(item.quote_request_id, list);
+    }
+    return map;
+  }, [items.data]);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const quote of quotes.data ?? []) counts[quote.status] = (counts[quote.status] ?? 0) + 1;
+    return counts;
+  }, [quotes.data]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return (quotes.data ?? []).filter((quote) => {
+      if (filter !== "all" && quote.status !== filter) return false;
+      if (!term) return true;
+      const skus = (itemsByQuote.get(quote.id) ?? [])
+        .map((item) =>
+          [item.product_name, item.product_id ? productsById.get(item.product_id)?.sku ?? "" : ""].join(
+            " ",
+          ),
+        )
+        .join(" ");
+      return `${quote.customer_name} ${quote.company} ${quote.email} ${quote.territory} ${skus}`
+        .toLowerCase()
+        .includes(term);
+    });
+  }, [quotes.data, filter, search, itemsByQuote, productsById]);
+
+  const sorted = useMemo(() => {
+    const list = [...filtered].sort((a, b) => {
+      if (sort === "created_at") return a.created_at.localeCompare(b.created_at);
+      return String(a[sort]).localeCompare(String(b[sort]), undefined, { sensitivity: "base" });
+    });
+    return dir === "asc" ? list : list.reverse();
+  }, [filtered, sort, dir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const current = Math.min(page, totalPages);
+  const pageRows = sorted.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+
+  const filteredCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const quote of sorted) counts[quote.status] = (counts[quote.status] ?? 0) + 1;
+    return counts;
+  }, [sorted]);
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -55,43 +173,207 @@ function AdminQuotes() {
     onError: () => toast.error("Could not update status"),
   });
 
-  const visible = (quotes.data ?? []).filter(
-    (quote) => filter === "all" || quote.status === filter,
+  function toggleSort(key: SortKey) {
+    if (key === sort) go({ dir: dir === "asc" ? "desc" : "asc", page: 1 });
+    else go({ sort: key === "created_at" ? undefined : key, dir: "desc", page: 1 });
+  }
+
+  function StatusChip({ quote, className = "" }: { quote: QuoteRequest; className?: string }) {
+    return (
+      <Select
+        value={quote.status}
+        onValueChange={(status) => updateStatus.mutate({ id: quote.id, status })}
+      >
+        <SelectTrigger
+          onClick={(event) => event.stopPropagation()}
+          className={`h-6 w-fit gap-1 rounded-full border-0 px-2.5 py-0 text-[11px] font-bold uppercase tracking-wide shadow-none focus:ring-0 focus:ring-offset-0 ${STATUS_BADGE[quote.status] ?? "bg-n-500 text-white"} ${className}`}
+        >
+          {statusLabel(quote.status)}
+        </SelectTrigger>
+        <SelectContent>
+          {QUOTE_STATUSES.map((status) => (
+            <SelectItem key={status} value={status}>
+              {statusLabel(status)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  const selectedQuote = (quotes.data ?? []).find((quote) => quote.id === selected) ?? null;
+
+  const toolbar = (
+    <div className="mt-5 flex flex-wrap items-center gap-2">
+      <Input
+        className="sm:max-w-xs"
+        value={search}
+        placeholder="Search customer, company, email, SKU…"
+        onChange={(event) => go({ q: event.target.value, page: 1 })}
+      />
+      <Select value={filter} onValueChange={(value) => go({ status: value, page: 1 })}>
+        <SelectTrigger className="w-[210px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All statuses ({(quotes.data ?? []).length})</SelectItem>
+          {QUOTE_STATUSES.map((status) => (
+            <SelectItem key={status} value={status}>
+              {statusLabel(status)} ({statusCounts[status] ?? 0})
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-sm text-n-500">{sorted.length} results</p>
+    </div>
+  );
+
+  const footer = (
+    <p className="mt-3 text-xs text-n-500">
+      {sorted.length} request{sorted.length === 1 ? "" : "s"}
+      {QUOTE_STATUSES.filter((status) => (filteredCounts[status] ?? 0) > 0).map(
+        (status) => ` · ${filteredCounts[status]} ${statusLabel(status)}`,
+      )}
+    </p>
   );
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-n-900">Quote requests</h1>
-          <p className="mt-2 text-n-500">{visible.length} shown</p>
-        </div>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {QUOTE_STATUSES.map((status) => (
-              <SelectItem key={status} value={status}>
-                {status.replace("_", " ")}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div>
+        <h1 className="text-2xl font-bold text-n-900">Quote requests</h1>
+        <p className="mt-1 text-sm text-n-500">
+          One row per request — click a row for the full detail.
+        </p>
       </div>
+
+      {toolbar}
 
       {quotes.isLoading ? (
         <div className="mt-6 space-y-3">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-24 rounded-2xl" />
+            <Skeleton key={index} className="h-12 rounded-lg" />
           ))}
         </div>
-      ) : visible.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <p className="mt-10 text-n-500">No requests match this filter.</p>
+      ) : isDesktop ? (
+        <>
+          <div className="mt-4 overflow-x-auto rounded-xl border border-n-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-white">
+                <tr className="border-b border-n-200">
+                  {COLUMNS.map((column, index) => (
+                    <th
+                      key={`${column.label}-${index}`}
+                      className={`whitespace-nowrap px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-n-500 ${column.className ?? ""}`}
+                    >
+                      {column.key ? (
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 hover:text-n-900"
+                          onClick={() => toggleSort(column.key as SortKey)}
+                        >
+                          {column.label}
+                          {sort === column.key ? (
+                            dir === "asc" ? (
+                              <ArrowUp className="size-3" />
+                            ) : (
+                              <ArrowDown className="size-3" />
+                            )
+                          ) : null}
+                        </button>
+                      ) : (
+                        column.label
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pageRows.map((quote) => {
+                  const isNew = quote.status === "new";
+                  return (
+                    <tr
+                      key={quote.id}
+                      onClick={() => setSelected(quote.id)}
+                      className="cursor-pointer border-b border-n-200 last:border-0 hover:bg-navy-50"
+                    >
+                      <td
+                        className="whitespace-nowrap px-3 py-2 text-n-500"
+                        title={new Date(quote.created_at).toLocaleString()}
+                      >
+                        {relativeAge(quote.created_at)}
+                      </td>
+                      <td className="px-3 py-2">
+                        <StatusChip quote={quote} />
+                      </td>
+                      <td
+                        className={`whitespace-nowrap px-3 py-2 ${isNew ? "font-medium text-n-900" : "text-n-700"}`}
+                      >
+                        {isNew ? (
+                          <span className="mr-2 inline-block size-1.5 rounded-full bg-lime-500 align-middle" />
+                        ) : null}
+                        {quote.customer_name}
+                      </td>
+                      <td className={`px-3 py-2 ${isNew ? "font-medium text-n-900" : "text-n-700"}`}>
+                        {quote.company}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2 text-n-700">{quote.territory}</td>
+                      <td className="px-3 py-2 text-right text-n-700">
+                        {(itemsByQuote.get(quote.id) ?? []).length}
+                      </td>
+                      <td className="px-3 py-2">
+                        <a
+                          href={`mailto:${quote.email}`}
+                          onClick={(event) => event.stopPropagation()}
+                          className="text-navy-500 hover:underline"
+                        >
+                          {quote.email}
+                        </a>
+                        {quote.phone ? (
+                          <p className="text-xs text-n-500">{quote.phone}</p>
+                        ) : null}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2 text-n-700">
+                        {new Date(quote.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-4">
+            {footer}
+            {totalPages > 1 ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={current <= 1}
+                  onClick={() => go({ page: current - 1 })}
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <span className="text-xs text-n-500">
+                  Page {current} of {totalPages}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={current >= totalPages}
+                  onClick={() => go({ page: current + 1 })}
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </>
       ) : (
         <div className="mt-6 space-y-4">
-          {visible.map((quote) => {
+          {pageRows.map((quote) => {
             const quoteItems = (items.data ?? []).filter(
               (item) => item.quote_request_id === quote.id,
             );
@@ -131,7 +413,7 @@ function AdminQuotes() {
                     <SelectContent>
                       {QUOTE_STATUSES.map((status) => (
                         <SelectItem key={status} value={status}>
-                          {status.replace("_", " ")}
+                          {statusLabel(status)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -183,6 +465,14 @@ function AdminQuotes() {
           })}
         </div>
       )}
+
+      <QuoteDetailDrawer
+        quote={selectedQuote}
+        items={itemsByQuote.get(selected ?? "") ?? []}
+        productsById={productsById}
+        statusControl={selectedQuote ? <StatusChip quote={selectedQuote} /> : null}
+        onClose={() => setSelected(null)}
+      />
     </div>
   );
 }
