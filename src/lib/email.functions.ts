@@ -143,11 +143,14 @@ export const saveEmailTemplate = createServerFn({ method: "POST" })
     const { findUnknownTags, MERGE_TAGS } = await import("@/lib/email.server");
     const unknown = findUnknownTags(data.draft);
     if (unknown.length) {
-      throw new Error(
-        `These merge tags aren't recognised: ${unknown
+      // Expected user-input problem — return it as data so it surfaces as a toast,
+      // not as an uncaught server-function error.
+      return {
+        ok: false as const,
+        error: `These merge tags aren't recognised: ${unknown
           .map((tag) => `{{${tag}}}`)
           .join(", ")}. Valid tags are ${MERGE_TAGS.map((tag) => `{{${tag}}}`).join(", ")}.`,
-      );
+      };
     }
 
     const { data: profile } = await context.supabase
