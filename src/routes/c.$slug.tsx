@@ -188,7 +188,7 @@ function CategoryPage() {
   return (
     <SiteLayout>
       <div className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="site-container">
+        <div className="site-container xl:max-w-[1344px]">
           <div className="flex items-center gap-2 py-3">
             <Link
               to="/"
@@ -229,9 +229,9 @@ function CategoryPage() {
         </div>
       </div>
 
-      <div id="category-top" className="site-container py-6 pb-28 lg:py-8 lg:pb-16">
-        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
-          <aside className="hidden w-[250px] shrink-0 lg:block">
+      <div id="category-top" className="site-container xl:max-w-[1344px] py-6 pb-28 lg:py-8 lg:pb-16">
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-6 xl:gap-8">
+          <aside className="hidden w-[240px] shrink-0 lg:block">
             <div className="sticky top-40 max-h-[calc(100vh-11rem)] overflow-y-auto pr-2">
               <FilterPanel
                 variant="sidebar"
