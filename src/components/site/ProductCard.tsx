@@ -35,7 +35,7 @@ function SpecLabel({ children }: { children: React.ReactNode }) {
 
 function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | null }) {
   return (
-    <p className="card-value flex h-[18px] items-center gap-1.5">
+    <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:179px)]:text-[13px]">
       <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
       <span className="whitespace-nowrap">{value ?? "On request"}</span>
     </p>
@@ -97,21 +97,25 @@ export function ProductCard({
           {product.name}
         </h3>
 
-        <div className="relative mt-3 grid grid-cols-[40%_60%] items-stretch border-t border-n-200 pt-3">
-          <div className="flex min-w-0 justify-center pr-[12px]">
-            <div className="min-w-0">
+        <div className="relative mt-3 flex items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
+          <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
+            <div className="min-w-0 text-left">
               <SpecLabel>MOQ</SpecLabel>
-              <p className="card-value mt-1 h-[18px] overflow-hidden text-ellipsis">
+              <p className="card-value mt-1 h-[18px] [@container(max-width:179px)]:text-[13px]">
                 {specValue(product.moq)}
               </p>
             </div>
           </div>
           <div
-            className="absolute bottom-0 left-[40%] top-3 w-px bg-n-200"
+            className="mr-[12px] w-px shrink-0 self-stretch bg-n-200 [@container(min-width:200px)]:hidden"
             aria-hidden="true"
           />
-          <div className="flex min-w-0 justify-center pl-[12px]">
-            <div className="min-w-0">
+          <div
+            className="absolute bottom-0 left-[40%] top-3 hidden w-px bg-n-200 [@container(min-width:200px)]:block"
+            aria-hidden="true"
+          />
+          <div className="flex min-w-0 flex-1 justify-start pr-[12px] [@container(min-width:200px)]:justify-center [@container(min-width:200px)]:pl-[12px] [@container(min-width:200px)]:pr-0">
+            <div className="min-w-0 text-left">
               <SpecLabel>Lead time</SpecLabel>
               <div className="mt-1 space-y-0.5">
                 <LeadRow icon={Plane} value={airLeadLabel(product, shipping)} />
