@@ -149,7 +149,7 @@ export function ProductCard({
           startIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           footer={
-            <div className="flex items-center gap-3 border-t border-white/10 bg-n-900/80 px-4 py-3 backdrop-blur-sm">
+            <div className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-white">{product.name}</p>
                 <p className="text-xs text-white/60">{product.sku ?? "—"}</p>
