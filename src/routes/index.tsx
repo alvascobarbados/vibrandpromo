@@ -18,8 +18,12 @@ import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> =>
-    parseCatalogSearch(search),
+  validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> & {
+    page?: number;
+  } => ({
+    ...parseCatalogSearch(search),
+    page: Number(search['page']) > 0 ? Number(search['page']) : 1,
+  }),
   search: {
     middlewares: [
       stripSearchParams({
