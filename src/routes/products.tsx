@@ -146,11 +146,11 @@ function CatalogPage() {
 
   return (
     <SiteLayout>
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
+      <div className="site-container py-6 lg:py-8">
         <h1 className="sr-only">All Vibrand promotional products</h1>
 
-        <div className="flex flex-col gap-8 lg:flex-row">
-          <aside className="hidden w-64 shrink-0 lg:block">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <aside className="hidden w-56 shrink-0 lg:block">
             <FilterPanel
               variant="sidebar"
               products={allProducts}
@@ -163,7 +163,7 @@ function CatalogPage() {
             />
           </aside>
 
-          <div className="min-w-0 flex-1">
+          <div className="@container min-w-0 flex-1">
             <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
               <Button
                 variant="outline"
@@ -218,9 +218,9 @@ function CatalogPage() {
             ) : null}
 
             {products.isLoading ? (
-              <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+              <div className="product-grid mt-4">
                 {Array.from({ length: 8 }).map((_, index) => (
-                  <Skeleton key={index} className="aspect-[3/4] rounded-2xl" />
+                  <Skeleton key={index} className="aspect-[3/4] w-full rounded-2xl" />
                 ))}
               </div>
             ) : visible.length === 0 ? (
@@ -232,7 +232,7 @@ function CatalogPage() {
                 <p className="mt-4 text-xs text-muted-foreground">
                   {`Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} products`}
                 </p>
-                <div className="mt-2 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                <div className="product-grid mt-2">
                   {visible.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
@@ -241,7 +241,7 @@ function CatalogPage() {
             )}
 
             {totalPages > 1 ? (
-              <div className="mt-8 flex items-center justify-center gap-3">
+              <div className="mt-10 flex items-center justify-center gap-3">
                 <Button
                   variant="outline"
                   disabled={page <= 1}
