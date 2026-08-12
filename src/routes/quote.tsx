@@ -310,6 +310,18 @@ function QuotePage() {
               </p>
             </div>
 
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="marketing_opt_in"
+                checked={marketingOptIn}
+                onCheckedChange={(value) => setMarketingOptIn(value === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="marketing_opt_in" className="text-sm font-normal text-n-500">
+                Keep me updated on new products and offers
+              </Label>
+            </div>
+
             <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
               <label htmlFor="website">Website</label>
               <input
