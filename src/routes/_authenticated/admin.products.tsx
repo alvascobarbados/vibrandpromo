@@ -44,6 +44,7 @@ import {
   subcategoriesQuery,
   imageSrc,
   productImage,
+  productionLabel,
   specValue,
   type Product,
 } from "@/lib/catalog";
