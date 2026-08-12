@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
 import { imageSrcList } from "@/lib/catalog";
@@ -37,6 +38,11 @@ export function ImageLightbox({
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const scrollRef = useRef(typeof window === "undefined" ? 0 : window.scrollY);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const markLoaded = useCallback((i: number) => {
     setLoaded((prev) => (prev.includes(i) || i < 0 || i >= images.length ? prev : [...prev, i]));
@@ -199,7 +205,9 @@ export function ImageLightbox({
     lastTapRef.current = now;
   };
 
-  return (
+  if (!mounted || typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -307,6 +315,7 @@ export function ImageLightbox({
           <div className="mx-auto w-full max-w-[720px]">{footer}</div>
         </div>
       ) : null}
-    </div>
+    </div>,
+    document.body,
   );
 }
