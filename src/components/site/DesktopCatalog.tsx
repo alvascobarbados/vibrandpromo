@@ -62,7 +62,7 @@ export function DesktopCatalog({
   function selectCategory(slug: string | null) {
     const patch: Partial<CatalogSearch> = slug
       ? { cat: [slug], sub: [] }
-      : { cat: [], sub: [], colour: [], deco: [], src: [], mat: [] };
+      : { cat: [], sub: [], colour: [], deco: [], mat: [] };
     update(patch);
   }
 
