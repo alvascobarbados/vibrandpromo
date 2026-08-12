@@ -27,7 +27,7 @@ import {
   type Product,
   type Subcategory,
 } from "@/lib/catalog";
-import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 
 export type FormState = {
   name: string;
