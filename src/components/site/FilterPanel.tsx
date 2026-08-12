@@ -22,11 +22,15 @@ import {
   type FilterGroupId,
 } from "@/lib/catalog-filters";
 import { useShippingSettings, type ShippingMap } from "@/lib/shipping";
+import { SourceDot } from "@/components/site/SourceDot";
 
 type Option = { value: string; label: string };
 
-/** Subcategories are rendered nested inside the category tree. */
-const PANEL_GROUPS: FilterGroupId[] = GROUP_IDS.filter((group) => group !== "sub");
+/**
+ * Subcategories are rendered nested inside the category tree. Inventory source
+ * sits directly after lead time and is always available.
+ */
+const PANEL_GROUPS: FilterGroupId[] = ["cat", "moq", "prod", "src", "deco", "colour", "mat"];
 
 export function useFilterOptions(
   products: Product[],
@@ -97,12 +101,14 @@ function OptionRow({
   checked,
   onChange,
   indent,
+  dot,
 }: {
   label: string;
   count: number;
   checked: boolean;
   onChange: () => void;
   indent?: boolean;
+  dot?: React.ReactNode;
 }) {
   return (
     <label
@@ -111,6 +117,7 @@ function OptionRow({
       } hover:bg-n-50 ${indent ? "ml-4" : ""}`}
     >
       <Checkbox checked={checked} onCheckedChange={onChange} />
+      {dot}
       <span className="min-w-0 flex-1">{label}</span>
       <span className="shrink-0 text-[11px] text-n-500">({count})</span>
     </label>
@@ -260,6 +267,7 @@ export function FilterPanel({
               <OptionRow
                 key={option.value}
                 label={option.label}
+                {...(group === "src" ? { dot: <SourceDot source={option.value} /> } : {})}
                 count={counts[group][option.value] ?? 0}
                 checked={search[group].includes(option.value)}
                 onChange={() => onToggle(group, option.value)}
