@@ -89,8 +89,8 @@ export function CategoryRow({
           type="button"
           aria-label="Scroll left"
           onClick={() => page(-1)}
-          className={`pointer-events-auto -ml-3 inline-flex size-9 items-center justify-center rounded-full bg-n-700 text-white shadow-card transition-opacity duration-[180ms] ease-out group-hover/shelf:opacity-100 ${
-            atStart ? "opacity-0" : "opacity-0"
+          className={`-ml-3 inline-flex size-9 items-center justify-center rounded-full bg-n-700 text-white shadow-card opacity-0 transition-opacity duration-[180ms] ease-out ${
+            atStart ? "pointer-events-none" : "pointer-events-auto group-hover/shelf:opacity-100"
           }`}
         >
           <ChevronLeft className="size-5" />
@@ -99,8 +99,8 @@ export function CategoryRow({
           type="button"
           aria-label="Scroll right"
           onClick={() => page(1)}
-          className={`pointer-events-auto -mr-3 inline-flex size-9 items-center justify-center rounded-full bg-n-700 text-white shadow-card transition-opacity duration-[180ms] ease-out group-hover/shelf:opacity-100 ${
-            atEnd ? "opacity-0" : "opacity-0"
+          className={`-mr-3 inline-flex size-9 items-center justify-center rounded-full bg-n-700 text-white shadow-card opacity-0 transition-opacity duration-[180ms] ease-out ${
+            atEnd ? "pointer-events-none" : "pointer-events-auto group-hover/shelf:opacity-100"
           }`}
         >
           <ChevronRight className="size-5" />
