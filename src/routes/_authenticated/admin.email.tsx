@@ -450,6 +450,37 @@ function EmailSettingsPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <Sheet open={Boolean(openLog)} onOpenChange={(open) => !open && setOpenLog(null)}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle className="pr-6 text-left text-base">
+              {openLog?.subject ?? "Email"}
+            </SheetTitle>
+          </SheetHeader>
+          {openLog ? (
+            <div className="mt-3 space-y-3 text-sm">
+              <p className="text-muted-foreground">
+                {EMAIL_TYPE_LABELS[openLog.type] ?? openLog.type} · {openLog.recipient} ·{" "}
+                {new Date(openLog.created_at).toLocaleString()} · {openLog.status}
+              </p>
+              {openLog.error ? <p className="text-red-600">{openLog.error}</p> : null}
+              {openLog.html ? (
+                <iframe
+                  title="Sent email"
+                  sandbox=""
+                  srcDoc={openLog.html}
+                  className="h-[70vh] w-full rounded-lg border border-n-200 bg-white"
+                />
+              ) : (
+                <p className="text-muted-foreground">
+                  No snapshot stored for this send (it predates snapshot logging).
+                </p>
+              )}
+            </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
