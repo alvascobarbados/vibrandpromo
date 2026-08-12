@@ -1,12 +1,20 @@
 import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Columns3 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -38,16 +46,15 @@ const PAGE_SIZE = 50;
 
 type SortKey = "created_at" | "customer_name" | "company" | "status";
 
-const COLUMNS: { key: SortKey | null; label: string; className?: string }[] = [
-  { key: "created_at", label: "Age", className: "w-16" },
-  { key: "status", label: "Status", className: "w-40" },
-  { key: "customer_name", label: "Customer" },
-  { key: "company", label: "Company" },
-  { key: null, label: "Territory" },
-  { key: null, label: "Items", className: "w-16 text-right" },
-  { key: null, label: "Contact" },
-  { key: "created_at", label: "Submitted", className: "w-40" },
+type OptionalColumn = "email" | "phone" | "submitted";
+
+const OPTIONAL_COLUMNS: { id: OptionalColumn; label: string }[] = [
+  { id: "email", label: "Email" },
+  { id: "phone", label: "Phone" },
+  { id: "submitted", label: "Submitted date" },
 ];
+
+const COLUMN_PREFS_KEY = "vibrand.admin.quotes.columns";
 
 function relativeAge(iso: string) {
   const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
@@ -89,6 +96,39 @@ function AdminQuotes() {
   const raw = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const [open, setOpen] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [optional, setOptional] = useState<Record<OptionalColumn, boolean>>({
+    email: false,
+    phone: false,
+    submitted: false,
+  });
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(COLUMN_PREFS_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<Record<OptionalColumn, boolean>>;
+        setOptional({
+          email: parsed.email === true,
+          phone: parsed.phone === true,
+          submitted: parsed.submitted === true,
+        });
+      }
+    } catch {
+      /* ignore unreadable preferences */
+    }
+  }, []);
+
+  function toggleOptional(id: OptionalColumn) {
+    setOptional((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        window.localStorage.setItem(COLUMN_PREFS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore unwritable preferences */
+      }
+      return next;
+    });
+  }
 
   const search = typeof raw["q"] === "string" ? (raw["q"] as string) : "";
   const filter = typeof raw["status"] === "string" ? (raw["status"] as string) : "all";
@@ -226,6 +266,30 @@ function AdminQuotes() {
         </SelectContent>
       </Select>
       <p className="text-sm text-n-500">{sorted.length} results</p>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" variant="outline" className="ml-auto gap-2">
+            <Columns3 className="size-4" />
+            Columns
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wide text-n-500">
+            Optional columns
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {OPTIONAL_COLUMNS.map((column) => (
+            <DropdownMenuCheckboxItem
+              key={column.id}
+              checked={optional[column.id]}
+              onCheckedChange={() => toggleOptional(column.id)}
+              onSelect={(event) => event.preventDefault()}
+            >
+              {column.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 
