@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { QuoteListProvider } from "@/lib/quote-list";
 import { StaffSessionProvider } from "@/lib/staff-session";
+import { purgeLegacyFilterStorage } from "@/lib/filter-hygiene";
 
 function NotFoundComponent() {
   return (
@@ -136,6 +137,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Filters live only in the URL — delete any legacy stored scope/source keys.
+  useEffect(() => purgeLegacyFilterStorage(), []);
 
   return (
     <QueryClientProvider client={queryClient}>
