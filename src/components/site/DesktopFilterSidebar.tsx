@@ -1,0 +1,198 @@
+import { useMemo } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+
+import { Checkbox } from "@/components/ui/checkbox";
+import type { Category, Product, Subcategory } from "@/lib/catalog";
+import {
+  GROUP_LABELS,
+  filterProducts,
+  groupMatchers,
+  type CatalogSearch,
+  type FilterGroupId,
+} from "@/lib/catalog-filters";
+import { useFilterOptions } from "@/components/site/FilterPanel";
+import { useShippingSettings } from "@/lib/shipping";
+
+/** Always shown, regardless of category selection. */
+const BASE_GROUPS: FilterGroupId[] = ["moq", "prod"];
+/** Only shown once a single category is selected. */
+const CONDITIONAL_GROUPS: FilterGroupId[] = ["deco", "colour", "src", "mat"];
+
+type Props = {
+  products: Product[];
+  categories: Category[];
+  subcategories: Subcategory[];
+  search: CatalogSearch;
+  selectedCategory: string | null;
+  onSelectCategory: (slug: string | null) => void;
+  onToggle: (group: FilterGroupId, value: string) => void;
+  onClear: () => void;
+  activeCount: number;
+};
+
+function Row({
+  label,
+  count,
+  checked,
+  onChange,
+  radio,
+  indent,
+}: {
+  label: string;
+  count: number;
+  checked: boolean;
+  onChange: () => void;
+  radio?: boolean;
+  indent?: boolean;
+}) {
+  return (
+    <label
+      className={`flex cursor-pointer items-center gap-2.5 rounded-md px-1.5 py-2 text-sm leading-[1.5] transition-colors duration-[150ms] ease-out ${
+        checked ? "font-medium text-n-900" : "text-n-700"
+      } hover:bg-n-50 ${indent ? "ml-4" : ""}`}
+    >
+      {radio ? (
+        <input
+          type="radio"
+          checked={checked}
+          onChange={onChange}
+          className="size-4 shrink-0 accent-[var(--color-lime-500)]"
+        />
+      ) : (
+        <Checkbox checked={checked} onCheckedChange={onChange} />
+      )}
+      <span className="min-w-0 flex-1">{label}</span>
+      <span className="shrink-0 text-[11px] text-n-500">({count})</span>
+    </label>
+  );
+}
+
+function Group({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="py-1.5 text-[11px] font-semibold uppercase tracking-wide text-n-500">{label}</p>
+      <div className="mt-1">{children}</div>
+    </div>
+  );
+}
+
+export function DesktopFilterSidebar({
+  products,
+  categories,
+  subcategories,
+  search,
+  selectedCategory,
+  onSelectCategory,
+  onToggle,
+  onClear,
+  activeCount,
+}: Props) {
+  const options = useFilterOptions(products, categories, subcategories);
+  const shipping = useShippingSettings();
+
+  const counts = useMemo(() => {
+    const taxonomy = { categories, subcategories, shipping };
+    const matchers = groupMatchers(taxonomy);
+    const result = {} as Record<FilterGroupId, Record<string, number>>;
+    for (const group of ["cat", "sub", ...BASE_GROUPS, ...CONDITIONAL_GROUPS] as FilterGroupId[]) {
+      const base = filterProducts(products, search, taxonomy, group === "sub" ? "cat" : group);
+      result[group] = {};
+      for (const option of options[group]) {
+        result[group][option.value] = base.filter((product) =>
+          matchers[group](product, [option.value]),
+        ).length;
+      }
+    }
+    return result;
+  }, [products, categories, subcategories, search, options, shipping]);
+
+  const subsForSelected = useMemo(() => {
+    const category = categories.find((c) => c.slug === selectedCategory);
+    if (!category) return [] as Subcategory[];
+    return subcategories.filter((sub) => sub.category_id === category.id);
+  }, [categories, subcategories, selectedCategory]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 pb-3">
+        <p className="text-sm font-semibold text-n-900">Filters</p>
+        {activeCount ? (
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-xs font-semibold text-navy-500 hover:text-navy-700 hover:underline"
+          >
+            Clear all
+          </button>
+        ) : null}
+      </div>
+
+      <div className="space-y-5">
+        <Group label={GROUP_LABELS.cat}>
+          <Row
+            radio
+            label="All categories"
+            count={products.length}
+            checked={!selectedCategory}
+            onChange={() => onSelectCategory(null)}
+          />
+          {categories.map((category) => {
+            const active = selectedCategory === category.slug;
+            return (
+              <div key={category.id}>
+                <div className="flex items-center">
+                  <div className="min-w-0 flex-1">
+                    <Row
+                      radio
+                      label={category.name}
+                      count={counts.cat[category.slug] ?? 0}
+                      checked={active}
+                      onChange={() => onSelectCategory(category.slug)}
+                    />
+                  </div>
+                  {active ? (
+                    <ChevronDown className="size-4 shrink-0 text-n-500" />
+                  ) : (
+                    <ChevronRight className="size-4 shrink-0 text-n-300" />
+                  )}
+                </div>
+                {active
+                  ? subsForSelected.map((sub) => (
+                      <Row
+                        key={sub.id}
+                        indent
+                        label={sub.name}
+                        count={counts.sub[sub.slug] ?? 0}
+                        checked={search.sub.includes(sub.slug)}
+                        onChange={() => onToggle("sub", sub.slug)}
+                      />
+                    ))
+                  : null}
+              </div>
+            );
+          })}
+        </Group>
+
+        {[...BASE_GROUPS, ...(selectedCategory ? CONDITIONAL_GROUPS : [])].map((group) => {
+          const rows = options[group].filter(
+            (option) => (counts[group][option.value] ?? 0) > 0 || search[group].includes(option.value),
+          );
+          if (!rows.length) return null;
+          return (
+            <Group key={group} label={GROUP_LABELS[group]}>
+              {rows.map((option) => (
+                <Row
+                  key={option.value}
+                  label={option.label}
+                  count={counts[group][option.value] ?? 0}
+                  checked={search[group].includes(option.value)}
+                  onChange={() => onToggle(group, option.value)}
+                />
+              ))}
+            </Group>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
