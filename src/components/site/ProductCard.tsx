@@ -36,20 +36,10 @@ function SpecLabel({ children }: { children: React.ReactNode }) {
 function LeadRow({
   icon: Icon,
   value,
-  unavailable = false,
 }: {
   icon: typeof Plane;
   value: string | null;
-  unavailable?: boolean;
 }) {
-  if (unavailable) {
-    return (
-      <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:199px)]:text-[13px]">
-        <Icon className="size-[13px] shrink-0 text-n-400" strokeWidth={1.75} />
-        <span className="whitespace-nowrap text-n-400 line-through">Not available</span>
-      </p>
-    );
-  }
   return (
     <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:199px)]:text-[13px]">
       <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
@@ -77,8 +67,8 @@ export function ProductCard({
   const sea = seaLeadLabel(product, shipping);
   const hasLead = air != null && sea != null;
   const hasMoq = product.moq != null;
-  const noAir = !airAvailable(product.shipping_methods);
-  const noSea = !seaAvailable(product.shipping_methods);
+  const showAir = airAvailable(product.shipping_methods);
+  const showSea = seaAvailable(product.shipping_methods);
 
   return (
     <article
@@ -145,9 +135,9 @@ export function ProductCard({
             <div className="flex min-w-0 flex-1 justify-start pr-[12px] [@container(min-width:200px)]:justify-center [@container(min-width:200px)]:pl-[12px] [@container(min-width:200px)]:pr-0">
               <div className="min-w-0 text-left">
                 <SpecLabel>Lead time</SpecLabel>
-                <div className="mt-1 space-y-0.5">
-                  <LeadRow icon={Plane} value={hasLead ? air : null} unavailable={noAir} />
-                  <LeadRow icon={Ship} value={hasLead ? sea : null} unavailable={noSea} />
+                <div className="mt-1 flex h-[38px] flex-col justify-center space-y-0.5">
+                  {showAir ? <LeadRow icon={Plane} value={hasLead ? air : null} /> : null}
+                  {showSea ? <LeadRow icon={Ship} value={hasLead ? sea : null} /> : null}
                 </div>
               </div>
             </div>
@@ -170,7 +160,7 @@ export function ProductCard({
                 <p className="truncate text-sm font-semibold text-white">{product.name}</p>
                 <p className="text-xs text-white/60">
                   {product.sku ?? "—"}
-                  {noAir || noSea ? ` · ${noAir ? "Sea only" : "Air only"}` : ""}
+                  {!showAir || !showSea ? ` · ${showAir ? "Air only" : "Sea only"}` : ""}
                 </p>
               </div>
               <div className="@container w-[15rem] shrink-0">
