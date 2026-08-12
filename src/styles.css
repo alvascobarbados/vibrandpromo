@@ -367,6 +367,9 @@
   & .image-field-media {
     padding: 6%;
   }
+  & [role="img"] {
+    background-color: transparent;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
