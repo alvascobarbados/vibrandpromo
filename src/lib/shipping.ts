@@ -39,15 +39,29 @@ export function settingFor(map: ShippingMap, source: string | null | undefined):
 
 export type Range = { min: number; max: number };
 
+/**
+ * Production time may be fixed (min only) or a range. A blank maximum means the
+ * maximum equals the minimum.
+ */
+function productionRange(
+  min: number | null | undefined,
+  max: number | null | undefined,
+): Range | null {
+  if (min == null) return null;
+  return { min, max: max == null ? min : max };
+}
+
 /** Air lead time in whole days: production + the source's air shipping window. */
 export function airLeadDays(
-  productionDays: number | null | undefined,
+  productionMin: number | null | undefined,
+  productionMax: number | null | undefined,
   setting: ShippingSetting,
 ): Range | null {
-  if (productionDays == null) return null;
+  const production = productionRange(productionMin, productionMax);
+  if (!production) return null;
   return {
-    min: productionDays + setting.air_min_days,
-    max: productionDays + setting.air_max_days,
+    min: production.min + setting.air_min_days,
+    max: production.max + setting.air_max_days,
   };
 }
 
@@ -56,13 +70,15 @@ export function airLeadDays(
  * up so the range shown always brackets the real transit window.
  */
 export function seaLeadWeeks(
-  productionDays: number | null | undefined,
+  productionMin: number | null | undefined,
+  productionMax: number | null | undefined,
   setting: ShippingSetting,
 ): Range | null {
-  if (productionDays == null) return null;
+  const production = productionRange(productionMin, productionMax);
+  if (!production) return null;
   return {
-    min: Math.floor((productionDays + setting.sea_min_weeks * 7) / 7),
-    max: Math.ceil((productionDays + setting.sea_max_weeks * 7) / 7),
+    min: Math.floor((production.min + setting.sea_min_weeks * 7) / 7),
+    max: Math.ceil((production.max + setting.sea_max_weeks * 7) / 7),
   };
 }
 
@@ -72,19 +88,35 @@ function formatRange(range: Range | null, unit: "days" | "wks"): string | null {
 }
 
 export type LeadSource = {
-  production_days: number | null;
+  production_min_days: number | null;
+  production_max_days?: number | null;
   inventory_source: string | null;
   shipping_methods?: string | null;
   rush_enabled?: boolean | null;
-  rush_production_days?: number | null;
+  rush_production_min_days?: number | null;
+  rush_production_max_days?: number | null;
 };
 
 export function airLeadLabel(product: LeadSource, map: ShippingMap): string | null {
-  return formatRange(airLeadDays(product.production_days, settingFor(map, product.inventory_source)), "days");
+  return formatRange(
+    airLeadDays(
+      product.production_min_days,
+      product.production_max_days ?? null,
+      settingFor(map, product.inventory_source),
+    ),
+    "days",
+  );
 }
 
 export function seaLeadLabel(product: LeadSource, map: ShippingMap): string | null {
-  return formatRange(seaLeadWeeks(product.production_days, settingFor(map, product.inventory_source)), "wks");
+  return formatRange(
+    seaLeadWeeks(
+      product.production_min_days,
+      product.production_max_days ?? null,
+      settingFor(map, product.inventory_source),
+    ),
+    "wks",
+  );
 }
 
 /**
@@ -95,7 +127,11 @@ export function rushLeadLabel(product: LeadSource, map: ShippingMap): string | n
   if (!product.rush_enabled) return null;
   if (!airAvailable(product.shipping_methods)) return null;
   return formatRange(
-    airLeadDays(product.rush_production_days ?? null, settingFor(map, product.inventory_source)),
+    airLeadDays(
+      product.rush_production_min_days ?? null,
+      product.rush_production_max_days ?? null,
+      settingFor(map, product.inventory_source),
+    ),
     "days",
   );
 }
@@ -104,7 +140,11 @@ export function rushLeadLabel(product: LeadSource, map: ShippingMap): string | n
 export function calculatedAirMin(product: LeadSource, map: ShippingMap): number | null {
   // Sea-only products have no air lead time, so they can never match an air bucket.
   if (!airAvailable(product.shipping_methods)) return null;
-  const range = airLeadDays(product.production_days, settingFor(map, product.inventory_source));
+  const range = airLeadDays(
+    product.production_min_days,
+    product.production_max_days ?? null,
+    settingFor(map, product.inventory_source),
+  );
   return range ? range.min : null;
 }
 

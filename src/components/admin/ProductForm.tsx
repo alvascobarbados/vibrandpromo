@@ -33,10 +33,12 @@ export type FormState = {
   name: string;
   sku: string;
   moq: string;
-  production_days: string;
+  production_min_days: string;
+  production_max_days: string;
   shipping_methods: string;
   rush_enabled: boolean;
-  rush_production_days: string;
+  rush_production_min_days: string;
+  rush_production_max_days: string;
   colour_option: string;
   decoration_methods: string[];
   inventory_source: string;
@@ -60,10 +62,12 @@ export const EMPTY_FORM: FormState = {
   name: "",
   sku: "",
   moq: "",
-  production_days: "",
+  production_min_days: "",
+  production_max_days: "",
   shipping_methods: "air_sea",
   rush_enabled: false,
-  rush_production_days: "",
+  rush_production_min_days: "",
+  rush_production_max_days: "",
   colour_option: "Fully Customised",
   decoration_methods: [],
   inventory_source: "Factory Direct",
@@ -88,11 +92,16 @@ export function formFromProduct(product: Product): FormState {
     name: product.name,
     sku: product.sku ?? "",
     moq: product.moq == null ? "" : String(product.moq),
-    production_days: product.production_days == null ? "" : String(product.production_days),
+    production_min_days:
+      product.production_min_days == null ? "" : String(product.production_min_days),
+    production_max_days:
+      product.production_max_days == null ? "" : String(product.production_max_days),
     shipping_methods: product.shipping_methods ?? "air_sea",
     rush_enabled: product.rush_enabled ?? false,
-    rush_production_days:
-      product.rush_production_days == null ? "" : String(product.rush_production_days),
+    rush_production_min_days:
+      product.rush_production_min_days == null ? "" : String(product.rush_production_min_days),
+    rush_production_max_days:
+      product.rush_production_max_days == null ? "" : String(product.rush_production_max_days),
     colour_option: product.colour_option ?? "Fully Customised",
     decoration_methods: product.decoration_methods ?? [],
     inventory_source: product.inventory_source ?? "Factory Direct",
@@ -113,18 +122,29 @@ export function formFromProduct(product: Product): FormState {
   };
 }
 
+/** Blank/invalid text becomes null so "on request" and fixed times both work. */
+function numberOrNull(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function payloadFromForm(form: FormState) {
   return {
     name: form.name.trim(),
     sku: form.sku.trim(),
-    moq: form.moq.trim() ? Number(form.moq) : null,
-    production_days: form.production_days.trim() ? Number(form.production_days) : null,
+    moq: numberOrNull(form.moq),
+    production_min_days: numberOrNull(form.production_min_days),
+    production_max_days: numberOrNull(form.production_max_days),
     shipping_methods: form.shipping_methods || "air_sea",
     rush_enabled: form.rush_enabled,
-    rush_production_days:
-      form.rush_enabled && form.rush_production_days.trim()
-        ? Number(form.rush_production_days)
-        : null,
+    rush_production_min_days: form.rush_enabled
+      ? numberOrNull(form.rush_production_min_days)
+      : null,
+    rush_production_max_days: form.rush_enabled
+      ? numberOrNull(form.rush_production_max_days)
+      : null,
     colour_option: form.colour_option,
     decoration_methods: form.decoration_methods,
     inventory_source: form.inventory_source,
@@ -151,14 +171,22 @@ export function validateForm(form: FormState): string | null {
   if (!form.name.trim()) return "Please give the product a name.";
   if (!form.sku.trim()) return "Please enter a SKU (product code).";
   if (!form.subcategory_id) return "Please choose a category and subcategory.";
+  const normalMin = numberOrNull(form.production_min_days);
+  const normalMax = numberOrNull(form.production_max_days);
+  if (normalMax != null) {
+    if (normalMin == null) return "Enter a minimum production time before adding a maximum.";
+    if (normalMax < normalMin)
+      return "The maximum production time must be the same as or longer than the minimum.";
+  }
   if (form.rush_enabled) {
     if (form.shipping_methods === "sea_only") return "Rush requires air shipping.";
-    const rush = Number(form.rush_production_days.trim());
-    if (!form.rush_production_days.trim() || !Number.isFinite(rush) || rush < 1)
-      return "Please enter the rush production time in days.";
-    const normal = form.production_days.trim() ? Number(form.production_days) : null;
-    if (normal == null) return "Add a normal production time before offering rush.";
-    if (rush >= normal)
+    const rushMin = numberOrNull(form.rush_production_min_days);
+    const rushMax = numberOrNull(form.rush_production_max_days);
+    if (rushMin == null || rushMin < 1) return "Please enter the rush production time in days.";
+    if (rushMax != null && rushMax < rushMin)
+      return "The maximum rush production time must be the same as or longer than the minimum.";
+    if (normalMin == null) return "Add a normal production time before offering rush.";
+    if (rushMin >= normalMin)
       return "Rush production time must be shorter than the normal production time.";
   }
   return null;
@@ -166,18 +194,20 @@ export function validateForm(form: FormState): string | null {
 
 /** Rush shares the normal air shipping buffer — only the production time changes. */
 function RushPreview({
-  rushProduction,
+  rushMin,
+  rushMax,
   source,
 }: {
-  rushProduction: string;
+  rushMin: string;
+  rushMax: string;
   source: string;
 }) {
   const shipping = useShippingSettings();
-  const days = rushProduction.trim() ? Number(rushProduction) : null;
   const value = {
-    production_days: null,
+    production_min_days: null,
     rush_enabled: true,
-    rush_production_days: Number.isFinite(days as number) ? days : null,
+    rush_production_min_days: numberOrNull(rushMin),
+    rush_production_max_days: numberOrNull(rushMax),
     inventory_source: source,
   };
   return (
@@ -191,10 +221,21 @@ function RushPreview({
  * Customer-facing lead times are derived from production time plus the global
  * shipping windows, so the form shows them read-only.
  */
-function LeadPreview({ production, source }: { production: string; source: string }) {
+function LeadPreview({
+  productionMin,
+  productionMax,
+  source,
+}: {
+  productionMin: string;
+  productionMax: string;
+  source: string;
+}) {
   const shipping = useShippingSettings();
-  const days = production.trim() ? Number(production) : null;
-  const value = { production_days: Number.isFinite(days as number) ? days : null, inventory_source: source };
+  const value = {
+    production_min_days: numberOrNull(productionMin),
+    production_max_days: numberOrNull(productionMax),
+    inventory_source: source,
+  };
   return (
     <p className="mt-1.5 text-xs text-muted-foreground">
       Lead time shown to customers: air {airLeadLabel(value, shipping) ?? "On request"} · sea{" "}
@@ -343,17 +384,39 @@ export function ProductForm({
         </div>
         <div>
           <Label htmlFor={id("days")}>Production time (days)</Label>
-          <Input
-            id={id("days")}
-            type="number"
-            min={1}
-            value={form.production_days}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, production_days: event.target.value }))
-            }
-            placeholder="Leave blank for On request"
+          <div className="flex items-center gap-2">
+            <Input
+              id={id("days")}
+              type="number"
+              min={1}
+              className="w-full"
+              value={form.production_min_days}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, production_min_days: event.target.value }))
+              }
+              placeholder="min"
+            />
+            <span className="text-sm text-muted-foreground">–</span>
+            <Input
+              id={id("days-max")}
+              type="number"
+              min={1}
+              className="w-full"
+              value={form.production_max_days}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, production_max_days: event.target.value }))
+              }
+              placeholder="optional"
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Enter one number for a fixed time, or both for a range.
+          </p>
+          <LeadPreview
+            productionMin={form.production_min_days}
+            productionMax={form.production_max_days}
+            source={form.inventory_source}
           />
-          <LeadPreview production={form.production_days} source={form.inventory_source} />
         </div>
         <div>
           <Label htmlFor={id("shipping-methods")}>Available shipping</Label>
@@ -402,20 +465,45 @@ export function ProductForm({
             {form.shipping_methods === "sea_only" ? (
               <p className="mt-1.5 text-xs text-muted-foreground">Rush requires air shipping</p>
             ) : form.rush_enabled ? (
-              <div className="mt-3">
+              <div className="mt-3 sm:max-w-sm">
                 <Label htmlFor={id("rush-days")}>Rush production time (days)</Label>
-                <Input
-                  id={id("rush-days")}
-                  type="number"
-                  min={1}
-                  value={form.rush_production_days}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, rush_production_days: event.target.value }))
-                  }
-                  placeholder="Must be less than the normal production time"
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id={id("rush-days")}
+                    type="number"
+                    min={1}
+                    className="w-full"
+                    value={form.rush_production_min_days}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        rush_production_min_days: event.target.value,
+                      }))
+                    }
+                    placeholder="min"
+                  />
+                  <span className="text-sm text-muted-foreground">–</span>
+                  <Input
+                    id={id("rush-days-max")}
+                    type="number"
+                    min={1}
+                    className="w-full"
+                    value={form.rush_production_max_days}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        rush_production_max_days: event.target.value,
+                      }))
+                    }
+                    placeholder="optional"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Enter one number for a fixed time, or both for a range.
+                </p>
                 <RushPreview
-                  rushProduction={form.rush_production_days}
+                  rushMin={form.rush_production_min_days}
+                  rushMax={form.rush_production_max_days}
                   source={form.inventory_source}
                 />
               </div>

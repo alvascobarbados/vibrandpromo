@@ -44,6 +44,7 @@ import {
   subcategoriesQuery,
   imageSrc,
   productImage,
+  productionLabel,
   specValue,
   type Product,
 } from "@/lib/catalog";
@@ -459,7 +460,10 @@ function ProductSummary({
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
         <Spec label="MOQ" value={specValue(product.moq)} />
-        <Spec label="Production time" value={specValue(product.production_days, "days")} />
+        <Spec
+          label="Production time"
+          value={productionLabel(product.production_min_days, product.production_max_days)}
+        />
         <Spec label="Air lead time" value={airLeadLabel(product, shipping) ?? "On request"} />
         <Spec label="Sea lead time" value={seaLeadLabel(product, shipping) ?? "On request"} />
         <Spec label="Colour options" value={product.colour_option ?? ""} />

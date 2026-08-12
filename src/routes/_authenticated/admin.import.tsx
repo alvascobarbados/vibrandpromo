@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCsvRecords } from "@/lib/csv";
-import { categoriesQuery, subcategoriesQuery, slugify } from "@/lib/catalog";
+import { categoriesQuery, subcategoriesQuery, slugify, productionLabel } from "@/lib/catalog";
 
 export const Route = createFileRoute("/_authenticated/admin/import")({
   beforeLoad: ({ context }) => requirePage(context.access, "import"),
@@ -116,7 +116,6 @@ function AdminImport() {
         .map((value) => value.trim())
         .filter(Boolean);
       const moq = (row["moq"] ?? "").trim();
-      const days = (row["production_days"] ?? "").trim();
       const shipping = (row["shipping_methods"] ?? "").trim().toLowerCase() || "air_sea";
       if (!["air_sea", "air_only", "sea_only"].includes(shipping)) {
         found.push({
@@ -142,26 +141,47 @@ function AdminImport() {
         return;
       }
       const rushEnabled = ["true", "yes", "1"].includes(rushRaw);
-      const rushDays = num("rush_production_days");
-      const normalDays = days ? Number(days) : null;
+      // production_days stays supported as the fixed/minimum production time.
+      const normalMin = num("production_min_days") ?? num("production_days");
+      const normalMax = num("production_max_days");
+      const rushMin = num("rush_production_min_days") ?? num("rush_production_days");
+      const rushMax = num("rush_production_max_days");
+      if (normalMax != null && (normalMin == null || normalMax < normalMin)) {
+        found.push({
+          line,
+          sku,
+          reason: "production_max_days must be a number greater than or equal to the minimum",
+        });
+        return;
+      }
       if (rushEnabled) {
         if (shipping === "sea_only") {
           found.push({ line, sku, reason: "Rush requires air shipping — this row is sea only" });
           return;
         }
-        if (rushDays == null || rushDays < 1) {
+        if (rushMin == null || rushMin < 1) {
           found.push({
             line,
             sku,
-            reason: "Rush is on, so rush_production_days must be a whole number of 1 or more",
+            reason:
+              "Rush is on, so rush_production_min_days must be a whole number of 1 or more",
           });
           return;
         }
-        if (normalDays == null || rushDays >= normalDays) {
+        if (rushMax != null && rushMax < rushMin) {
           found.push({
             line,
             sku,
-            reason: "rush_production_days must be less than production_days",
+            reason:
+              "rush_production_max_days must be greater than or equal to rush_production_min_days",
+          });
+          return;
+        }
+        if (normalMin == null || rushMin >= normalMin) {
+          found.push({
+            line,
+            sku,
+            reason: "rush_production_min_days must be less than the normal production minimum",
           });
           return;
         }
@@ -176,10 +196,12 @@ function AdminImport() {
           subcategory_id: match.id,
           inventory_source: (row["inventory_source"] ?? "").trim() || "Factory Direct",
           moq: moq ? Number(moq) : null,
-          production_days: days ? Number(days) : null,
+          production_min_days: normalMin,
+          production_max_days: normalMax,
           shipping_methods: shipping,
           rush_enabled: rushEnabled,
-          rush_production_days: rushEnabled ? rushDays : null,
+          rush_production_min_days: rushEnabled ? rushMin : null,
+          rush_production_max_days: rushEnabled ? rushMax : null,
           colour_option: (row["colour_option"] ?? "").trim() || null,
           decoration_methods: methods,
           material: (row["material"] ?? "").trim() || null,
@@ -275,9 +297,16 @@ function AdminImport() {
           Sea.
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
-          Optional rush columns: <span className="font-mono">rush_enabled</span> (true/false) and{" "}
-          <span className="font-mono">rush_production_days</span>. When rush is true the rush
-          production days must be less than production_days, and the product cannot be sea only.
+          Production time can be a range. <span className="font-mono">production_days</span> (or{" "}
+          <span className="font-mono">production_min_days</span>) is the fixed or minimum time, and
+          the optional <span className="font-mono">production_max_days</span> makes it a range.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Optional rush columns: <span className="font-mono">rush_enabled</span> (true/false),{" "}
+          <span className="font-mono">rush_production_min_days</span> and optional{" "}
+          <span className="font-mono">rush_production_max_days</span>. When rush is true the rush
+          minimum must be less than the normal production minimum, and the product cannot be sea
+          only.
         </p>
         <p className="mt-3 text-xs text-muted-foreground">
           Leave MOQ or production days blank if they are on request. Customer-facing lead times are
@@ -349,9 +378,10 @@ function AdminImport() {
                               : String(item.payload["moq"])}
                           </td>
                           <td className="py-2 pr-4">
-                            {item.payload["production_days"] == null
-                              ? "On request"
-                              : `${String(item.payload["production_days"])} days`}
+                            {productionLabel(
+                              item.payload["production_min_days"] as number | null,
+                              item.payload["production_max_days"] as number | null,
+                            )}
                           </td>
                           <td className="py-2 pr-4">
                             {item.payload["is_active"] ? "Yes" : "Hidden"}
