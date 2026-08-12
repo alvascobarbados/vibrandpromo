@@ -46,9 +46,9 @@ export function QuantityStepper({
       : "text-n-700 hover:bg-n-200 disabled:text-n-400";
 
   return (
-    <div className="relative w-full shrink-0 [@container(min-width:200px)]:w-auto">
+    <div className="relative w-full shrink-0 [@container(min-width:340px)]:w-auto">
       <div
-        className={`flex h-10 w-full items-center justify-between rounded-full [@container(min-width:200px)]:inline-flex [@container(min-width:200px)]:w-auto [@container(min-width:200px)]:justify-start ${
+        className={`flex h-10 w-full items-center justify-between rounded-full [@container(min-width:340px)]:inline-flex [@container(min-width:340px)]:w-auto [@container(min-width:340px)]:justify-start ${
           tone === "dark" ? "border" : ""
         } ${shell}`}
       >
@@ -74,9 +74,7 @@ export function QuantityStepper({
             }
           }}
           style={{ width: `${Math.max(2, Math.min(draft.length, 6))}ch` }}
-          className={`border-0 bg-transparent p-0 text-center font-medium tabular-nums outline-none ${
-            draft.length >= 5 ? "text-[12px]" : "text-[13px]"
-          }`}
+          className="card-value border-0 bg-transparent p-0 text-center outline-none"
         />
         <button
           type="button"
