@@ -30,6 +30,7 @@ import {
 } from "@/lib/catalog-filters";
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
+import { warnInvisibleFilter } from "@/lib/filter-hygiene";
 
 const PAGE_SIZE = 20;
 
@@ -100,6 +101,7 @@ function CatalogPage() {
   );
 
   const total = filtered.length;
+  warnInvisibleFilter("/products", total, allProducts.length, activeCount + (search.q ? 1 : 0));
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(Math.max(1, rawPage), totalPages);
   const start = (page - 1) * PAGE_SIZE;
