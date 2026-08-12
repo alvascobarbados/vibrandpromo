@@ -360,6 +360,15 @@
   padding: var(--field-pad);
 }
 
+/* Full-bleed variant: product sits directly on the card, no visible frame. */
+@utility image-field-bleed {
+  border-radius: 0;
+  background-color: transparent;
+  & .image-field-media {
+    padding: 6%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
