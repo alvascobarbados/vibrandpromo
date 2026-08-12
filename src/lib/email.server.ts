@@ -196,65 +196,184 @@ export function siteOrigin() {
   return process.env["PUBLIC_SITE_URL"] ?? "https://vibrandpromo.lovable.app";
 }
 
-export function staffTemplate(quote: QuoteEmailPayload) {
-  const subject = `New quote request — ${quote.company} (${quote.items.length} item${
-    quote.items.length === 1 ? "" : "s"
-  })`;
+/* ------------------------------------------------------------------ *
+ * Editable template copy (plain text) + the single shared renderer.
+ * Preview, test sends and production all go through renderEmail().
+ * ------------------------------------------------------------------ */
+
+export type TemplateType = "staff" | "customer";
+
+export type TemplateCopy = {
+  subject: string;
+  heading: string;
+  body: string;
+  signoff: string;
+};
+
+export const DEFAULT_TEMPLATES: Record<TemplateType, TemplateCopy> = {
+  staff: {
+    subject: "New quote request — {{company}} ({{items_count}} items)",
+    heading: "New quote request",
+    body: "A new quote request came in on {{quote_date}}. The customer details and requested items are below.",
+    signoff: "You can reply directly to {{customer_email}}.",
+  },
+  customer: {
+    subject: "We've received your quote request — Vibrand",
+    heading: "Thanks — we've got your request",
+    body: `Hi {{customer_name}},
+
+Thank you for your quote request. Our team is reviewing it now and will get back to you with pricing, options and lead times within 24 hours (Monday to Friday).`,
+    signoff: `If anything needs changing in the meantime, just reply to this email.
+
+Warm regards,
+Vibrand Caribbean Inc.
+sales@vibrand.com · +1 (246) 625-1000`,
+  },
+};
+
+export const MERGE_TAGS = [
+  "customer_name",
+  "company",
+  "customer_email",
+  "phone",
+  "territory",
+  "message",
+  "items_count",
+  "quote_date",
+] as const;
+
+export type MergeTag = (typeof MERGE_TAGS)[number];
+
+/** Returns every unknown {{tag}} found in the supplied copy. */
+export function findUnknownTags(copy: TemplateCopy): string[] {
+  const found = new Set<string>();
+  for (const value of [copy.subject, copy.heading, copy.body, copy.signoff]) {
+    for (const match of value.matchAll(/\{\{\s*([^}]*?)\s*\}\}/g)) {
+      const tag = match[1] ?? "";
+      if (!(MERGE_TAGS as readonly string[]).includes(tag)) found.add(tag);
+    }
+  }
+  return [...found];
+}
+
+function tagValues(quote: QuoteEmailPayload): Record<MergeTag, string> {
+  return {
+    customer_name: quote.customer_name,
+    company: quote.company,
+    customer_email: quote.email,
+    phone: quote.phone ?? "—",
+    territory: quote.territory,
+    message: quote.message ?? "—",
+    items_count: String(quote.items.length),
+    quote_date: new Date().toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
+  };
+}
+
+/** Replaces merge tags in plain text. Unknown tags are left as-is. */
+export function fillTags(value: string, quote: QuoteEmailPayload): string {
+  const values = tagValues(quote);
+  return value.replace(/\{\{\s*([^}]*?)\s*\}\}/g, (whole, rawTag: string) => {
+    const tag = rawTag as MergeTag;
+    return tag in values ? values[tag] : whole;
+  });
+}
+
+/** Plain text → escaped HTML paragraphs, blank lines separating paragraphs. */
+function paragraphs(value: string, extraStyle = "") {
+  return value
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map(
+      (block) =>
+        `<p style="font-size:14px;line-height:1.6;margin:0 0 14px;${extraStyle}">${escapeHtml(
+          block,
+        ).replace(/\n/g, "<br/>")}</p>`,
+    )
+    .join("");
+}
+
+/**
+ * THE renderer. Locked brand frame; only the plain-text copy is user supplied.
+ * Assembly order: heading → body → (staff details) → items table → sign-off → footer.
+ */
+export function renderEmail(
+  type: TemplateType,
+  copy: TemplateCopy,
+  quote: QuoteEmailPayload,
+): { subject: string; html: string; text: string } {
+  const subject = fillTags(copy.subject, quote).trim() || DEFAULT_TEMPLATES[type].subject;
+  const heading = fillTags(copy.heading, quote);
+  const body = fillTags(copy.body, quote);
+  const signoff = fillTags(copy.signoff, quote);
   const link = `${siteOrigin()}/admin/quotes`;
-  const html = shell(
-    "New quote request",
-    `${field("Name", quote.customer_name)}
+
+  const details =
+    type === "staff"
+      ? `${field("Name", quote.customer_name)}
      ${field("Company", quote.company)}
      ${field("Email", quote.email)}
      ${field("Phone", quote.phone)}
      ${field("Territory", quote.territory)}
-     ${field("Message", quote.message)}
-     <h2 style="font-size:15px;margin:20px 0 0;">Requested items</h2>
-     ${itemsTable(quote.items)}
-     <a href="${link}" style="display:inline-block;background:${LIME};color:${CHARCOAL};font-weight:700;text-decoration:none;padding:12px 20px;border-radius:999px;">Open in admin</a>`,
-  );
-  const text = `New quote request
+     ${field("Message", quote.message)}`
+      : "";
 
+  const itemsHeading =
+    type === "staff" ? "Requested items" : "What you asked us about";
+
+  const button =
+    type === "staff"
+      ? `<a href="${link}" style="display:inline-block;background:${LIME};color:${CHARCOAL};font-weight:700;text-decoration:none;padding:12px 20px;border-radius:999px;">Open in admin</a>`
+      : "";
+
+  const html = shell(
+    heading,
+    `${paragraphs(body)}
+     ${details}
+     <h2 style="font-size:15px;margin:20px 0 0;">${escapeHtml(itemsHeading)}</h2>
+     ${itemsTable(quote.items)}
+     ${paragraphs(signoff)}
+     ${button}`,
+  );
+
+  const text = `${heading}
+
+${body}
+${
+  type === "staff"
+    ? `
 Name: ${quote.customer_name}
 Company: ${quote.company}
 Email: ${quote.email}
 Phone: ${quote.phone ?? "—"}
 Territory: ${quote.territory}
 Message: ${quote.message ?? "—"}
-
-Items:
+`
+    : ""
+}
+${itemsHeading}:
 ${itemsText(quote.items)}
 
-Open in admin: ${link}`;
+${signoff}${type === "staff" ? `\n\nOpen in admin: ${link}` : ""}`;
+
   return { subject, html, text };
 }
 
-export function customerTemplate(quote: QuoteEmailPayload) {
-  const subject = "We've received your quote request — Vibrand";
-  const html = shell(
-    "Thanks — we've got your request",
-    `<p style="font-size:14px;line-height:1.6;margin:0 0 14px;">Hi ${escapeHtml(
-      quote.customer_name.split(" ")[0] || quote.customer_name,
-    )},</p>
-     <p style="font-size:14px;line-height:1.6;margin:0 0 14px;">Thank you for your quote request. Our team is reviewing it now and will get back to you with pricing, options and lead times <strong>within 24 hours</strong> (Monday to Friday).</p>
-     <h2 style="font-size:15px;margin:20px 0 0;">What you asked us about</h2>
-     ${itemsTable(quote.items)}
-     <p style="font-size:14px;line-height:1.6;margin:0 0 4px;">If anything needs changing in the meantime, just reply to this email.</p>
-     <p style="font-size:14px;line-height:1.6;margin:16px 0 0;">Warm regards,<br/><strong>Vibrand Caribbean Inc.</strong><br/>sales@vibrand.com · +1 (246) 625-1000</p>`,
-  );
-  const text = `Hi ${quote.customer_name},
-
-Thank you for your quote request. Our team is reviewing it now and will get back to you with pricing, options and lead times within 24 hours (Monday to Friday).
-
-What you asked us about:
-${itemsText(quote.items)}
-
-If anything needs changing in the meantime, just reply to this email.
-
-Warm regards,
-Vibrand Caribbean Inc.
-sales@vibrand.com · +1 (246) 625-1000`;
-  return { subject, html, text };
+/** Reads the stored copy for one template, falling back to the shipped defaults. */
+export async function loadTemplate(
+  supabaseAdmin: Admin,
+  type: TemplateType,
+): Promise<TemplateCopy> {
+  const { data } = await supabaseAdmin
+    .from("email_templates")
+    .select("subject, heading, body, signoff")
+    .eq("template_type", type)
+    .maybeSingle();
+  return data ? (data as TemplateCopy) : DEFAULT_TEMPLATES[type];
 }
 
 export const SAMPLE_QUOTE: QuoteEmailPayload = {
@@ -327,6 +446,7 @@ export async function sendAndLog(
       type: args.type,
       recipient: args.to,
       subject: args.subject,
+      html: args.html,
       status: ok ? "sent" : "failed",
       error: error ?? null,
       quote_request_id: args.quoteRequestId ?? null,
@@ -351,7 +471,7 @@ export async function sendQuoteEmails(supabaseAdmin: Admin, quote: QuoteEmailPay
     const verified = await isDomainVerified();
 
     if (settings.staff_notify_enabled) {
-      const staff = staffTemplate(quote);
+      const staff = renderEmail("staff", await loadTemplate(supabaseAdmin, "staff"), quote);
       for (const recipient of settings.recipients) {
         await sendAndLog(supabaseAdmin, {
           type: "staff_notification",
@@ -366,7 +486,11 @@ export async function sendQuoteEmails(supabaseAdmin: Admin, quote: QuoteEmailPay
     }
 
     if (settings.customer_confirm_enabled) {
-      const customer = customerTemplate(quote);
+      const customer = renderEmail(
+        "customer",
+        await loadTemplate(supabaseAdmin, "customer"),
+        quote,
+      );
       await sendAndLog(supabaseAdmin, {
         type: "customer_confirmation",
         to: quote.email,

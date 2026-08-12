@@ -22,9 +22,16 @@ import {
   EMAIL_TYPE_LABELS,
   emailLogQuery,
   emailSettingsQuery,
+  emailTemplatesQuery,
+  TEMPLATE_DESCRIPTIONS,
+  TEMPLATE_LABELS,
+  type EmailLogRow,
   type EmailSettingsRow,
+  type TemplateType,
 } from "@/lib/email-settings";
 import { getEmailStatus, sendTestEmail, updateEmailSettings } from "@/lib/email.functions";
+import { EmailTemplateEditor } from "@/components/admin/EmailTemplateEditor";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/admin/email")({
   beforeLoad: ({ context }) => {
@@ -61,6 +68,9 @@ function EmailSettingsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const templates = useQuery(emailTemplatesQuery);
+  const [editing, setEditing] = useState<TemplateType | null>(null);
+  const [openLog, setOpenLog] = useState<EmailLogRow | null>(null);
 
   useEffect(() => {
     if (settings.data) setDraft(settings.data);
@@ -117,7 +127,7 @@ function EmailSettingsPage() {
   });
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-6xl">
       <h1 className="text-2xl font-bold">Email</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Control the two quote emails, who gets notified, and review every send.
@@ -168,6 +178,7 @@ function EmailSettingsPage() {
       <Tabs defaultValue="settings" className="mt-6">
         <TabsList>
           <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="log">Email log</TabsTrigger>
         </TabsList>
 
@@ -307,7 +318,48 @@ function EmailSettingsPage() {
           </section>
         </TabsContent>
 
+        <TabsContent value="templates" className="pt-4">
+          {editing ? (
+            <EmailTemplateEditor
+              key={editing}
+              type={editing}
+              row={templates.data?.find((row) => row.template_type === editing)}
+              onBack={() => setEditing(null)}
+            />
+          ) : templates.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading templates…</p>
+          ) : (
+            <ul className="divide-y divide-n-200 overflow-hidden rounded-xl border border-border bg-white">
+              {(["staff", "customer"] as TemplateType[]).map((type) => {
+                const row = templates.data?.find((item) => item.template_type === type);
+                return (
+                  <li key={type} className="flex flex-wrap items-center gap-3 p-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">{TEMPLATE_LABELS[type]}</p>
+                      <p className="text-sm text-muted-foreground">{TEMPLATE_DESCRIPTIONS[type]}</p>
+                      <p className="mt-1 truncate text-sm">
+                        <span className="text-n-500">Subject:</span> {row?.subject ?? "—"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {row
+                          ? `Edited${row.updated_by_name ? ` by ${row.updated_by_name}` : ""} · ${new Date(
+                              row.updated_at,
+                            ).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+                          : "Using the default copy"}
+                      </p>
+                    </div>
+                    <Button variant="outline" onClick={() => setEditing(type)} disabled={!row}>
+                      Edit
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </TabsContent>
+
         <TabsContent value="log" className="pt-4">
+          {/* log tab */}
           <div className="flex flex-wrap gap-2">
             <Input
               className="sm:max-w-xs"
@@ -341,7 +393,8 @@ function EmailSettingsPage() {
           </div>
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Newest first · log entries are kept for 90 days.
+            Newest first · log entries are kept for 90 days. Click a row to see exactly what was
+            sent.
           </p>
 
           <div className="mt-3 overflow-x-auto rounded-xl border border-border bg-white">
@@ -364,7 +417,11 @@ function EmailSettingsPage() {
                   </tr>
                 ) : (
                   rows.map((row) => (
-                    <tr key={row.id} className="border-t border-n-200 align-top">
+                    <tr
+                      key={row.id}
+                      onClick={() => setOpenLog(row)}
+                      className="cursor-pointer border-t border-n-200 align-top hover:bg-navy-50"
+                    >
                       <td className="whitespace-nowrap px-3 py-2">
                         {new Date(row.created_at).toLocaleString()}
                       </td>
@@ -393,6 +450,37 @@ function EmailSettingsPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <Sheet open={Boolean(openLog)} onOpenChange={(open) => !open && setOpenLog(null)}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle className="pr-6 text-left text-base">
+              {openLog?.subject ?? "Email"}
+            </SheetTitle>
+          </SheetHeader>
+          {openLog ? (
+            <div className="mt-3 space-y-3 text-sm">
+              <p className="text-muted-foreground">
+                {EMAIL_TYPE_LABELS[openLog.type] ?? openLog.type} · {openLog.recipient} ·{" "}
+                {new Date(openLog.created_at).toLocaleString()} · {openLog.status}
+              </p>
+              {openLog.error ? <p className="text-red-600">{openLog.error}</p> : null}
+              {openLog.html ? (
+                <iframe
+                  title="Sent email"
+                  sandbox=""
+                  srcDoc={openLog.html}
+                  className="h-[70vh] w-full rounded-lg border border-n-200 bg-white"
+                />
+              ) : (
+                <p className="text-muted-foreground">
+                  No snapshot stored for this send (it predates snapshot logging).
+                </p>
+              )}
+            </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
