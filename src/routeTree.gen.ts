@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as QuoteRouteImport } from './routes/quote'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAccountRouteImport } from './routes/_authenticated/admin.account'
@@ -62,6 +63,11 @@ const ProductsRoute = ProductsRouteImport.update({
 const QuoteRoute = QuoteRouteImport.update({
   id: '/quote',
   path: '/quote',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/products': typeof ProductsRoute
   '/quote': typeof QuoteRoute
+  '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/products': typeof ProductsRoute
   '/quote': typeof QuoteRoute
+  '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/products': typeof ProductsRoute
   '/quote': typeof QuoteRoute
+  '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
   '/_authenticated/admin/account': typeof AuthenticatedAdminAccountRoute
   '/_authenticated/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/products'
     | '/quote'
+    | '/team'
     | '/c/$slug'
     | '/admin/account'
     | '/admin/bulk-images'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/products'
     | '/quote'
+    | '/team'
     | '/c/$slug'
     | '/admin/account'
     | '/admin/bulk-images'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/products'
     | '/quote'
+    | '/team'
     | '/c/$slug'
     | '/_authenticated/admin/account'
     | '/_authenticated/admin/bulk-images'
@@ -279,6 +291,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   ProductsRoute: typeof ProductsRoute
   QuoteRoute: typeof QuoteRoute
+  TeamRoute: typeof TeamRoute
   CSlugRoute: typeof CSlugRoute
   ApiPublicProductImageSplatRoute: typeof ApiPublicProductImageSplatRoute
 }
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       path: '/quote'
       fullPath: '/quote'
       preLoaderRoute: typeof QuoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/c/$slug': {
@@ -467,6 +487,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   ProductsRoute: ProductsRoute,
   QuoteRoute: QuoteRoute,
+  TeamRoute: TeamRoute,
   CSlugRoute: CSlugRoute,
   ApiPublicProductImageSplatRoute: ApiPublicProductImageSplatRoute,
 }
