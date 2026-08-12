@@ -81,9 +81,11 @@ export type Database = {
           moq: number | null
           name: string
           price: number | null
-          production_days: number | null
+          production_max_days: number | null
+          production_min_days: number | null
           rush_enabled: boolean
-          rush_production_days: number | null
+          rush_production_max_days: number | null
+          rush_production_min_days: number | null
           shipping_methods: string
           show_price: boolean
           size: string | null
@@ -111,9 +113,11 @@ export type Database = {
           moq?: number | null
           name: string
           price?: number | null
-          production_days?: number | null
+          production_max_days?: number | null
+          production_min_days?: number | null
           rush_enabled?: boolean
-          rush_production_days?: number | null
+          rush_production_max_days?: number | null
+          rush_production_min_days?: number | null
           shipping_methods?: string
           show_price?: boolean
           size?: string | null
@@ -141,9 +145,11 @@ export type Database = {
           moq?: number | null
           name?: string
           price?: number | null
-          production_days?: number | null
+          production_max_days?: number | null
+          production_min_days?: number | null
           rush_enabled?: boolean
-          rush_production_days?: number | null
+          rush_production_max_days?: number | null
+          rush_production_min_days?: number | null
           shipping_methods?: string
           show_price?: boolean
           size?: string | null
