@@ -577,6 +577,7 @@ export type Database = {
       suppliers: {
         Row: {
           code: string
+          contact: string | null
           country: string
           created_at: string
           default_shipping_mode: string
@@ -589,6 +590,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          contact?: string | null
           country?: string
           created_at?: string
           default_shipping_mode?: string
@@ -601,6 +603,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          contact?: string | null
           country?: string
           created_at?: string
           default_shipping_mode?: string
