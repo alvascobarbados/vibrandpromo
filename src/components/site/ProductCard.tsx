@@ -73,7 +73,7 @@ export function ProductCard({
             <Pencil className="size-3.5 sm:size-4" />
           </button>
           {hidden ? (
-            <span className="absolute left-2 top-2 z-20 rounded-full bg-n-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            <span className="card-label absolute left-2 top-2 z-20 rounded-full bg-n-700 px-2 py-0.5 !text-white">
               Hidden
             </span>
           ) : null}
