@@ -127,7 +127,7 @@ function EmailSettingsPage() {
   });
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-6xl">
       <h1 className="text-2xl font-bold">Email</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Control the two quote emails, who gets notified, and review every send.
