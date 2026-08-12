@@ -134,11 +134,11 @@ function StaffPage() {
           />
         </div>
         <div>
-          <Label htmlFor="password">Temporary password</Label>
+          <Label htmlFor="password">Temporary password (optional)</Label>
           <Input
             id="password"
-            required
             minLength={8}
+            placeholder="Leave blank — no password needed"
             value={form.password}
             onChange={(event) => setForm((p) => ({ ...p, password: event.target.value }))}
           />
@@ -159,6 +159,10 @@ function StaffPage() {
           </Select>
         </div>
         <div className="sm:col-span-2">
+          <p className="mb-3 text-xs text-muted-foreground">
+            Name, email and role are all that's required. The invitee signs in with Google or an
+            emailed sign-in link using this address — a password is only for emergency fallback.
+          </p>
           <Button type="submit" disabled={createMutation.isPending}>
             {createMutation.isPending ? "Creating…" : "Add staff member"}
           </Button>
