@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ProductCard } from "@/components/site/ProductCard";
 import type { Product } from "@/lib/catalog";
 
 const CARD_WIDTH =
-  "w-[calc((100%-1.5rem)/2.1)] sm:w-[calc((100%-2.25rem)/3.3)] xl:w-[calc((100%-3rem)/4.3)]";
+  "w-[calc((100%-1.5rem)/2.1)] sm:w-[228px] md:w-[240px] lg:w-[252px] xl:w-[264px]";
 
 export function CategoryRow({
   items,
@@ -19,6 +19,8 @@ export function CategoryRow({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [renderCount, setRenderCount] = useState(4);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
 
   const update = useCallback(() => {
     const node = trackRef.current;
@@ -27,6 +29,8 @@ export function CategoryRow({
     const gap = 12;
     const lastVisible = Math.ceil((node.scrollLeft + node.clientWidth) / (cardWidth + gap));
     setRenderCount((prev) => Math.max(prev, lastVisible + 2));
+    setAtStart(node.scrollLeft <= 4);
+    setAtEnd(node.scrollLeft + node.clientWidth >= node.scrollWidth - 4);
   }, []);
 
   useEffect(() => {
@@ -45,12 +49,19 @@ export function CategoryRow({
     };
   }, [update]);
 
+  const page = (direction: -1 | 1) => {
+    const node = trackRef.current;
+    if (!node) return;
+    node.scrollBy({ left: direction * node.clientWidth * 0.9, behavior: "smooth" });
+  };
+
   return (
-    <div
-      ref={trackRef}
-      className="-mx-4 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto overflow-y-hidden scroll-smooth px-4 pb-1 [scroll-padding-left:1rem] [scroll-padding-right:1rem] sm:mx-0 sm:px-0 sm:[scroll-padding-left:0px] sm:[scroll-padding-right:0px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      style={{ touchAction: "pan-x pan-y pinch-zoom", overscrollBehaviorX: "contain" }}
-    >
+    <div className="group/shelf relative">
+      <div
+        ref={trackRef}
+        className="site-scroller flex snap-x snap-mandatory items-stretch gap-3 overflow-y-hidden scroll-smooth pb-1 md:gap-5 lg:gap-6"
+        style={{ touchAction: "pan-x pan-y pinch-zoom", overscrollBehaviorX: "contain" }}
+      >
       {items.map((product, index) => (
         <div key={product.id} className={`shrink-0 snap-start ${CARD_WIDTH}`}>
           {index < renderCount ? (
@@ -71,6 +82,30 @@ export function CategoryRow({
           View all {total}
         </Link>
       ) : null}
+      </div>
+
+      <div className="pointer-events-none absolute inset-y-0 left-0 right-0 hidden items-center justify-between [@media(hover:hover)]:flex">
+        <button
+          type="button"
+          aria-label="Scroll left"
+          onClick={() => page(-1)}
+          className={`-ml-3 inline-flex size-9 items-center justify-center rounded-full bg-n-700 text-white shadow-card opacity-0 transition-opacity duration-[180ms] ease-out ${
+            atStart ? "pointer-events-none" : "pointer-events-auto group-hover/shelf:opacity-100"
+          }`}
+        >
+          <ChevronLeft className="size-5" />
+        </button>
+        <button
+          type="button"
+          aria-label="Scroll right"
+          onClick={() => page(1)}
+          className={`-mr-3 inline-flex size-9 items-center justify-center rounded-full bg-n-700 text-white shadow-card opacity-0 transition-opacity duration-[180ms] ease-out ${
+            atEnd ? "pointer-events-none" : "pointer-events-auto group-hover/shelf:opacity-100"
+          }`}
+        >
+          <ChevronRight className="size-5" />
+        </button>
+      </div>
     </div>
   );
 }

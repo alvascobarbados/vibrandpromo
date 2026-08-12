@@ -255,7 +255,7 @@ export function ImageLightbox({
                   alt={i === 0 ? alt : `${alt} — image ${i + 1}`}
                   draggable={false}
                   onClick={onImageTap}
-                  className="max-h-full max-w-full select-none object-contain"
+                  className="max-h-[80vh] max-w-full select-none object-contain"
                   style={{
                     transform:
                       i === index ? `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)` : undefined,
@@ -288,7 +288,11 @@ export function ImageLightbox({
         </div>
       ) : null}
 
-      {footer ? <div className="relative z-10">{footer}</div> : null}
+      {footer ? (
+        <div className="relative z-10 border-t border-white/10 bg-n-900/80 backdrop-blur-sm">
+          <div className="mx-auto w-full max-w-[720px]">{footer}</div>
+        </div>
+      ) : null}
     </div>
   );
 }

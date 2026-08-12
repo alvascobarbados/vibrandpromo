@@ -34,14 +34,16 @@ const DETAILS = [
 function ContactPage() {
   return (
     <SiteLayout>
-      <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-6">
-        <h1 className="text-4xl font-bold sm:text-5xl">Contact us</h1>
-        <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+      <div className="site-container py-10 lg:py-16">
+        <h1 className="font-display text-[28px] font-semibold leading-[1.3] sm:text-[40px]">
+          Contact us
+        </h1>
+        <p className="mt-4 max-w-2xl text-lg leading-[1.5] text-muted-foreground">
           Tell us what you need branded and we'll take it from there. For the fastest response, send
           through a quote list with the products you're interested in.
         </p>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2">
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:mt-16">
           {DETAILS.map((detail) => (
             <div
               key={detail.label}
@@ -64,8 +66,8 @@ function ContactPage() {
           ))}
         </div>
 
-        <div className="mt-12 rounded-2xl border border-border bg-secondary p-8">
-          <h2 className="text-2xl font-bold">Ready for pricing?</h2>
+        <div className="mt-10 rounded-2xl border border-border bg-secondary p-8 lg:mt-16">
+          <h2 className="font-display text-[24px] font-semibold leading-[1.3]">Ready for pricing?</h2>
           <p className="mt-2 text-muted-foreground">
             Add products to your quote list and submit the request form — no account needed.
           </p>

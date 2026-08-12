@@ -88,7 +88,7 @@ export function SiteLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-lime-700/20 bg-lime-500">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+        <div className="site-container">
           <div className="flex h-16 flex-nowrap items-center gap-2 sm:gap-3">
             <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -172,7 +172,7 @@ export function SiteLayout({
       <AdminEditBar />
 
       <footer className="border-t border-navy-800 bg-navy-900 text-white">
-        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-3">
+        <div className="site-container grid gap-10 py-10 md:grid-cols-3 lg:py-16">
           <div>
             <img src={markLime} alt="Vibrand" className="h-10 w-auto" />
             <p className="mt-3 max-w-sm text-sm text-navy-100">
@@ -213,7 +213,7 @@ export function SiteLayout({
           </div>
         </div>
         <div className="border-t border-navy-800">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-navy-300 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="site-container flex flex-col gap-2 py-6 text-xs text-navy-300 sm:flex-row sm:items-center sm:justify-between">
             <p>© {new Date().getFullYear()} {COMPANY.name} All rights reserved.</p>
             <Link to="/auth" className="hover:text-white">
               Staff Login

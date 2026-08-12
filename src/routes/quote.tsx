@@ -127,7 +127,7 @@ function QuotePage() {
   if (submitted) {
     return (
       <SiteLayout>
-        <div className="mx-auto w-full max-w-2xl px-4 py-24 text-center sm:px-6">
+        <div className="site-container max-w-[720px] py-16 text-center lg:py-24">
           <CheckCircle2 className="mx-auto size-14 text-primary" />
           <h1 className="mt-6 text-3xl font-bold">Thanks — request received</h1>
           <p className="mt-4 text-muted-foreground">
@@ -148,13 +148,15 @@ function QuotePage() {
 
   return (
     <SiteLayout>
-      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-        <h1 className="text-3xl font-bold text-n-900 sm:text-4xl">Your Quote List</h1>
-        <p className="mt-3 text-n-500">
+      <div className="site-container max-w-[720px] py-10 lg:py-16">
+        <h1 className="font-display text-[24px] font-semibold leading-[1.3] text-n-900 lg:text-[32px]">
+          Your Quote List
+        </h1>
+        <p className="mt-4 leading-[1.5] text-n-500">
           Nothing is being purchased here. Send us your list and we'll reply with a formal quote.
         </p>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_1fr]">
+        <div className="mt-10 flex flex-col gap-10 lg:mt-16 lg:gap-16">
           <div className="space-y-4">
             {items.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-n-200 p-10 text-center">
@@ -174,10 +176,10 @@ function QuotePage() {
                       src={item.image}
                       alt={item.name}
                       loading="lazy"
-                      className="size-24 shrink-0 rounded-xl object-cover"
+                      className="image-field size-24 shrink-0 object-contain p-[10%]"
                     />
                   ) : (
-                    <ProductPlaceholder className="size-24 shrink-0 rounded-xl" />
+                    <ProductPlaceholder className="image-field size-24 shrink-0" />
                   )}
                   <div className="flex-1 space-y-2">
                     <div className="flex items-start justify-between gap-3">
@@ -215,7 +217,9 @@ function QuotePage() {
             onSubmit={handleSubmit}
             className="space-y-4 rounded-2xl border border-n-200 bg-lime-50 p-6 shadow-card"
           >
-            <h2 className="text-xl font-bold text-n-900">Request a quote</h2>
+            <h2 className="font-display text-[20px] font-semibold leading-[1.3] text-n-900 lg:text-[24px]">
+              Request a quote
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="customer_name">Name *</Label>

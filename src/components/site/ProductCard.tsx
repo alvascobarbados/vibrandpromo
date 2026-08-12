@@ -15,14 +15,14 @@ function FlagBadge({ source }: { source: string }) {
     <span
       title={source}
       aria-label={source}
-      className="absolute bottom-2 right-2 size-7 overflow-hidden rounded-full border-2 border-white shadow-card"
+      className="absolute bottom-[var(--badge-inset)] right-[var(--badge-inset)] size-[var(--badge-size)] overflow-hidden rounded-full border-2 border-white shadow-card"
     >
       <img
         src={usa ? "https://flagcdn.com/w80/us.png" : "https://flagcdn.com/w80/cn.png"}
         alt={usa ? "USA Inventory" : "Factory Direct"}
         loading="lazy"
-        width={28}
-        height={28}
+        width={22}
+        height={22}
         className="size-full object-cover"
       />
     </span>
@@ -31,7 +31,7 @@ function FlagBadge({ source }: { source: string }) {
 
 function SpecLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="whitespace-nowrap text-[10px] font-normal uppercase leading-3 tracking-[0.01em] text-n-500">
+    <p className="whitespace-nowrap text-[10px] font-normal uppercase leading-3 tracking-[0.01em] text-n-500 lg:text-[11px]">
       {children}
     </p>
   );
@@ -48,7 +48,7 @@ function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | nu
         className="size-3 shrink-0 translate-y-[0.5px] text-n-500 [@container(min-width:170px)]:size-[13px]"
         strokeWidth={1.75}
       />
-      <span className="whitespace-nowrap text-[clamp(9px,6.2cqw,12px)]">
+      <span className="whitespace-nowrap text-[clamp(9px,6.2cqw,12px)] lg:text-[clamp(10px,6.2cqw,13px)]">
         {value ?? "On request"}
       </span>
     </p>
@@ -72,7 +72,7 @@ export function ProductCard({
 
   return (
     <article
-      className={`@container relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-card ${
+      className={`group @container relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white transition-shadow duration-[180ms] ease-out [@media(hover:hover)]:hover:shadow-hover ${
         hidden ? "border-dashed border-n-300 opacity-60" : "border-n-200"
       }`}
     >
@@ -93,33 +93,35 @@ export function ProductCard({
           ) : null}
         </>
       ) : null}
-      <ProductImageCarousel
-        images={images}
-        alt={product.name}
-        coverOnly={coverOnly}
-        onImageTap={(i) => setLightboxIndex(i)}
-      >
-        <FlagBadge source={product.inventory_source} />
-      </ProductImageCarousel>
+      <div className="p-2 pb-0 [@container(min-width:170px)]:p-3 [@container(min-width:170px)]:pb-0">
+        <ProductImageCarousel
+          images={images}
+          alt={product.name}
+          coverOnly={coverOnly}
+          onImageTap={(i) => setLightboxIndex(i)}
+        >
+          <FlagBadge source={product.inventory_source} />
+        </ProductImageCarousel>
+      </div>
 
-      <div className="flex flex-1 flex-col p-2.5 [@container(min-width:170px)]:p-3">
-        <p className="truncate text-xs font-medium leading-4 text-n-500">
+      <div className="flex flex-1 flex-col p-2 pt-3 [@container(min-width:170px)]:p-3 [@container(min-width:170px)]:pt-3">
+        <p className="truncate text-[10px] font-medium leading-4 text-n-500 lg:text-[11px]">
           {product.sku ?? "—"}
         </p>
-        <h3 className="mt-0.5 line-clamp-2 h-[2.5rem] text-sm font-semibold leading-5 text-n-900">
+        <h3 className="mt-1 line-clamp-2 h-[34px] overflow-hidden text-[13px] font-semibold leading-[1.3] text-n-900 lg:h-[39px] lg:text-[15px]">
           {product.name}
         </h3>
-        <p className="mt-1 h-[1.25rem] truncate text-sm font-semibold leading-5 text-n-700">
+        <p className="mt-2 h-[1.25rem] truncate text-[13px] font-semibold leading-5 text-n-700 lg:text-[14px]">
           {price ?? "\u00a0"}
         </p>
 
-        <div className="mt-auto flex min-h-[3.25rem] flex-col items-stretch border-t border-n-200 pt-2.5 [@container(min-width:150px)]:flex-row">
+        <div className="mt-auto flex min-h-[3.25rem] flex-col items-stretch border-t border-n-200 pt-3 [@container(min-width:150px)]:flex-row">
           <div className="shrink-0 [@container(min-width:150px)]:pr-2">
             <SpecLabel>MOQ</SpecLabel>
             <p
               className={`mt-0.5 whitespace-nowrap font-medium leading-4 tabular-nums text-n-700 ${
                 product.moq
-                  ? "text-[clamp(11px,7cqw,13px)]"
+                  ? "text-[clamp(11px,7cqw,13px)] lg:text-[clamp(12px,7cqw,14px)]"
                   : "text-[clamp(9px,5.6cqw,12px)] font-normal text-n-500"
               }`}
             >
@@ -147,7 +149,7 @@ export function ProductCard({
           startIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           footer={
-            <div className="flex items-center gap-3 border-t border-white/10 bg-n-900/80 px-4 py-3 backdrop-blur-sm">
+            <div className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-white">{product.name}</p>
                 <p className="text-xs text-white/60">{product.sku ?? "—"}</p>

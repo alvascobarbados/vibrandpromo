@@ -155,6 +155,33 @@
   --gradient-primary: linear-gradient(100deg, var(--navy-700), var(--navy-500));
   --shadow-card: 0 1px 2px oklch(0.31 0.005 271 / 6%), 0 12px 28px -18px oklch(0.31 0.005 271 / 22%);
   --shadow-lift: 0 2px 6px oklch(0.31 0.005 271 / 8%), 0 22px 44px -22px oklch(0.31 0.005 271 / 26%);
+  --shadow-hover: 0 4px 16px rgb(16 28 46 / 8%);
+
+  /* ---- Layout system (public site) ---- */
+  --container-max: 1240px;
+  --gutter: 16px;
+  --card-min: 220px;
+  --card-max: 280px;
+  --field-radius: 10px;
+  --field-pad: 10%;
+  --badge-size: 22px;
+  --badge-inset: 7px;
+
+  /* ---- Spacing scale ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 64px;
+
+  /* ---- Motion ---- */
+  --motion-fast: 150ms;
+  --motion-base: 180ms;
+  --motion-slow: 200ms;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --chart-1: var(--lime-500);
@@ -170,6 +197,18 @@
   --sidebar-accent-foreground: var(--navy-100);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: var(--lime-500);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 32px;
+  }
 }
 
 .dark {
@@ -247,6 +286,89 @@
 
 @utility shadow-lift {
   box-shadow: var(--shadow-lift);
+}
+
+@utility shadow-hover {
+  box-shadow: var(--shadow-hover);
+}
+
+/* ---- Public layout container: one shared left edge everywhere ---- */
+@utility site-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--container-max);
+  padding-inline: var(--gutter);
+}
+
+/* Edge-to-edge horizontal scroller whose first item aligns to the container. */
+@utility site-scroller {
+  margin-inline: calc(var(--gutter) * -1);
+  padding-inline: var(--gutter);
+  scroll-padding-left: var(--gutter);
+  scroll-padding-right: var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Full-bleed band: consistent internal vertical padding, contained content. */
+@utility section-band {
+  padding-block: var(--space-5);
+  @media (min-width: 1024px) {
+    padding-block: var(--space-7);
+  }
+}
+
+/*
+ * Responsive product grid.
+ * Container queries (not viewport) so the /products sidebar can't squeeze cards.
+ * Thresholds map to the container's inner width at 768 / 1024 / 1440 viewports.
+ */
+@utility product-grid {
+  display: grid;
+  justify-content: center;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, var(--card-max)));
+  @container (min-width: 700px) {
+    gap: var(--space-5);
+    grid-template-columns: repeat(3, minmax(var(--card-min), var(--card-max)));
+  }
+  @container (min-width: 940px) {
+    grid-template-columns: repeat(4, minmax(var(--card-min), var(--card-max)));
+  }
+  @container (min-width: 1150px) {
+    grid-template-columns: repeat(5, minmax(var(--card-min), var(--card-max)));
+  }
+}
+
+/* Normalized image field — identical on every card, carousel frame and lightbox thumb. */
+@utility image-field {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: var(--field-radius);
+  background-color: var(--n-50);
+}
+
+@utility image-field-media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: var(--field-pad);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @keyframes badge-bounce {

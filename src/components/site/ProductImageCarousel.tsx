@@ -60,8 +60,8 @@ export function ProductImageCarousel({
 
   if (list.length === 0) {
     return (
-      <div className="relative aspect-square overflow-hidden">
-        <ProductPlaceholder className="size-full" />
+      <div className="image-field">
+        <ProductPlaceholder className="size-full rounded-[10px]" />
         {children}
       </div>
     );
@@ -69,14 +69,16 @@ export function ProductImageCarousel({
 
   if (coverOnly) {
     return (
-      <div className="relative aspect-square overflow-hidden bg-muted">
+      <div className="image-field">
         <img
           src={list[0]}
           alt={alt}
           loading="lazy"
           decoding="async"
           onClick={onImageTap ? () => onImageTap(0) : undefined}
-          className={`size-full object-cover ${onImageTap ? "cursor-zoom-in" : ""}`}
+          className={`image-field-media transition-transform duration-[180ms] ease-out motion-safe:[@media(hover:hover)]:group-hover:scale-[1.02] ${
+            onImageTap ? "cursor-zoom-in" : ""
+          }`}
         />
         {children}
       </div>
@@ -84,7 +86,7 @@ export function ProductImageCarousel({
   }
 
   return (
-    <div className="group relative aspect-square overflow-hidden bg-muted">
+    <div className="image-field group/car">
       <div
         ref={trackRef}
         onPointerDown={(e) => {
@@ -123,10 +125,10 @@ export function ProductImageCarousel({
                 alt={i === 0 ? alt : `${alt} — image ${i + 1}`}
                 loading={i === 0 ? "lazy" : "lazy"}
                 decoding="async"
-                className="size-full object-cover"
+                className="image-field-media transition-transform duration-[180ms] ease-out motion-safe:[@media(hover:hover)]:group-hover:scale-[1.02]"
               />
             ) : (
-              <div className="size-full bg-muted" aria-hidden="true" />
+              <div className="size-full bg-n-50" aria-hidden="true" />
             )}
           </div>
         ))}
@@ -139,7 +141,7 @@ export function ProductImageCarousel({
             aria-label="Previous image"
             onClick={() => goTo(index - 1)}
             disabled={index === 0}
-            className="absolute left-1.5 top-1/2 hidden -translate-y-1/2 rounded-full bg-background/80 p-1 text-foreground shadow-card opacity-0 transition-opacity hover:bg-background disabled:opacity-0 group-hover:opacity-100 sm:block"
+            className="absolute left-1.5 top-1/2 hidden -translate-y-1/2 rounded-full bg-background/85 p-1 text-foreground shadow-card opacity-0 transition-opacity duration-[180ms] ease-out hover:bg-background disabled:opacity-0 group-hover/car:opacity-100 sm:block"
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -148,12 +150,12 @@ export function ProductImageCarousel({
             aria-label="Next image"
             onClick={() => goTo(index + 1)}
             disabled={index === list.length - 1}
-            className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 rounded-full bg-background/80 p-1 text-foreground shadow-card opacity-0 transition-opacity hover:bg-background disabled:opacity-0 group-hover:opacity-100 sm:block"
+            className="absolute right-1.5 top-1/2 hidden -translate-y-1/2 rounded-full bg-background/85 p-1 text-foreground shadow-card opacity-0 transition-opacity duration-[180ms] ease-out hover:bg-background disabled:opacity-0 group-hover/car:opacity-100 sm:block"
           >
             <ChevronRight className="size-4" />
           </button>
 
-          <div className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-n-700/55 px-2 py-1 backdrop-blur-sm">
+          <div className="pointer-events-none absolute bottom-[7px] left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-n-700/55 px-2 py-1 backdrop-blur-sm">
             {list.map((src, i) => (
               <span
                 key={`dot-${src}-${i}`}

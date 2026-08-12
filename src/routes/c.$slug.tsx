@@ -115,7 +115,7 @@ function CategoryPage() {
   return (
     <SiteLayout>
       <div className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+        <div className="site-container">
           <div className="flex items-center gap-2 py-3">
             <Link
               to="/"
@@ -124,7 +124,7 @@ function CategoryPage() {
             >
               <ArrowLeft className="size-5" />
             </Link>
-            <h1 className="font-display text-lg font-bold text-foreground">
+            <h1 className="font-display text-[20px] font-semibold leading-[1.3] text-foreground lg:text-[24px]">
               {category?.name ?? "Category"}
             </h1>
             {total ? (
@@ -135,14 +135,14 @@ function CategoryPage() {
           </div>
 
           {sections.length ? (
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-3 [scroll-padding-left:1rem] [scroll-padding-right:1rem] sm:mx-0 sm:px-0 sm:[scroll-padding-left:0px] sm:[scroll-padding-right:0px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="site-scroller flex gap-2 pb-3">
               {[{ slug: "all", name: "All" }, ...sections].map((chip) => (
                 <button
                   key={chip.slug}
                   type="button"
                   onClick={() => scrollToSection(chip.slug)}
                   aria-current={activeChip === chip.slug}
-                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-[150ms] ease-out ${
                     activeChip === chip.slug
                       ? "border-lime-500 bg-lime-500 text-n-700"
                       : "border-n-200 bg-white text-n-700 hover:bg-n-50"
@@ -156,11 +156,11 @@ function CategoryPage() {
         </div>
       </div>
 
-      <div id="category-top" className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
+      <div id="category-top" className="site-container @container py-6 lg:py-8">
         {loading ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+          <div className="product-grid">
             {Array.from({ length: 8 }).map((_, index) => (
-              <Skeleton key={index} className="aspect-[3/4] rounded-2xl" />
+              <Skeleton key={index} className="aspect-[3/4] w-full rounded-2xl" />
             ))}
           </div>
         ) : sections.length === 0 ? (
@@ -168,7 +168,7 @@ function CategoryPage() {
             No products in this category yet.
           </p>
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-10 lg:space-y-16">
             {sections.map((section) => (
               <section
                 key={section.id}
@@ -178,8 +178,10 @@ function CategoryPage() {
                 }}
                 className="scroll-mt-40"
               >
-                <h2 className="font-display text-base font-bold text-foreground">{section.name}</h2>
-                <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                <h2 className="font-display text-[20px] font-semibold leading-[1.3] text-foreground lg:text-[24px]">
+                  {section.name}
+                </h2>
+                <div className="product-grid mt-4 lg:mt-5">
                   {section.items.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
