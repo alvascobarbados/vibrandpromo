@@ -244,6 +244,116 @@ function AdminQuotes() {
 
   const selectedQuote = (quotes.data ?? []).find((quote) => quote.id === selected) ?? null;
 
+  type Column = {
+    id: string;
+    label: string;
+    sortKey?: SortKey;
+    align?: "right";
+    className?: string;
+    cellClassName?: string;
+    cell: (quote: QuoteRequest) => React.ReactNode;
+  };
+
+  const columns: Column[] = [
+    {
+      id: "age",
+      label: "Age",
+      sortKey: "created_at",
+      className: "w-[70px]",
+      cellClassName: "whitespace-nowrap text-n-500",
+      cell: (quote) => relativeAge(quote.created_at),
+    },
+    {
+      id: "company",
+      label: "Company",
+      sortKey: "company",
+      cellClassName: "font-medium text-n-900",
+      cell: (quote) => (
+        <>
+          {quote.status === "new" ? (
+            <span className="mr-2 inline-block size-1.5 rounded-full bg-lime-500 align-middle" />
+          ) : null}
+          {quote.company}
+        </>
+      ),
+    },
+    {
+      id: "customer_name",
+      label: "Contact name",
+      sortKey: "customer_name",
+      cellClassName: "text-n-500",
+      cell: (quote) => quote.customer_name,
+    },
+    {
+      id: "territory",
+      label: "Territory",
+      className: "w-[110px]",
+      cellClassName: "whitespace-nowrap text-n-700",
+      cell: (quote) => quote.territory,
+    },
+    ...(optional.email
+      ? [
+          {
+            id: "email",
+            label: "Email",
+            cellClassName: "whitespace-nowrap",
+            cell: (quote: QuoteRequest) => (
+              <a
+                href={`mailto:${quote.email}`}
+                onClick={(event) => event.stopPropagation()}
+                className="text-navy-500 hover:underline"
+              >
+                {quote.email}
+              </a>
+            ),
+          } as Column,
+        ]
+      : []),
+    ...(optional.phone
+      ? [
+          {
+            id: "phone",
+            label: "Phone",
+            className: "w-[140px]",
+            cellClassName: "whitespace-nowrap text-n-700",
+            cell: (quote: QuoteRequest) => quote.phone || "—",
+          } as Column,
+        ]
+      : []),
+    ...(optional.submitted
+      ? [
+          {
+            id: "submitted",
+            label: "Submitted",
+            sortKey: "created_at" as SortKey,
+            className: "w-[120px]",
+            cellClassName: "whitespace-nowrap text-n-700",
+            cell: (quote: QuoteRequest) => new Date(quote.created_at).toLocaleDateString(),
+          } as Column,
+        ]
+      : []),
+    {
+      id: "items",
+      label: "Items",
+      align: "right",
+      className: "w-[70px]",
+      cellClassName: "text-n-700",
+      cell: (quote) => (itemsByQuote.get(quote.id) ?? []).length,
+    },
+    {
+      id: "status",
+      label: "Status",
+      sortKey: "status",
+      align: "right",
+      className: "w-[160px]",
+      cell: (quote) => (
+        <div className="flex justify-end">
+          <StatusChip quote={quote} />
+        </div>
+      ),
+    },
+  ];
+
   const toolbar = (
     <div className="mt-5 flex flex-wrap items-center gap-2">
       <Input
