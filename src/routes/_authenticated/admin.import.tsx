@@ -116,7 +116,6 @@ function AdminImport() {
         .map((value) => value.trim())
         .filter(Boolean);
       const moq = (row["moq"] ?? "").trim();
-      const days = (row["production_days"] ?? "").trim();
       const shipping = (row["shipping_methods"] ?? "").trim().toLowerCase() || "air_sea";
       if (!["air_sea", "air_only", "sea_only"].includes(shipping)) {
         found.push({
@@ -142,26 +141,47 @@ function AdminImport() {
         return;
       }
       const rushEnabled = ["true", "yes", "1"].includes(rushRaw);
-      const rushDays = num("rush_production_days");
-      const normalDays = days ? Number(days) : null;
+      // production_days stays supported as the fixed/minimum production time.
+      const normalMin = num("production_min_days") ?? num("production_days");
+      const normalMax = num("production_max_days");
+      const rushMin = num("rush_production_min_days") ?? num("rush_production_days");
+      const rushMax = num("rush_production_max_days");
+      if (normalMax != null && (normalMin == null || normalMax < normalMin)) {
+        found.push({
+          line,
+          sku,
+          reason: "production_max_days must be a number greater than or equal to the minimum",
+        });
+        return;
+      }
       if (rushEnabled) {
         if (shipping === "sea_only") {
           found.push({ line, sku, reason: "Rush requires air shipping — this row is sea only" });
           return;
         }
-        if (rushDays == null || rushDays < 1) {
+        if (rushMin == null || rushMin < 1) {
           found.push({
             line,
             sku,
-            reason: "Rush is on, so rush_production_days must be a whole number of 1 or more",
+            reason:
+              "Rush is on, so rush_production_min_days must be a whole number of 1 or more",
           });
           return;
         }
-        if (normalDays == null || rushDays >= normalDays) {
+        if (rushMax != null && rushMax < rushMin) {
           found.push({
             line,
             sku,
-            reason: "rush_production_days must be less than production_days",
+            reason:
+              "rush_production_max_days must be greater than or equal to rush_production_min_days",
+          });
+          return;
+        }
+        if (normalMin == null || rushMin >= normalMin) {
+          found.push({
+            line,
+            sku,
+            reason: "rush_production_min_days must be less than the normal production minimum",
           });
           return;
         }
@@ -176,10 +196,12 @@ function AdminImport() {
           subcategory_id: match.id,
           inventory_source: (row["inventory_source"] ?? "").trim() || "Factory Direct",
           moq: moq ? Number(moq) : null,
-          production_days: days ? Number(days) : null,
+          production_min_days: normalMin,
+          production_max_days: normalMax,
           shipping_methods: shipping,
           rush_enabled: rushEnabled,
-          rush_production_days: rushEnabled ? rushDays : null,
+          rush_production_min_days: rushEnabled ? rushMin : null,
+          rush_production_max_days: rushEnabled ? rushMax : null,
           colour_option: (row["colour_option"] ?? "").trim() || null,
           decoration_methods: methods,
           material: (row["material"] ?? "").trim() || null,
