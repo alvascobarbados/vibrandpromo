@@ -297,9 +297,16 @@ function AdminImport() {
           Sea.
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
-          Optional rush columns: <span className="font-mono">rush_enabled</span> (true/false) and{" "}
-          <span className="font-mono">rush_production_days</span>. When rush is true the rush
-          production days must be less than production_days, and the product cannot be sea only.
+          Production time can be a range. <span className="font-mono">production_days</span> (or{" "}
+          <span className="font-mono">production_min_days</span>) is the fixed or minimum time, and
+          the optional <span className="font-mono">production_max_days</span> makes it a range.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Optional rush columns: <span className="font-mono">rush_enabled</span> (true/false),{" "}
+          <span className="font-mono">rush_production_min_days</span> and optional{" "}
+          <span className="font-mono">rush_production_max_days</span>. When rush is true the rush
+          minimum must be less than the normal production minimum, and the product cannot be sea
+          only.
         </p>
         <p className="mt-3 text-xs text-muted-foreground">
           Leave MOQ or production days blank if they are on request. Customer-facing lead times are
@@ -371,9 +378,10 @@ function AdminImport() {
                               : String(item.payload["moq"])}
                           </td>
                           <td className="py-2 pr-4">
-                            {item.payload["production_days"] == null
-                              ? "On request"
-                              : `${String(item.payload["production_days"])} days`}
+                            {productionLabel(
+                              item.payload["production_min_days"] as number | null,
+                              item.payload["production_max_days"] as number | null,
+                            )}
                           </td>
                           <td className="py-2 pr-4">
                             {item.payload["is_active"] ? "Yes" : "Hidden"}
