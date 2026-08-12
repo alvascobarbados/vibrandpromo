@@ -75,7 +75,7 @@ export const Route = createFileRoute("/products")({
 
 function CatalogPage() {
   const rawPage = Route.useSearch().page ?? 1;
-  const { search, scope, setScope, toggle, clear, update, activeCount } = useCatalogFilters();
+  const { search, toggle, clear, update, activeCount } = useCatalogFilters();
   const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
@@ -126,8 +126,6 @@ function CatalogPage() {
     subcategories: allSubcategories,
     search,
     resultCount: total,
-    scope,
-    onScope: setScope,
     onToggle: toggle,
     onClear: clear,
     activeCount,
@@ -242,8 +240,6 @@ function CatalogPage() {
 
       <FilterBar
         activeCount={activeCount}
-        scope={scope}
-        onScope={setScope}
         onOpenFilters={() => setFiltersOpen(true)}
         suppressed={filtersOpen}
       />

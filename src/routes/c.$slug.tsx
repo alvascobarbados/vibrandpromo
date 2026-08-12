@@ -90,7 +90,7 @@ function CategoryPage() {
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const shipping = useShippingSettings();
-  const { search, scope, setScope, toggle, clear, activeCount } = useCatalogFilters();
+  const { search, toggle, clear, activeCount } = useCatalogFilters();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeChip, setActiveChip] = useState("all");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -232,8 +232,6 @@ function CategoryPage() {
                 subcategories={subcategories.data ?? []}
                 search={search}
                 resultCount={matching.length}
-                scope={scope}
-                onScope={setScope}
                 onToggle={toggle}
                 onClear={clear}
                 activeCount={activeCount}
@@ -316,8 +314,6 @@ function CategoryPage() {
 
       <FilterBar
         activeCount={activeCount}
-        scope={scope}
-        onScope={setScope}
         onOpenFilters={() => setFiltersOpen(true)}
         suppressed={filtersOpen}
       />
@@ -331,8 +327,6 @@ function CategoryPage() {
             subcategories={subcategories.data ?? []}
             search={search}
             resultCount={matching.length}
-            scope={scope}
-            onScope={setScope}
             onToggle={toggle}
             onClear={clear}
             activeCount={activeCount}
