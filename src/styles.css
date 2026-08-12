@@ -121,6 +121,9 @@
   --success-foreground: oklch(1 0 0);
   --warning: oklch(0.7612 0.1399 71.61);
   --warning-foreground: oklch(0.292 0.0634 64.78);
+  /* Inventory source dots, matching the card flag badges (US blue / CN red) */
+  --source-usa: oklch(0.4762 0.1637 264.05);
+  --source-factory: oklch(0.5525 0.2135 27.33);
 
   /* ---- Semantic mapping ---- */
   --background: oklch(1 0 0);
