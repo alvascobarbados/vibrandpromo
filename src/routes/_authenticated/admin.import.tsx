@@ -274,6 +274,11 @@ function AdminImport() {
           air_sea, air_only or sea_only. Leave it out or blank and the product is treated as Air &
           Sea.
         </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Optional rush columns: <span className="font-mono">rush_enabled</span> (true/false) and{" "}
+          <span className="font-mono">rush_production_days</span>. When rush is true the rush
+          production days must be less than production_days, and the product cannot be sea only.
+        </p>
         <p className="mt-3 text-xs text-muted-foreground">
           Leave MOQ or production days blank if they are on request. Customer-facing lead times are
           calculated automatically from production time plus the global shipping settings, so
