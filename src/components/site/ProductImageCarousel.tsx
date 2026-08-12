@@ -10,12 +10,14 @@ export function ProductImageCarousel({
   children,
   onImageTap,
   coverOnly = false,
+  fieldClassName = "",
 }: {
   images: string[];
   alt: string;
   children?: React.ReactNode;
   onImageTap?: (index: number) => void;
   coverOnly?: boolean;
+  fieldClassName?: string;
 }) {
   const list = images.map(imageSrc);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -60,8 +62,8 @@ export function ProductImageCarousel({
 
   if (list.length === 0) {
     return (
-      <div className="image-field">
-        <ProductPlaceholder className="size-full rounded-[10px]" />
+      <div className={`image-field ${fieldClassName}`}>
+        <ProductPlaceholder className="size-full" />
         {children}
       </div>
     );
@@ -69,7 +71,7 @@ export function ProductImageCarousel({
 
   if (coverOnly) {
     return (
-      <div className="image-field">
+      <div className={`image-field ${fieldClassName}`}>
         <img
           src={list[0]}
           alt={alt}
@@ -86,7 +88,7 @@ export function ProductImageCarousel({
   }
 
   return (
-    <div className="image-field group/car">
+    <div className={`image-field group/car ${fieldClassName}`}>
       <div
         ref={trackRef}
         onPointerDown={(e) => {
