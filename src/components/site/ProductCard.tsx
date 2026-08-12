@@ -108,7 +108,7 @@ export function ProductCard({
         <p className="truncate text-[10px] font-medium leading-4 text-n-500 lg:text-[11px]">
           {product.sku ?? "—"}
         </p>
-        <h3 className="mt-1 line-clamp-2 h-[2.6rem] text-[13px] font-semibold leading-[1.3] text-n-900 lg:h-[2.9rem] lg:text-[15px]">
+        <h3 className="mt-1 line-clamp-2 h-[34px] overflow-hidden text-[13px] font-semibold leading-[1.3] text-n-900 lg:h-[39px] lg:text-[15px]">
           {product.name}
         </h3>
         <p className="mt-2 h-[1.25rem] truncate text-[13px] font-semibold leading-5 text-n-700 lg:text-[14px]">
