@@ -1,25 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 
-import { SourceScopeToggle } from "@/components/site/SourceScope";
 import { useStaffSession } from "@/lib/staff-session";
-import type { SourceScope } from "@/lib/use-catalog-filters";
 
 /**
- * Mobile-only floating control bar: filter entry point + source scope.
+ * Mobile-only floating filter pill: the single filter entry point under 1024px.
  * Auto-hides on scroll down, stacks above the admin edit-mode toolbar, and
  * stays hidden while any modal surface (filter panel, lightbox) is open.
  */
 export function FilterBar({
   activeCount,
-  scope,
-  onScope,
   onOpenFilters,
   suppressed,
 }: {
   activeCount: number;
-  scope: SourceScope;
-  onScope: (next: SourceScope) => void;
   onOpenFilters: () => void;
   suppressed?: boolean;
 }) {
@@ -66,11 +60,11 @@ export function FilterBar({
         transform: hidden ? "translateY(160%)" : "translateY(0)",
       }}
     >
-      <div className="pointer-events-auto flex max-w-full items-center gap-2 rounded-full border border-n-700 bg-n-900/95 p-1 pl-1.5 text-white shadow-lift backdrop-blur">
+      <div className="pointer-events-auto flex max-w-full items-center rounded-full border border-n-700 bg-n-900/95 p-1 text-white shadow-lift backdrop-blur">
         <button
           type="button"
           onClick={onOpenFilters}
-          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold text-white hover:bg-white/10"
+          className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-white hover:bg-white/10"
         >
           <SlidersHorizontal className="size-4" />
           Filters
@@ -80,8 +74,6 @@ export function FilterBar({
             </span>
           ) : null}
         </button>
-        <span className="h-6 w-px bg-white/20" />
-        <SourceScopeToggle value={scope} onChange={onScope} tone="dark" />
       </div>
     </div>
   );
