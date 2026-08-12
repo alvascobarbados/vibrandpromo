@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { SHIPPING_METHOD_OPTIONS, type Product } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import { RushChip } from "@/components/site/RushChip";
 
 export function ProductQuickEdit({
   product,
