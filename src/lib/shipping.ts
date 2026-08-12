@@ -75,6 +75,8 @@ export type LeadSource = {
   production_days: number | null;
   inventory_source: string | null;
   shipping_methods?: string | null;
+  rush_enabled?: boolean | null;
+  rush_production_days?: number | null;
 };
 
 export function airLeadLabel(product: LeadSource, map: ShippingMap): string | null {
@@ -83,6 +85,19 @@ export function airLeadLabel(product: LeadSource, map: ShippingMap): string | nu
 
 export function seaLeadLabel(product: LeadSource, map: ShippingMap): string | null {
   return formatRange(seaLeadWeeks(product.production_days, settingFor(map, product.inventory_source)), "wks");
+}
+
+/**
+ * Rush is an alternative production time, not a different shipping method: it
+ * uses the same air shipping buffer as the normal air lead time.
+ */
+export function rushLeadLabel(product: LeadSource, map: ShippingMap): string | null {
+  if (!product.rush_enabled) return null;
+  if (!airAvailable(product.shipping_methods)) return null;
+  return formatRange(
+    airLeadDays(product.rush_production_days ?? null, settingFor(map, product.inventory_source)),
+    "days",
+  );
 }
 
 /** Value the "Lead time (air)" filter buckets are measured against. */
