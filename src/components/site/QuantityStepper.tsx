@@ -39,23 +39,25 @@ export function QuantityStepper({
   const shell =
     tone === "dark"
       ? "border-white/30 text-white"
-      : "border-n-200 bg-white text-n-900";
+      : "bg-n-100 text-n-900";
   const btn =
     tone === "dark"
       ? "text-white hover:bg-white/15 disabled:text-white/30"
-      : "text-n-700 hover:bg-n-50 disabled:text-n-300";
+      : "text-n-700 hover:bg-n-200 disabled:text-n-400";
 
   return (
     <div className="relative w-full shrink-0 [@container(min-width:200px)]:w-auto">
       <div
-        className={`flex h-10 w-full items-center justify-between rounded-full border [@container(min-width:200px)]:inline-flex [@container(min-width:200px)]:w-auto [@container(min-width:200px)]:justify-start ${shell}`}
+        className={`flex h-10 w-full items-center justify-between rounded-full [@container(min-width:200px)]:inline-flex [@container(min-width:200px)]:w-auto [@container(min-width:200px)]:justify-start ${
+          tone === "dark" ? "border" : ""
+        } ${shell}`}
       >
         <button
           type="button"
           aria-label="Decrease quantity"
           disabled={quantity <= floor}
           onClick={() => onChange(stepQty(quantity, -1, moq))}
-          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent ${btn}`}
+          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors duration-[150ms] ease-out disabled:cursor-not-allowed disabled:hover:bg-transparent ${btn}`}
         >
           <Minus className="size-3.5" />
         </button>
@@ -80,7 +82,7 @@ export function QuantityStepper({
           type="button"
           aria-label="Increase quantity"
           onClick={() => onChange(stepQty(quantity, 1, moq))}
-          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors ${btn}`}
+          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors duration-[150ms] ease-out ${btn}`}
         >
           <Plus className="size-3.5" />
         </button>
