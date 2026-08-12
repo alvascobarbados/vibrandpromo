@@ -117,6 +117,15 @@ function AdminImport() {
         .filter(Boolean);
       const moq = (row["moq"] ?? "").trim();
       const days = (row["production_days"] ?? "").trim();
+      const shipping = (row["shipping_methods"] ?? "").trim().toLowerCase() || "air_sea";
+      if (!["air_sea", "air_only", "sea_only"].includes(shipping)) {
+        found.push({
+          line,
+          sku,
+          reason: `Shipping "${(row["shipping_methods"] ?? "").trim()}" is not valid — use air_sea, air_only or sea_only (or leave blank for air_sea)`,
+        });
+        return;
+      }
       const num = (key: string) => {
         const raw = (row[key] ?? "").trim();
         if (!raw) return null;
@@ -134,6 +143,7 @@ function AdminImport() {
           inventory_source: (row["inventory_source"] ?? "").trim() || "Factory Direct",
           moq: moq ? Number(moq) : null,
           production_days: days ? Number(days) : null,
+          shipping_methods: shipping,
           colour_option: (row["colour_option"] ?? "").trim() || null,
           decoration_methods: methods,
           material: (row["material"] ?? "").trim() || null,
