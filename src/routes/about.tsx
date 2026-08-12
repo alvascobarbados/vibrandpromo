@@ -51,12 +51,12 @@ function AboutPage() {
   return (
     <SiteLayout>
       <section className="bg-navy-900 text-white">
-        <div className="mx-auto w-full max-w-4xl px-4 py-20 sm:px-6">
+        <div className="site-container py-16 lg:py-20">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">About us</p>
-          <h1 className="mt-4 text-4xl font-bold sm:text-5xl">
+          <h1 className="mt-4 max-w-3xl font-display text-[28px] font-semibold leading-[1.3] sm:text-[40px]">
             Branded merchandise, built for Caribbean business
           </h1>
-          <p className="mt-6 text-lg text-navy-100">
+          <p className="mt-6 max-w-3xl text-lg leading-[1.5] text-navy-100">
             Vibrand Caribbean Inc. has spent decades helping Caribbean organisations put their brand
             into people's hands — from staff uniforms and conference giveaways to executive gifts and
             large-format display.
@@ -64,21 +64,23 @@ function AboutPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
+      <section className="site-container py-10 lg:py-16">
         <div className="grid gap-6 sm:grid-cols-2">
           {VALUES.map((value) => (
             <div key={value.title} className="rounded-2xl border border-border bg-card p-6 shadow-card">
               <span className="inline-flex size-11 items-center justify-center rounded-xl bg-accent text-accent-foreground">
                 <value.icon className="size-5" />
               </span>
-              <h2 className="mt-4 text-lg font-semibold">{value.title}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{value.body}</p>
+              <h2 className="mt-4 text-lg font-semibold leading-[1.3]">{value.title}</h2>
+              <p className="mt-2 text-sm leading-[1.5] text-muted-foreground">{value.body}</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-16 rounded-3xl bg-gradient-hero p-10 text-white">
-          <h2 className="text-2xl font-bold sm:text-3xl">Let's talk about your next project</h2>
+        <div className="mt-10 rounded-3xl bg-gradient-hero p-8 text-white lg:mt-16 lg:p-10">
+          <h2 className="font-display text-[24px] font-semibold leading-[1.3]">
+            Let's talk about your next project
+          </h2>
           <p className="mt-3 max-w-xl text-navy-100">
             Build a quote list from our catalogue and our team will respond within 24 hours with
             pricing, options and lead times.
