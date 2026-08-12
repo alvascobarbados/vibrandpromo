@@ -1,12 +1,20 @@
 import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Columns3 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -38,16 +46,15 @@ const PAGE_SIZE = 50;
 
 type SortKey = "created_at" | "customer_name" | "company" | "status";
 
-const COLUMNS: { key: SortKey | null; label: string; className?: string }[] = [
-  { key: "created_at", label: "Age", className: "w-16" },
-  { key: "status", label: "Status", className: "w-40" },
-  { key: "customer_name", label: "Customer" },
-  { key: "company", label: "Company" },
-  { key: null, label: "Territory" },
-  { key: null, label: "Items", className: "w-16 text-right" },
-  { key: null, label: "Contact" },
-  { key: "created_at", label: "Submitted", className: "w-40" },
+type OptionalColumn = "email" | "phone" | "submitted";
+
+const OPTIONAL_COLUMNS: { id: OptionalColumn; label: string }[] = [
+  { id: "email", label: "Email" },
+  { id: "phone", label: "Phone" },
+  { id: "submitted", label: "Submitted date" },
 ];
+
+const COLUMN_PREFS_KEY = "vibrand.admin.quotes.columns";
 
 function relativeAge(iso: string) {
   const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
@@ -89,6 +96,39 @@ function AdminQuotes() {
   const raw = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const [open, setOpen] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [optional, setOptional] = useState<Record<OptionalColumn, boolean>>({
+    email: false,
+    phone: false,
+    submitted: false,
+  });
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(COLUMN_PREFS_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<Record<OptionalColumn, boolean>>;
+        setOptional({
+          email: parsed.email === true,
+          phone: parsed.phone === true,
+          submitted: parsed.submitted === true,
+        });
+      }
+    } catch {
+      /* ignore unreadable preferences */
+    }
+  }, []);
+
+  function toggleOptional(id: OptionalColumn) {
+    setOptional((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        window.localStorage.setItem(COLUMN_PREFS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore unwritable preferences */
+      }
+      return next;
+    });
+  }
 
   const search = typeof raw["q"] === "string" ? (raw["q"] as string) : "";
   const filter = typeof raw["status"] === "string" ? (raw["status"] as string) : "all";
@@ -138,7 +178,7 @@ function AdminQuotes() {
           ),
         )
         .join(" ");
-      return `${quote.customer_name} ${quote.company} ${quote.email} ${quote.territory} ${skus}`
+      return `${quote.customer_name} ${quote.company} ${quote.email} ${quote.phone ?? ""} ${quote.territory} ${skus}`
         .toLowerCase()
         .includes(term);
     });
@@ -204,6 +244,116 @@ function AdminQuotes() {
 
   const selectedQuote = (quotes.data ?? []).find((quote) => quote.id === selected) ?? null;
 
+  type Column = {
+    id: string;
+    label: string;
+    sortKey?: SortKey;
+    align?: "right";
+    className?: string;
+    cellClassName?: string;
+    cell: (quote: QuoteRequest) => React.ReactNode;
+  };
+
+  const columns: Column[] = [
+    {
+      id: "age",
+      label: "Age",
+      sortKey: "created_at",
+      className: "w-[70px]",
+      cellClassName: "whitespace-nowrap text-n-500",
+      cell: (quote) => relativeAge(quote.created_at),
+    },
+    {
+      id: "company",
+      label: "Company",
+      sortKey: "company",
+      cellClassName: "font-medium text-n-900",
+      cell: (quote) => (
+        <>
+          {quote.status === "new" ? (
+            <span className="mr-2 inline-block size-1.5 rounded-full bg-lime-500 align-middle" />
+          ) : null}
+          {quote.company}
+        </>
+      ),
+    },
+    {
+      id: "customer_name",
+      label: "Contact name",
+      sortKey: "customer_name",
+      cellClassName: "text-n-500",
+      cell: (quote) => quote.customer_name,
+    },
+    {
+      id: "territory",
+      label: "Territory",
+      className: "w-[110px]",
+      cellClassName: "whitespace-nowrap text-n-700",
+      cell: (quote) => quote.territory,
+    },
+    ...(optional.email
+      ? [
+          {
+            id: "email",
+            label: "Email",
+            cellClassName: "whitespace-nowrap",
+            cell: (quote: QuoteRequest) => (
+              <a
+                href={`mailto:${quote.email}`}
+                onClick={(event) => event.stopPropagation()}
+                className="text-navy-500 hover:underline"
+              >
+                {quote.email}
+              </a>
+            ),
+          } as Column,
+        ]
+      : []),
+    ...(optional.phone
+      ? [
+          {
+            id: "phone",
+            label: "Phone",
+            className: "w-[140px]",
+            cellClassName: "whitespace-nowrap text-n-700",
+            cell: (quote: QuoteRequest) => quote.phone || "—",
+          } as Column,
+        ]
+      : []),
+    ...(optional.submitted
+      ? [
+          {
+            id: "submitted",
+            label: "Submitted",
+            sortKey: "created_at" as SortKey,
+            className: "w-[120px]",
+            cellClassName: "whitespace-nowrap text-n-700",
+            cell: (quote: QuoteRequest) => new Date(quote.created_at).toLocaleDateString(),
+          } as Column,
+        ]
+      : []),
+    {
+      id: "items",
+      label: "Items",
+      align: "right",
+      className: "w-[70px]",
+      cellClassName: "text-n-700",
+      cell: (quote) => (itemsByQuote.get(quote.id) ?? []).length,
+    },
+    {
+      id: "status",
+      label: "Status",
+      sortKey: "status",
+      align: "right",
+      className: "w-[160px]",
+      cell: (quote) => (
+        <div className="flex justify-end">
+          <StatusChip quote={quote} />
+        </div>
+      ),
+    },
+  ];
+
   const toolbar = (
     <div className="mt-5 flex flex-wrap items-center gap-2">
       <Input
@@ -226,6 +376,30 @@ function AdminQuotes() {
         </SelectContent>
       </Select>
       <p className="text-sm text-n-500">{sorted.length} results</p>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" variant="outline" className="ml-auto gap-2">
+            <Columns3 className="size-4" />
+            Columns
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wide text-n-500">
+            Optional columns
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {OPTIONAL_COLUMNS.map((column) => (
+            <DropdownMenuCheckboxItem
+              key={column.id}
+              checked={optional[column.id]}
+              onCheckedChange={() => toggleOptional(column.id)}
+              onSelect={(event) => event.preventDefault()}
+            >
+              {column.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 
@@ -263,19 +437,19 @@ function AdminQuotes() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 bg-white">
                 <tr className="border-b border-n-200">
-                  {COLUMNS.map((column, index) => (
+                  {columns.map((column) => (
                     <th
-                      key={`${column.label}-${index}`}
-                      className={`whitespace-nowrap px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-n-500 ${column.className ?? ""}`}
+                      key={column.id}
+                      className={`whitespace-nowrap px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-n-500 ${column.align === "right" ? "text-right" : "text-left"} ${column.className ?? ""}`}
                     >
-                      {column.key ? (
+                      {column.sortKey ? (
                         <button
                           type="button"
                           className="inline-flex items-center gap-1 hover:text-n-900"
-                          onClick={() => toggleSort(column.key as SortKey)}
+                          onClick={() => toggleSort(column.sortKey as SortKey)}
                         >
                           {column.label}
-                          {sort === column.key ? (
+                          {sort === column.sortKey ? (
                             dir === "asc" ? (
                               <ArrowUp className="size-3" />
                             ) : (
@@ -291,56 +465,25 @@ function AdminQuotes() {
                 </tr>
               </thead>
               <tbody>
-                {pageRows.map((quote) => {
-                  const isNew = quote.status === "new";
-                  return (
+                {pageRows.map((quote) => (
                     <tr
                       key={quote.id}
                       onClick={() => setSelected(quote.id)}
                       className="cursor-pointer border-b border-n-200 last:border-0 hover:bg-navy-50"
                     >
-                      <td
-                        className="whitespace-nowrap px-3 py-2 text-n-500"
-                        title={new Date(quote.created_at).toLocaleString()}
-                      >
-                        {relativeAge(quote.created_at)}
-                      </td>
-                      <td className="px-3 py-2">
-                        <StatusChip quote={quote} />
-                      </td>
-                      <td
-                        className={`whitespace-nowrap px-3 py-2 ${isNew ? "font-medium text-n-900" : "text-n-700"}`}
-                      >
-                        {isNew ? (
-                          <span className="mr-2 inline-block size-1.5 rounded-full bg-lime-500 align-middle" />
-                        ) : null}
-                        {quote.customer_name}
-                      </td>
-                      <td className={`px-3 py-2 ${isNew ? "font-medium text-n-900" : "text-n-700"}`}>
-                        {quote.company}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-n-700">{quote.territory}</td>
-                      <td className="px-3 py-2 text-right text-n-700">
-                        {(itemsByQuote.get(quote.id) ?? []).length}
-                      </td>
-                      <td className="px-3 py-2">
-                        <a
-                          href={`mailto:${quote.email}`}
-                          onClick={(event) => event.stopPropagation()}
-                          className="text-navy-500 hover:underline"
+                      {columns.map((column) => (
+                        <td
+                          key={column.id}
+                          className={`px-3 py-2 ${column.align === "right" ? "text-right" : ""} ${column.cellClassName ?? ""}`}
+                          {...(column.id === "age"
+                            ? { title: new Date(quote.created_at).toLocaleString() }
+                            : {})}
                         >
-                          {quote.email}
-                        </a>
-                        {quote.phone ? (
-                          <p className="text-xs text-n-500">{quote.phone}</p>
-                        ) : null}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-n-700">
-                        {new Date(quote.created_at).toLocaleDateString()}
-                      </td>
+                          {column.cell(quote)}
+                        </td>
+                      ))}
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>
