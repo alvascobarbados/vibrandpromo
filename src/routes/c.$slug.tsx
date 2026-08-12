@@ -229,7 +229,7 @@ function CategoryPage() {
         </div>
       </div>
 
-      <div id="category-top" className="site-container py-6 pb-28 lg:py-8 lg:pb-16">
+      <div id="category-top" className="site-container catalog-container py-6 pb-28 lg:py-8 lg:pb-16">
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-6 xl:gap-8">
           <aside className="hidden w-[240px] shrink-0 lg:block">
             <div className="sticky top-40 max-h-[calc(100vh-11rem)] overflow-y-auto pr-2">

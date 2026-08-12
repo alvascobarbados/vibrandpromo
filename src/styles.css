@@ -298,9 +298,16 @@
   width: 100%;
   max-width: var(--container-max);
   padding-inline: var(--gutter);
-  /* Wider desktop budget so four cards always fit beside the filter sidebar. */
+}
+
+/*
+ * Catalog pages carry a filter sidebar, so their content box widens to a full
+ * 1280px at >=1280px viewports: 1280 - 240 sidebar - 32 gap = 1008px of grid,
+ * i.e. four ~237px columns. Home keeps the standard container.
+ */
+@utility catalog-container {
   @media (min-width: 1280px) {
-    max-width: 1280px;
+    max-width: calc(1280px + 2 * var(--gutter));
   }
 }
 
