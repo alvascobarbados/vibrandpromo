@@ -133,7 +133,7 @@ function SuppliersTab() {
     ]);
 
   async function patch(id: string, values: Record<string, unknown>) {
-    const { error } = await supabase.from("suppliers").update(values).eq("id", id);
+    const { error } = await supabase.from("suppliers").update(values as never).eq("id", id);
     if (error) {
       toast.error(error.message);
       return false;
@@ -535,7 +535,7 @@ function OriginsTab() {
     ]);
 
   async function patch(id: string, values: Record<string, unknown>) {
-    const { error } = await supabase.from("origins").update(values).eq("id", id);
+    const { error } = await supabase.from("origins").update(values as never).eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
