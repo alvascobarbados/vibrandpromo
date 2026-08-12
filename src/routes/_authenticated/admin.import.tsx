@@ -290,15 +290,55 @@ function AdminImport() {
         }
       }
 
+      await applySourcing(failed);
       setResult({ created, updated, skipped: failed });
       await queryClient.invalidateQueries({ queryKey: ["products"] });
-      await applySourcing(failed);
+      await queryClient.invalidateQueries({ queryKey: ["product_sourcing"] });
       toast.success(`Import finished — ${created} created, ${updated} updated`);
     } catch (error) {
       console.error(error);
       toast.error(error instanceof Error ? error.message : "Import failed");
     } finally {
       setImporting(false);
+    }
+  }
+
+  /** Second pass: resolve the freshly upserted SKUs to ids and save sourcing. */
+  async function applySourcing(failed: Problem[]) {
+    const withSourcing = ready.filter((item) => item.sourcing);
+    if (!withSourcing.length) return;
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, sku")
+      .in(
+        "sku",
+        withSourcing.map((item) => item.sku),
+      );
+    if (error) {
+      failed.push({ line: 0, sku: "—", reason: `Sourcing not saved: ${error.message}` });
+      return;
+    }
+    const idBySku = new Map(
+      (data ?? []).map((product) => [(product.sku ?? "").toLowerCase(), product.id] as const),
+    );
+    const payload = withSourcing.flatMap((item) => {
+      const id = idBySku.get(item.sku.toLowerCase());
+      if (!id) return [];
+      return [
+        {
+          product_id: id,
+          supplier_id: item.sourcing?.supplier_id ?? null,
+          supplier_item_no: item.sourcing?.supplier_item_no ?? null,
+        },
+      ];
+    });
+    for (let i = 0; i < payload.length; i += 50) {
+      const { error: writeError } = await supabase
+        .from("product_sourcing")
+        .upsert(payload.slice(i, i + 50), { onConflict: "product_id" });
+      if (writeError) {
+        failed.push({ line: 0, sku: "—", reason: `Sourcing not saved: ${writeError.message}` });
+      }
     }
   }
 
