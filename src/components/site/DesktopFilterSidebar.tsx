@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Category, Product, Subcategory } from "@/lib/catalog";
@@ -136,42 +135,31 @@ export function DesktopFilterSidebar({
             checked={!selectedCategory}
             onChange={() => onSelectCategory(null)}
           />
-          {categories.map((category) => {
-            const active = selectedCategory === category.slug;
-            return (
-              <div key={category.id}>
-                <div className="flex items-center">
-                  <div className="min-w-0 flex-1">
-                    <Row
-                      radio
-                      label={category.name}
-                      count={counts.cat[category.slug] ?? 0}
-                      checked={active}
-                      onChange={() => onSelectCategory(category.slug)}
-                    />
-                  </div>
-                  {active ? (
-                    <ChevronDown className="size-4 shrink-0 text-n-500" />
-                  ) : (
-                    <ChevronRight className="size-4 shrink-0 text-n-300" />
-                  )}
-                </div>
-                {active
-                  ? subsForSelected.map((sub) => (
-                      <Row
-                        key={sub.id}
-                        indent
-                        label={sub.name}
-                        count={counts.sub[sub.slug] ?? 0}
-                        checked={search.sub.includes(sub.slug)}
-                        onChange={() => onToggle("sub", sub.slug)}
-                      />
-                    ))
-                  : null}
-              </div>
-            );
-          })}
+          {categories.map((category) => (
+            <Row
+              key={category.id}
+              radio
+              label={category.name}
+              count={counts.cat[category.slug] ?? 0}
+              checked={selectedCategory === category.slug}
+              onChange={() => onSelectCategory(category.slug)}
+            />
+          ))}
         </Group>
+
+        {selectedCategory && subsForSelected.length ? (
+          <Group label={GROUP_LABELS.sub}>
+            {subsForSelected.map((sub) => (
+              <Row
+                key={sub.id}
+                label={sub.name}
+                count={counts.sub[sub.slug] ?? 0}
+                checked={search.sub.includes(sub.slug)}
+                onChange={() => onToggle("sub", sub.slug)}
+              />
+            ))}
+          </Group>
+        ) : null}
 
         {[...BASE_GROUPS, ...(selectedCategory ? CONDITIONAL_GROUPS : [])].map((group) => {
           const rows = options[group].filter(
