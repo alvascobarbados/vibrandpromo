@@ -292,6 +292,7 @@ function AdminImport() {
 
       setResult({ created, updated, skipped: failed });
       await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await applySourcing(failed);
       toast.success(`Import finished — ${created} created, ${updated} updated`);
     } catch (error) {
       console.error(error);
