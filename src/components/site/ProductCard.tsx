@@ -37,20 +37,9 @@ function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | nu
   return (
     <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:199px)]:text-[13px]">
       <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
-      <span className="whitespace-nowrap">{value ?? "On request"}</span>
-    </p>
-  );
-}
-
-const EMPTY_PHRASE = "Quoted per order";
-
-/** Muted empty-state line; wraps instead of clipping on very narrow cards. */
-function QuotedPerOrder({ className = "" }: { className?: string }) {
-  return (
-    <p
-      className={`card-value !whitespace-normal leading-tight !text-n-500 [@container(max-width:199px)]:text-[13px] ${className}`}
-    >
-      {EMPTY_PHRASE}
+      <span className={`whitespace-nowrap${value == null ? " text-n-500" : ""}`}>
+        {value ?? "—"}
+      </span>
     </p>
   );
 }
@@ -114,18 +103,15 @@ export function ProductCard({
           {product.name}
         </h3>
 
-        {!hasMoq && !hasLead ? (
-          <div className="mt-3 flex h-[69px] items-center border-t border-n-200 pt-3">
-            <div className="flex w-full items-center">
-              <QuotedPerOrder />
-            </div>
-          </div>
-        ) : (
-          <div className="relative mt-3 flex h-[69px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
+        <div className="relative mt-3 flex h-[69px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
             <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
               <div className="min-w-0 text-left">
                 <SpecLabel>MOQ</SpecLabel>
-                <p className="card-value mt-1 h-[18px] [@container(max-width:199px)]:text-[13px]">
+                <p
+                  className={`card-value mt-1 h-[18px] [@container(max-width:199px)]:text-[13px]${
+                    hasMoq ? "" : " !text-n-500"
+                  }`}
+                >
                   {hasMoq ? specValue(product.moq) : "—"}
                 </p>
               </div>
@@ -141,20 +127,13 @@ export function ProductCard({
             <div className="flex min-w-0 flex-1 justify-start pr-[12px] [@container(min-width:200px)]:justify-center [@container(min-width:200px)]:pl-[12px] [@container(min-width:200px)]:pr-0">
               <div className="min-w-0 text-left">
                 <SpecLabel>Lead time</SpecLabel>
-                {hasLead ? (
-                  <div className="mt-1 space-y-0.5">
-                    <LeadRow icon={Plane} value={air} />
-                    <LeadRow icon={Ship} value={sea} />
-                  </div>
-                ) : (
-                  <div className="mt-1 flex h-[38px] items-center">
-                    <QuotedPerOrder />
-                  </div>
-                )}
+                <div className="mt-1 space-y-0.5">
+                  <LeadRow icon={Plane} value={hasLead ? air : null} />
+                  <LeadRow icon={Ship} value={hasLead ? sea : null} />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+        </div>
 
         <div className="mt-3">
           <AddToQuoteRow product={product} />
