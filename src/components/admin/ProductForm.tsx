@@ -384,17 +384,39 @@ export function ProductForm({
         </div>
         <div>
           <Label htmlFor={id("days")}>Production time (days)</Label>
-          <Input
-            id={id("days")}
-            type="number"
-            min={1}
-            value={form.production_days}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, production_days: event.target.value }))
-            }
-            placeholder="Leave blank for On request"
+          <div className="flex items-center gap-2">
+            <Input
+              id={id("days")}
+              type="number"
+              min={1}
+              className="w-full"
+              value={form.production_min_days}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, production_min_days: event.target.value }))
+              }
+              placeholder="min"
+            />
+            <span className="text-sm text-muted-foreground">–</span>
+            <Input
+              id={id("days-max")}
+              type="number"
+              min={1}
+              className="w-full"
+              value={form.production_max_days}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, production_max_days: event.target.value }))
+              }
+              placeholder="optional"
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Enter one number for a fixed time, or both for a range.
+          </p>
+          <LeadPreview
+            productionMin={form.production_min_days}
+            productionMax={form.production_max_days}
+            source={form.inventory_source}
           />
-          <LeadPreview production={form.production_days} source={form.inventory_source} />
         </div>
         <div>
           <Label htmlFor={id("shipping-methods")}>Available shipping</Label>
@@ -443,20 +465,45 @@ export function ProductForm({
             {form.shipping_methods === "sea_only" ? (
               <p className="mt-1.5 text-xs text-muted-foreground">Rush requires air shipping</p>
             ) : form.rush_enabled ? (
-              <div className="mt-3">
+              <div className="mt-3 sm:max-w-sm">
                 <Label htmlFor={id("rush-days")}>Rush production time (days)</Label>
-                <Input
-                  id={id("rush-days")}
-                  type="number"
-                  min={1}
-                  value={form.rush_production_days}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, rush_production_days: event.target.value }))
-                  }
-                  placeholder="Must be less than the normal production time"
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id={id("rush-days")}
+                    type="number"
+                    min={1}
+                    className="w-full"
+                    value={form.rush_production_min_days}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        rush_production_min_days: event.target.value,
+                      }))
+                    }
+                    placeholder="min"
+                  />
+                  <span className="text-sm text-muted-foreground">–</span>
+                  <Input
+                    id={id("rush-days-max")}
+                    type="number"
+                    min={1}
+                    className="w-full"
+                    value={form.rush_production_max_days}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        rush_production_max_days: event.target.value,
+                      }))
+                    }
+                    placeholder="optional"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Enter one number for a fixed time, or both for a range.
+                </p>
                 <RushPreview
-                  rushProduction={form.rush_production_days}
+                  rushMin={form.rush_production_min_days}
+                  rushMax={form.rush_production_max_days}
                   source={form.inventory_source}
                 />
               </div>
