@@ -112,7 +112,7 @@ export const createStaffUser = createServerFn({ method: "POST" })
       .object({
         display_name: z.string().trim().min(1).max(120),
         email: z.string().trim().email().max(255),
-        password: z.string().min(8).max(72),
+        password: z.union([z.string().min(8).max(72), z.literal("")]).optional(),
         role: z.enum(["admin", "staff"]),
       })
       .parse(data),
@@ -123,7 +123,7 @@ export const createStaffUser = createServerFn({ method: "POST" })
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: data.password,
+      ...(data.password ? { password: data.password } : {}),
       email_confirm: true,
       user_metadata: { display_name: data.display_name },
     });
