@@ -22,7 +22,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -67,6 +67,14 @@ import {
   type Product,
 } from "@/lib/catalog";
 import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import {
+  CHEVRON_WIDTH,
+  DEFAULT_COL_WIDTHS,
+  THUMB_WIDTH,
+  minWidthFor,
+  useColumnWidths,
+  type ColId,
+} from "@/lib/column-widths";
 
 const searchSchema = z.object({
   q: fallback(z.string(), "").default(""),
@@ -108,6 +116,8 @@ function AdminProducts() {
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const suppliers = useQuery(suppliersQuery);
+  const columns = useColumnWidths();
+  const dragged = useRef(false);
 
   const [openIds, setOpenIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -395,25 +405,47 @@ function AdminProducts() {
       </p>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[1180px] border-collapse text-sm">
+        <table
+          className="w-full border-collapse text-sm"
+          style={{ tableLayout: "fixed", minWidth: `${columns.totalWidth}px` }}
+        >
+          <colgroup>
+            <col style={{ width: `${THUMB_WIDTH}px` }} />
+            {(Object.keys(DEFAULT_COL_WIDTHS) as ColId[]).map((id) => (
+              <col key={id} style={{ width: `${columns.widths[id]}px` }} />
+            ))}
+            <col style={{ width: `${CHEVRON_WIDTH}px` }} />
+          </colgroup>
           <thead className="sticky top-0 z-10 bg-card">
             <tr className="border-b border-border">
-              <Th className="w-[46px]" />
-              <Th sortKey="cat" search={search} onSort={toggleSort} className="w-[130px]">
+              <Th />
+              <Th sortKey="cat" search={search} onSort={toggleSort} colId="cat" columns={columns} dragged={dragged}>
                 Category
               </Th>
-              <Th className="w-[130px]">Subcategory</Th>
-              <Th sortKey="supplier" search={search} onSort={toggleSort} className="w-[180px]">
+              <Th colId="subcat" columns={columns} dragged={dragged}>
+                Subcategory
+              </Th>
+              <Th sortKey="supplier" search={search} onSort={toggleSort} colId="supplier" columns={columns} dragged={dragged}>
                 Supplier
               </Th>
-              <Th sortKey="name" search={search} onSort={toggleSort}>
+              <Th sortKey="name" search={search} onSort={toggleSort} colId="name" columns={columns} dragged={dragged}>
                 Item name
               </Th>
-              <Th sortKey="sku" search={search} onSort={toggleSort} className="w-[110px]">
+              <Th sortKey="sku" search={search} onSort={toggleSort} colId="sku" columns={columns} dragged={dragged}>
                 SKU
               </Th>
-              <Th className="w-[130px]">Supplier item #</Th>
-              <Th sortKey="moq" search={search} onSort={toggleSort} align="right" className="w-[70px]">
+              <Th colId="supitem" columns={columns} dragged={dragged}>
+                Supplier item #
+              </Th>
+              <Th
+                sortKey="moq"
+                search={search}
+                onSort={toggleSort}
+                align="right"
+                colId="moq"
+                columns={columns}
+                dragged={dragged}
+              >
                 MOQ
               </Th>
               <Th
@@ -421,12 +453,16 @@ function AdminProducts() {
                 search={search}
                 onSort={toggleSort}
                 align="right"
-                className="w-[100px]"
+                colId="production"
+                columns={columns}
+                dragged={dragged}
               >
                 Production
               </Th>
-              <Th className="w-[110px]">Status</Th>
-              <Th className="w-[40px]" />
+              <Th colId="status" columns={columns} dragged={dragged}>
+                Status
+              </Th>
+              <Th />
             </tr>
           </thead>
           <tbody>
@@ -460,7 +496,7 @@ function AdminProducts() {
                           setEditingId(null);
                         }}
                       >
-                        <Td className="w-[46px]">
+                        <Td>
                           {cover ? (
                             <img
                               src={cover}
@@ -580,6 +616,15 @@ function AdminProducts() {
           <span>{activeCount} active</span>
           <span>{noPhotoCount} without photos</span>
           <span>{supplierCounts.unassigned} supplier unassigned</span>
+          {!columns.isDefault ? (
+            <button
+              type="button"
+              onClick={columns.resetAll}
+              className="ml-auto underline underline-offset-2 hover:text-foreground"
+            >
+              Reset widths
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -669,7 +714,9 @@ function AdminProducts() {
   );
 }
 
-/** Dense header cell; sortable when a sortKey is supplied. */
+type ColumnsApi = ReturnType<typeof useColumnWidths>;
+
+/** Dense header cell; sortable when a sortKey is supplied, resizable when a colId is. */
 function Th({
   children,
   className = "",
@@ -677,6 +724,9 @@ function Th({
   sortKey,
   search,
   onSort,
+  colId,
+  columns,
+  dragged,
 }: {
   children?: React.ReactNode;
   className?: string;
@@ -684,18 +734,62 @@ function Th({
   sortKey?: SortKey;
   search?: ProductSearch;
   onSort?: (key: SortKey) => void;
+  colId?: ColId;
+  columns?: ColumnsApi;
+  dragged?: React.MutableRefObject<boolean>;
 }) {
   const active = sortKey && search?.sort === sortKey;
+  const [dragging, setDragging] = useState(false);
+
+  function startResize(event: React.PointerEvent<HTMLSpanElement>) {
+    if (!colId || !columns) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startWidth = columns.widths[colId];
+    let moved = false;
+    let last = startWidth;
+    setDragging(true);
+    if (dragged) dragged.current = false;
+
+    const onMove = (move: PointerEvent) => {
+      const delta = move.clientX - startX;
+      if (Math.abs(delta) > 3) {
+        moved = true;
+        if (dragged) dragged.current = true;
+      }
+      if (moved) {
+        last = Math.max(minWidthFor(colId), startWidth + delta);
+        columns.setWidth(colId, last, false);
+      }
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      setDragging(false);
+      if (moved) columns.setWidth(colId, last, true);
+      // Let the synthetic click that follows pointerup see the guard, then clear it.
+      setTimeout(() => {
+        if (dragged) dragged.current = false;
+      }, 0);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
   return (
     <th
-      className={`px-2 py-2 text-[11px] font-semibold text-muted-foreground ${
+      className={`relative px-2 py-2 text-[11px] font-semibold text-muted-foreground ${
         align === "right" ? "text-right" : "text-left"
       } ${className}`}
     >
       {sortKey && onSort ? (
         <button
           type="button"
-          onClick={() => onSort(sortKey)}
+          onClick={() => {
+            if (dragged?.current) return;
+            onSort(sortKey);
+          }}
           className={`inline-flex items-center gap-1 hover:text-foreground ${
             active ? "text-foreground" : ""
           }`}
@@ -712,6 +806,26 @@ function Th({
       ) : (
         children
       )}
+      {colId && columns ? (
+        <span
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize column"
+          onPointerDown={startResize}
+          onDoubleClick={(event) => {
+            event.stopPropagation();
+            columns.resetColumn(colId);
+          }}
+          onClick={(event) => event.stopPropagation()}
+          className="group absolute right-0 top-0 z-20 flex h-full w-2 translate-x-1/2 cursor-col-resize touch-none select-none items-center justify-center"
+        >
+          <span
+            className={`h-4/5 w-px bg-navy-700 transition-opacity ${
+              dragging ? "opacity-60" : "opacity-0 group-hover:opacity-30"
+            }`}
+          />
+        </span>
+      ) : null}
     </th>
   );
 }
