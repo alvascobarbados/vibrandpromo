@@ -168,7 +168,10 @@ export function ProductCard({
             <div className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-white">{product.name}</p>
-                <p className="text-xs text-white/60">{product.sku ?? "—"}</p>
+                <p className="text-xs text-white/60">
+                  {product.sku ?? "—"}
+                  {noAir || noSea ? ` · ${noAir ? "Sea only" : "Air only"}` : ""}
+                </p>
               </div>
               <div className="@container w-[15rem] shrink-0">
                 <AddToQuoteRow product={product} tone="dark" />
