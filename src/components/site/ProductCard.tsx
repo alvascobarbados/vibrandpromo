@@ -35,9 +35,22 @@ function SpecLabel({ children }: { children: React.ReactNode }) {
 
 function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | null }) {
   return (
-    <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:179px)]:text-[13px]">
+    <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:199px)]:text-[13px]">
       <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
       <span className="whitespace-nowrap">{value ?? "On request"}</span>
+    </p>
+  );
+}
+
+const EMPTY_PHRASE = "Quoted per order";
+
+/** Muted empty-state line; wraps instead of clipping on very narrow cards. */
+function QuotedPerOrder({ className = "" }: { className?: string }) {
+  return (
+    <p
+      className={`card-value !whitespace-normal leading-tight !text-n-500 [@container(max-width:199px)]:text-[13px] ${className}`}
+    >
+      {EMPTY_PHRASE}
     </p>
   );
 }
@@ -55,6 +68,10 @@ export function ProductCard({
   const shipping = useShippingSettings();
   const [quickEditOpen, setQuickEditOpen] = useState(false);
   const hidden = editMode && !product.is_active;
+  const air = airLeadLabel(product, shipping);
+  const sea = seaLeadLabel(product, shipping);
+  const hasLead = air != null && sea != null;
+  const hasMoq = product.moq != null;
 
   return (
     <article
@@ -97,33 +114,47 @@ export function ProductCard({
           {product.name}
         </h3>
 
-        <div className="relative mt-3 flex items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
-          <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
-            <div className="min-w-0 text-left">
-              <SpecLabel>MOQ</SpecLabel>
-              <p className="card-value mt-1 h-[18px] [@container(max-width:179px)]:text-[13px]">
-                {specValue(product.moq)}
-              </p>
+        {!hasMoq && !hasLead ? (
+          <div className="mt-3 flex h-[69px] items-center border-t border-n-200 pt-3">
+            <div className="flex w-full items-center">
+              <QuotedPerOrder />
             </div>
           </div>
-          <div
-            className="mr-[12px] w-px shrink-0 self-stretch bg-n-200 [@container(min-width:200px)]:hidden"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute bottom-0 left-[40%] top-3 hidden w-px bg-n-200 [@container(min-width:200px)]:block"
-            aria-hidden="true"
-          />
-          <div className="flex min-w-0 flex-1 justify-start pr-[12px] [@container(min-width:200px)]:justify-center [@container(min-width:200px)]:pl-[12px] [@container(min-width:200px)]:pr-0">
-            <div className="min-w-0 text-left">
-              <SpecLabel>Lead time</SpecLabel>
-              <div className="mt-1 space-y-0.5">
-                <LeadRow icon={Plane} value={airLeadLabel(product, shipping)} />
-                <LeadRow icon={Ship} value={seaLeadLabel(product, shipping)} />
+        ) : (
+          <div className="relative mt-3 flex h-[69px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
+            <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
+              <div className="min-w-0 text-left">
+                <SpecLabel>MOQ</SpecLabel>
+                <p className="card-value mt-1 h-[18px] [@container(max-width:199px)]:text-[13px]">
+                  {hasMoq ? specValue(product.moq) : "—"}
+                </p>
+              </div>
+            </div>
+            <div
+              className="mr-[12px] w-px shrink-0 self-stretch bg-n-200 [@container(min-width:200px)]:hidden"
+              aria-hidden="true"
+            />
+            <div
+              className="absolute bottom-0 left-[40%] top-3 hidden w-px bg-n-200 [@container(min-width:200px)]:block"
+              aria-hidden="true"
+            />
+            <div className="flex min-w-0 flex-1 justify-start pr-[12px] [@container(min-width:200px)]:justify-center [@container(min-width:200px)]:pl-[12px] [@container(min-width:200px)]:pr-0">
+              <div className="min-w-0 text-left">
+                <SpecLabel>Lead time</SpecLabel>
+                {hasLead ? (
+                  <div className="mt-1 space-y-0.5">
+                    <LeadRow icon={Plane} value={air} />
+                    <LeadRow icon={Ship} value={sea} />
+                  </div>
+                ) : (
+                  <div className="mt-1 flex h-[38px] items-center">
+                    <QuotedPerOrder />
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-3">
           <AddToQuoteRow product={product} />
