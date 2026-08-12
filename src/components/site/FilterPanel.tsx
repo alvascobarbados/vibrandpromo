@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SourceScopeToggle } from "@/components/site/SourceScope";
 import {
   AIR_LEAD_BUCKETS,
   COLOUR_OPTIONS,
@@ -21,11 +22,15 @@ import {
   type CatalogSearch,
   type FilterGroupId,
 } from "@/lib/catalog-filters";
+import type { SourceScope } from "@/lib/use-catalog-filters";
 import { useShippingSettings, type ShippingMap } from "@/lib/shipping";
 
 type Option = { value: string; label: string };
 
-const PANEL_GROUPS: FilterGroupId[] = GROUP_IDS.filter((group) => group !== "sub");
+/** The `src` group is surfaced by the segmented scope control instead. */
+const PANEL_GROUPS: FilterGroupId[] = GROUP_IDS.filter(
+  (group) => group !== "sub" && group !== "src",
+);
 
 export function useFilterOptions(
   products: Product[],
@@ -80,10 +85,16 @@ type Props = {
   subcategories: Subcategory[];
   search: CatalogSearch;
   resultCount: number;
+  scope: SourceScope;
+  onScope: (next: SourceScope) => void;
   onToggle: (group: FilterGroupId, value: string) => void;
   onClear: () => void;
   variant: "drawer" | "sidebar";
+  /** On a category page the category is fixed: only its subcategories show. */
+  fixedCategoryId?: string;
+  activeCount?: number;
   onClose?: () => void;
+  showLabel?: string;
 };
 
 function OptionRow({
@@ -101,16 +112,46 @@ function OptionRow({
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-center gap-3 rounded-full px-2.5 py-2.5 text-sm transition-colors ${
-        checked ? "bg-lime-500 text-n-700" : "text-n-700 hover:bg-n-50"
-      } ${indent ? "ml-5" : ""}`}
+      className={`flex cursor-pointer items-center gap-2.5 rounded-md px-1.5 py-2 text-[13px] leading-[1.5] transition-colors duration-[150ms] ease-out lg:text-sm ${
+        checked ? "font-medium text-n-900" : "text-n-700"
+      } hover:bg-n-50 ${indent ? "ml-4" : ""}`}
     >
       <Checkbox checked={checked} onCheckedChange={onChange} />
-      <span className="flex-1">{label}</span>
-      <span className={`text-xs ${checked ? "text-n-700/70" : "text-n-500"}`}>
-        ({count})
-      </span>
+      <span className="min-w-0 flex-1">{label}</span>
+      <span className="shrink-0 text-[11px] text-n-500">({count})</span>
     </label>
+  );
+}
+
+function GroupBlock({
+  label,
+  children,
+  defaultOpen = true,
+}: {
+  label: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 py-1.5 text-left"
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-n-500">
+          {label}
+        </span>
+        {open ? (
+          <ChevronDown className="size-4 shrink-0 text-n-500" />
+        ) : (
+          <ChevronRight className="size-4 shrink-0 text-n-500" />
+        )}
+      </button>
+      {open ? <div className="mt-1">{children}</div> : null}
+    </div>
   );
 }
 
@@ -120,15 +161,19 @@ export function FilterPanel({
   subcategories,
   search,
   resultCount,
+  scope,
+  onScope,
   onToggle,
   onClear,
   variant,
+  fixedCategoryId,
+  activeCount = 0,
   onClose,
+  showLabel,
 }: Props) {
   const options = useFilterOptions(products, categories, subcategories);
   const shipping = useShippingSettings();
   const counts = useCounts(products, categories, subcategories, search, options, shipping);
-  const [activeGroup, setActiveGroup] = useState<FilterGroupId>("cat");
   const [expanded, setExpanded] = useState<string[]>([]);
 
   const subsByCategory = useMemo(() => {
@@ -141,14 +186,30 @@ export function FilterPanel({
     return map;
   }, [subcategories]);
 
+  function subRows(categoryId: string, indent: boolean) {
+    return (subsByCategory.get(categoryId) ?? [])
+      .filter((sub) => (counts.sub[sub.slug] ?? 0) > 0 || search.sub.includes(sub.slug))
+      .map((sub) => (
+        <OptionRow
+          key={sub.id}
+          indent={indent}
+          label={sub.name}
+          count={counts.sub[sub.slug] ?? 0}
+          checked={search.sub.includes(sub.slug)}
+          onChange={() => onToggle("sub", sub.slug)}
+        />
+      ));
+  }
+
   function renderCategoryTree() {
+    if (fixedCategoryId) return subRows(fixedCategoryId, false);
     return categories
-      .filter((category) => (counts.cat[category.slug] ?? 0) > 0 || search.cat.includes(category.slug))
+      .filter(
+        (category) => (counts.cat[category.slug] ?? 0) > 0 || search.cat.includes(category.slug),
+      )
       .map((category) => {
         const open = expanded.includes(category.id);
-        const subs = (subsByCategory.get(category.id) ?? []).filter(
-          (sub) => (counts.sub[sub.slug] ?? 0) > 0 || search.sub.includes(sub.slug),
-        );
+        const subs = subRows(category.id, true);
         return (
           <div key={category.id}>
             <div className="flex items-center">
@@ -172,7 +233,7 @@ export function FilterPanel({
                         : [...prev, category.id],
                     )
                   }
-                  className="shrink-0 rounded-full p-1.5 text-navy-700 hover:bg-navy-50"
+                  className="shrink-0 rounded-full p-1.5 text-n-500 hover:bg-n-50 hover:text-n-700"
                 >
                   {open ? (
                     <ChevronDown className="size-4" />
@@ -182,55 +243,65 @@ export function FilterPanel({
                 </button>
               ) : null}
             </div>
-            {open
-              ? subs.map((sub) => (
-                  <OptionRow
-                    key={sub.id}
-                    indent
-                    label={sub.name}
-                    count={counts.sub[sub.slug] ?? 0}
-                    checked={search.sub.includes(sub.slug)}
-                    onChange={() => onToggle("sub", sub.slug)}
-                  />
-                ))
-              : null}
+            {open ? subs : null}
           </div>
         );
       });
   }
 
+  const groups = (
+    <div className="space-y-5">
+      <div>
+        <p className="pb-2 text-[11px] font-semibold uppercase tracking-wide text-n-500">
+          {GROUP_LABELS.src}
+        </p>
+        <SourceScopeToggle value={scope} onChange={onScope} />
+      </div>
+
+      {PANEL_GROUPS.map((group) => {
+        if (group === "cat") {
+          const rows = renderCategoryTree();
+          if (!rows.length) return null;
+          return (
+            <GroupBlock key={group} label={fixedCategoryId ? "Subcategory" : GROUP_LABELS.cat}>
+              {rows}
+            </GroupBlock>
+          );
+        }
+        if (options[group].length === 0) return null;
+        return (
+          <GroupBlock key={group} label={GROUP_LABELS[group]} defaultOpen={group === "moq"}>
+            {options[group].map((option) => (
+              <OptionRow
+                key={option.value}
+                label={option.label}
+                count={counts[group][option.value] ?? 0}
+                checked={search[group].includes(option.value)}
+                onChange={() => onToggle(group, option.value)}
+              />
+            ))}
+          </GroupBlock>
+        );
+      })}
+    </div>
+  );
+
   if (variant === "sidebar") {
     return (
-      <div className="space-y-6">
-        {PANEL_GROUPS.map((group) =>
-          options[group].length === 0 ? null : (
-            <div key={group}>
-              <p className="text-xs font-bold uppercase tracking-wide text-navy-700">
-                {GROUP_LABELS[group]}
-              </p>
-              <div className="mt-1.5 max-h-72 overflow-y-auto">
-                {group === "cat"
-                  ? renderCategoryTree()
-                  : options[group].map((option) => (
-                  <OptionRow
-                    key={option.value}
-                    label={option.label}
-                    count={counts[group][option.value] ?? 0}
-                    checked={search[group].includes(option.value)}
-                    onChange={() => onToggle(group, option.value)}
-                  />
-                ))}
-              </div>
-            </div>
-          ),
-        )}
-        <Button
-          variant="outline"
-          className="w-full border-n-200 text-navy-500 hover:bg-navy-50 hover:text-navy-700"
-          onClick={onClear}
-        >
-          Clear Filters
-        </Button>
+      <div>
+        <div className="flex items-center justify-between gap-2 pb-3">
+          <p className="text-sm font-semibold text-n-900">Filters</p>
+          {activeCount ? (
+            <button
+              type="button"
+              onClick={onClear}
+              className="text-xs font-semibold text-navy-500 hover:text-navy-700 hover:underline"
+            >
+              Clear all
+            </button>
+          ) : null}
+        </div>
+        {groups}
       </div>
     );
   }
@@ -241,53 +312,7 @@ export function FilterPanel({
         <p className="font-display text-lg font-bold text-n-900">Filters</p>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[42%_58%]">
-        <div className="overflow-y-auto border-r border-n-200 bg-navy-50">
-          {PANEL_GROUPS.map((group) => {
-            const selected = group === "cat" ? search.cat.length + search.sub.length : search[group].length;
-            return (
-              <button
-                key={group}
-                type="button"
-                onClick={() => setActiveGroup(group)}
-                className={`flex w-full items-center justify-between gap-1 px-4 py-4 text-left text-sm font-medium ${
-                  activeGroup === group
-                    ? "border-l-4 border-lime-500 bg-white text-navy-700"
-                    : "text-n-700 hover:bg-white/60"
-                }`}
-              >
-                <span>
-                  {GROUP_LABELS[group]}
-                  {selected ? (
-                    <span className="ml-1.5 rounded-full bg-lime-500 px-1.5 py-0.5 text-[10px] font-bold text-n-700">
-                      {selected}
-                    </span>
-                  ) : null}
-                </span>
-                <ChevronRight className="size-4 shrink-0 opacity-50" />
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="overflow-y-auto p-2">
-          {activeGroup === "cat" ? (
-            renderCategoryTree()
-          ) : options[activeGroup].length === 0 ? (
-            <p className="p-4 text-sm text-n-500">No options available.</p>
-          ) : (
-            options[activeGroup].map((option) => (
-              <OptionRow
-                key={option.value}
-                label={option.label}
-                count={counts[activeGroup][option.value] ?? 0}
-                checked={search[activeGroup].includes(option.value)}
-                onChange={() => onToggle(activeGroup, option.value)}
-              />
-            ))
-          )}
-        </div>
-      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{groups}</div>
 
       <div className="flex gap-3 border-t border-n-200 bg-white p-4">
         <Button
@@ -295,13 +320,10 @@ export function FilterPanel({
           className="flex-1 border-n-200 text-navy-500 hover:bg-navy-50 hover:text-navy-700"
           onClick={onClear}
         >
-          Clear Filters
+          Clear filters
         </Button>
-        <Button
-          className="flex-1 bg-lime-500 text-n-700 hover:bg-lime-300"
-          onClick={onClose}
-        >
-          Show {resultCount} Results
+        <Button className="flex-1 bg-lime-500 text-n-700 hover:bg-lime-300" onClick={onClose}>
+          {showLabel ?? `Show ${resultCount} results`}
         </Button>
       </div>
     </div>
