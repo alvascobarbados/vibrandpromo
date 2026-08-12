@@ -11,11 +11,12 @@ import {
 } from "@/lib/catalog-filters";
 import { useFilterOptions } from "@/components/site/FilterPanel";
 import { useShippingSettings } from "@/lib/shipping";
+import { SourceDot } from "@/components/site/SourceDot";
 
 /** Always shown, regardless of category selection. */
-const BASE_GROUPS: FilterGroupId[] = ["moq", "prod"];
+const BASE_GROUPS: FilterGroupId[] = ["moq", "prod", "src"];
 /** Only shown once a single category is selected. */
-const CONDITIONAL_GROUPS: FilterGroupId[] = ["deco", "colour", "src", "mat"];
+const CONDITIONAL_GROUPS: FilterGroupId[] = ["deco", "colour", "mat"];
 
 type Props = {
   products: Product[];
@@ -36,6 +37,7 @@ function Row({
   onChange,
   radio,
   indent,
+  dot,
 }: {
   label: string;
   count: number;
@@ -43,6 +45,7 @@ function Row({
   onChange: () => void;
   radio?: boolean;
   indent?: boolean;
+  dot?: React.ReactNode;
 }) {
   return (
     <label
@@ -60,6 +63,7 @@ function Row({
       ) : (
         <Checkbox checked={checked} onCheckedChange={onChange} />
       )}
+      {dot}
       <span className="min-w-0 flex-1">{label}</span>
       <span className="shrink-0 text-[11px] text-n-500">({count})</span>
     </label>
@@ -172,6 +176,7 @@ export function DesktopFilterSidebar({
                 <Row
                   key={option.value}
                   label={option.label}
+                  {...(group === "src" ? { dot: <SourceDot source={option.value} /> } : {})}
                   count={counts[group][option.value] ?? 0}
                   checked={search[group].includes(option.value)}
                   onChange={() => onToggle(group, option.value)}
