@@ -188,6 +188,33 @@ export type Database = {
         }
         Relationships: []
       }
+      origins: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          notes: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       page_access_locks: {
         Row: {
           created_at: string
@@ -578,43 +605,51 @@ export type Database = {
         Row: {
           code: string
           contact: string | null
-          country: string
           created_at: string
           default_shipping_mode: string
           id: string
           is_archived: boolean
           name: string
           notes: string
+          origin_id: string | null
           unit_system: string
           updated_at: string
         }
         Insert: {
           code: string
           contact?: string | null
-          country?: string
           created_at?: string
           default_shipping_mode?: string
           id?: string
           is_archived?: boolean
           name: string
           notes?: string
+          origin_id?: string | null
           unit_system?: string
           updated_at?: string
         }
         Update: {
           code?: string
           contact?: string | null
-          country?: string
           created_at?: string
           default_shipping_mode?: string
           id?: string
           is_archived?: boolean
           name?: string
           notes?: string
+          origin_id?: string | null
           unit_system?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_origin_id_fkey"
+            columns: ["origin_id"]
+            isOneToOne: false
+            referencedRelation: "origins"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
