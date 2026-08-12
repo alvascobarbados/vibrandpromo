@@ -20,14 +20,6 @@ const copySchema = z.object({
 
 const templateTypeSchema = z.enum(["staff", "customer"]);
 
-async function assertAdmin(context: { supabase: { rpc: Function }; userId: string }) {
-  const { data: isAdmin, error } = await (context.supabase as any).rpc("is_admin", {
-    _user_id: context.userId,
-  });
-  if (error) throw new Error(error.message);
-  if (!isAdmin) throw new Error("Forbidden: admin access required");
-}
-
 export const updateEmailSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => settingsSchema.parse(data))
