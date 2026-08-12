@@ -110,7 +110,7 @@ function AdminQuotes() {
   );
 
   const itemsByQuote = useMemo(() => {
-    const map = new Map<string, typeof items.data extends undefined ? never : NonNullable<typeof items.data>>();
+    const map = new Map<string, QuoteRequestItem[]>();
     for (const item of items.data ?? []) {
       const list = map.get(item.quote_request_id) ?? [];
       list.push(item);
