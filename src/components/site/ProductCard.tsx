@@ -30,27 +30,14 @@ function FlagBadge({ source }: { source: string }) {
 }
 
 function SpecLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="whitespace-nowrap text-[10px] font-normal uppercase leading-3 tracking-[0.01em] text-n-500 lg:text-[11px]">
-      {children}
-    </p>
-  );
+  return <p className="card-label">{children}</p>;
 }
 
 function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | null }) {
   return (
-    <p
-      className={`flex items-center gap-1 whitespace-nowrap leading-4 tabular-nums ${
-        value ? "font-medium text-n-700" : "font-normal text-n-500"
-      }`}
-    >
-      <Icon
-        className="size-3 shrink-0 translate-y-[0.5px] text-n-500 [@container(min-width:170px)]:size-[13px]"
-        strokeWidth={1.75}
-      />
-      <span className="whitespace-nowrap text-[clamp(9px,6.2cqw,12px)] lg:text-[clamp(10px,6.2cqw,13px)]">
-        {value ?? "On request"}
-      </span>
+    <p className="card-value flex h-[18px] items-center gap-1.5">
+      <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+      <span className="whitespace-nowrap">{value ?? "On request"}</span>
     </p>
   );
 }
@@ -86,7 +73,7 @@ export function ProductCard({
             <Pencil className="size-3.5 sm:size-4" />
           </button>
           {hidden ? (
-            <span className="absolute left-2 top-2 z-20 rounded-full bg-n-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            <span className="card-label absolute left-2 top-2 z-20 rounded-full bg-n-700 px-2 py-0.5 !text-white">
               Hidden
             </span>
           ) : null}
@@ -105,34 +92,31 @@ export function ProductCard({
       </div>
 
       <div className="flex flex-col p-2 pt-3 [@container(min-width:170px)]:p-3 [@container(min-width:170px)]:pt-3">
-        <p className="truncate text-[10px] font-medium leading-4 text-n-500 lg:text-[11px]">
-          {product.sku ?? "—"}
-        </p>
-        <h3 className="mt-1 line-clamp-2 h-[34px] overflow-hidden text-[13px] font-semibold leading-[1.3] text-n-900 lg:h-[39px] lg:text-[15px]">
+        <p className="card-label truncate">{product.sku ?? "—"}</p>
+        <h3 className="card-title mt-1 line-clamp-2 h-[39px] overflow-hidden lg:h-[42px]">
           {product.name}
         </h3>
 
-        <div className="mt-3 flex items-stretch border-t border-n-200 pt-3">
-          <div className="flex shrink-0 flex-col">
-            <SpecLabel>MOQ</SpecLabel>
-            <div className="mt-0.5 flex flex-1 items-center">
-              <p
-                className={`whitespace-nowrap font-medium leading-4 tabular-nums text-n-700 ${
-                  product.moq
-                    ? "text-[clamp(11px,7cqw,13px)] lg:text-[clamp(12px,7cqw,14px)]"
-                    : "text-[clamp(9px,5.6cqw,12px)] font-normal text-n-500"
-                }`}
-              >
+        <div className="relative mt-3 grid grid-cols-[40%_60%] items-stretch border-t border-n-200 pt-3">
+          <div className="flex min-w-0 justify-center pr-[12px]">
+            <div className="min-w-0">
+              <SpecLabel>MOQ</SpecLabel>
+              <p className="card-value mt-1 h-[18px] overflow-hidden text-ellipsis">
                 {specValue(product.moq)}
               </p>
             </div>
           </div>
-          <div className="mx-[10px] w-px self-stretch bg-n-200" aria-hidden="true" />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <SpecLabel>Lead time</SpecLabel>
-            <div className="mt-0.5 space-y-0.5">
-              <LeadRow icon={Plane} value={airLeadLabel(product, shipping)} />
-              <LeadRow icon={Ship} value={seaLeadLabel(product, shipping)} />
+          <div
+            className="absolute bottom-0 left-[40%] top-3 w-px bg-n-200"
+            aria-hidden="true"
+          />
+          <div className="flex min-w-0 justify-center pl-[12px]">
+            <div className="min-w-0">
+              <SpecLabel>Lead time</SpecLabel>
+              <div className="mt-1 space-y-0.5">
+                <LeadRow icon={Plane} value={airLeadLabel(product, shipping)} />
+                <LeadRow icon={Ship} value={seaLeadLabel(product, shipping)} />
+              </div>
             </div>
           </div>
         </div>
