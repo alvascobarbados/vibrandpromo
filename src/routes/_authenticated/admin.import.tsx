@@ -362,6 +362,12 @@ function AdminImport() {
           Sea.
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
+          Optional sourcing columns: <span className="font-mono">supplier_code</span> (the 3-letter
+          code from the Suppliers page) and <span className="font-mono">supplier_item_no</span>.
+          These are internal only and never shown on the customer site. An unknown supplier code
+          stops that row so nothing is guessed.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
           Production time can be a range. <span className="font-mono">production_days</span> (or{" "}
           <span className="font-mono">production_min_days</span>) is the fixed or minimum time, and
           the optional <span className="font-mono">production_max_days</span> makes it a range.
