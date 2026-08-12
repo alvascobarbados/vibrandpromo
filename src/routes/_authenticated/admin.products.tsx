@@ -22,7 +22,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -714,7 +714,9 @@ function AdminProducts() {
   );
 }
 
-/** Dense header cell; sortable when a sortKey is supplied. */
+type ColumnsApi = ReturnType<typeof useColumnWidths>;
+
+/** Dense header cell; sortable when a sortKey is supplied, resizable when a colId is. */
 function Th({
   children,
   className = "",
@@ -722,6 +724,9 @@ function Th({
   sortKey,
   search,
   onSort,
+  colId,
+  columns,
+  dragged,
 }: {
   children?: React.ReactNode;
   className?: string;
@@ -729,18 +734,58 @@ function Th({
   sortKey?: SortKey;
   search?: ProductSearch;
   onSort?: (key: SortKey) => void;
+  colId?: ColId;
+  columns?: ColumnsApi;
+  dragged?: React.MutableRefObject<boolean>;
 }) {
   const active = sortKey && search?.sort === sortKey;
+  const [dragging, setDragging] = useState(false);
+
+  function startResize(event: React.PointerEvent<HTMLSpanElement>) {
+    if (!colId || !columns) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startWidth = columns.widths[colId];
+    let moved = false;
+    setDragging(true);
+    if (dragged) dragged.current = false;
+
+    const onMove = (move: PointerEvent) => {
+      const delta = move.clientX - startX;
+      if (Math.abs(delta) > 3) {
+        moved = true;
+        if (dragged) dragged.current = true;
+      }
+      if (moved) columns.setWidth(colId, Math.max(minWidthFor(colId), startWidth + delta), false);
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      setDragging(false);
+      if (moved) columns.setWidth(colId, columns.widths[colId], true);
+      // Let the synthetic click that follows pointerup see the guard, then clear it.
+      setTimeout(() => {
+        if (dragged) dragged.current = false;
+      }, 0);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
   return (
     <th
-      className={`px-2 py-2 text-[11px] font-semibold text-muted-foreground ${
+      className={`relative px-2 py-2 text-[11px] font-semibold text-muted-foreground ${
         align === "right" ? "text-right" : "text-left"
       } ${className}`}
     >
       {sortKey && onSort ? (
         <button
           type="button"
-          onClick={() => onSort(sortKey)}
+          onClick={() => {
+            if (dragged?.current) return;
+            onSort(sortKey);
+          }}
           className={`inline-flex items-center gap-1 hover:text-foreground ${
             active ? "text-foreground" : ""
           }`}
@@ -757,6 +802,26 @@ function Th({
       ) : (
         children
       )}
+      {colId && columns ? (
+        <span
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize column"
+          onPointerDown={startResize}
+          onDoubleClick={(event) => {
+            event.stopPropagation();
+            columns.resetColumn(colId);
+          }}
+          onClick={(event) => event.stopPropagation()}
+          className="group absolute right-0 top-0 z-20 flex h-full w-2 translate-x-1/2 cursor-col-resize touch-none select-none items-center justify-center"
+        >
+          <span
+            className={`h-4/5 w-px bg-navy-700 transition-opacity ${
+              dragging ? "opacity-60" : "opacity-0 group-hover:opacity-30"
+            }`}
+          />
+        </span>
+      ) : null}
     </th>
   );
 }
