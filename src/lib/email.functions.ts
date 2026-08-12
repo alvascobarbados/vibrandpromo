@@ -35,7 +35,7 @@ export const updateEmailSettings = createServerFn({ method: "POST" })
       .from("email_settings")
       .upsert({ id: "default", ...data }, { onConflict: "id" });
     if (writeError) throw new Error(writeError.message);
-    return { ok: true as const };
+    return { ok: true as const, error: undefined };
   });
 
 export const getEmailStatus = createServerFn({ method: "GET" })
