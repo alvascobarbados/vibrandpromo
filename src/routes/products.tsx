@@ -30,6 +30,7 @@ import {
 } from "@/lib/catalog-filters";
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
+import { warnInvisibleFilter } from "@/lib/filter-hygiene";
 
 const PAGE_SIZE = 20;
 
