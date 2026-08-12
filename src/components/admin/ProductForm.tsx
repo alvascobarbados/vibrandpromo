@@ -27,7 +27,7 @@ import {
   type Product,
   type Subcategory,
 } from "@/lib/catalog";
-import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 
 export type FormState = {
   name: string;
@@ -35,6 +35,8 @@ export type FormState = {
   moq: string;
   production_days: string;
   shipping_methods: string;
+  rush_enabled: boolean;
+  rush_production_days: string;
   colour_option: string;
   decoration_methods: string[];
   inventory_source: string;
@@ -60,6 +62,8 @@ export const EMPTY_FORM: FormState = {
   moq: "",
   production_days: "",
   shipping_methods: "air_sea",
+  rush_enabled: false,
+  rush_production_days: "",
   colour_option: "Fully Customised",
   decoration_methods: [],
   inventory_source: "Factory Direct",
@@ -86,6 +90,9 @@ export function formFromProduct(product: Product): FormState {
     moq: product.moq == null ? "" : String(product.moq),
     production_days: product.production_days == null ? "" : String(product.production_days),
     shipping_methods: product.shipping_methods ?? "air_sea",
+    rush_enabled: product.rush_enabled ?? false,
+    rush_production_days:
+      product.rush_production_days == null ? "" : String(product.rush_production_days),
     colour_option: product.colour_option ?? "Fully Customised",
     decoration_methods: product.decoration_methods ?? [],
     inventory_source: product.inventory_source ?? "Factory Direct",
@@ -113,6 +120,11 @@ export function payloadFromForm(form: FormState) {
     moq: form.moq.trim() ? Number(form.moq) : null,
     production_days: form.production_days.trim() ? Number(form.production_days) : null,
     shipping_methods: form.shipping_methods || "air_sea",
+    rush_enabled: form.rush_enabled,
+    rush_production_days:
+      form.rush_enabled && form.rush_production_days.trim()
+        ? Number(form.rush_production_days)
+        : null,
     colour_option: form.colour_option,
     decoration_methods: form.decoration_methods,
     inventory_source: form.inventory_source,
@@ -139,7 +151,40 @@ export function validateForm(form: FormState): string | null {
   if (!form.name.trim()) return "Please give the product a name.";
   if (!form.sku.trim()) return "Please enter a SKU (product code).";
   if (!form.subcategory_id) return "Please choose a category and subcategory.";
+  if (form.rush_enabled) {
+    if (form.shipping_methods === "sea_only") return "Rush requires air shipping.";
+    const rush = Number(form.rush_production_days.trim());
+    if (!form.rush_production_days.trim() || !Number.isFinite(rush) || rush < 1)
+      return "Please enter the rush production time in days.";
+    const normal = form.production_days.trim() ? Number(form.production_days) : null;
+    if (normal == null) return "Add a normal production time before offering rush.";
+    if (rush >= normal)
+      return "Rush production time must be shorter than the normal production time.";
+  }
   return null;
+}
+
+/** Rush shares the normal air shipping buffer — only the production time changes. */
+function RushPreview({
+  rushProduction,
+  source,
+}: {
+  rushProduction: string;
+  source: string;
+}) {
+  const shipping = useShippingSettings();
+  const days = rushProduction.trim() ? Number(rushProduction) : null;
+  const value = {
+    production_days: null,
+    rush_enabled: true,
+    rush_production_days: Number.isFinite(days as number) ? days : null,
+    inventory_source: source,
+  };
+  return (
+    <p className="mt-1.5 text-xs text-muted-foreground">
+      Rush lead time shown to customers: {rushLeadLabel(value, shipping) ?? "—"}
+    </p>
+  );
 }
 
 /**
@@ -314,7 +359,21 @@ export function ProductForm({
           <Label htmlFor={id("shipping-methods")}>Available shipping</Label>
           <Select
             value={form.shipping_methods}
-            onValueChange={(value) => setForm((prev) => ({ ...prev, shipping_methods: value }))}
+            onValueChange={(value) =>
+              setForm((prev) => {
+                if (value === "sea_only" && prev.rush_enabled) {
+                  if (
+                    !window.confirm(
+                      "Rush requires air shipping. Switching to Sea only will turn rush off. Continue?",
+                    )
+                  ) {
+                    return prev;
+                  }
+                  return { ...prev, shipping_methods: value, rush_enabled: false };
+                }
+                return { ...prev, shipping_methods: value };
+              })
+            }
           >
             <SelectTrigger id={id("shipping-methods")}>
               <SelectValue />
@@ -327,6 +386,41 @@ export function ProductForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="sm:col-span-2">
+          <div className="rounded-xl border border-border p-3">
+            <label className="flex items-center justify-between gap-3 text-sm font-medium">
+              Rush available
+              <Switch
+                checked={form.rush_enabled}
+                disabled={form.shipping_methods === "sea_only"}
+                onCheckedChange={(checked) =>
+                  setForm((prev) => ({ ...prev, rush_enabled: checked }))
+                }
+              />
+            </label>
+            {form.shipping_methods === "sea_only" ? (
+              <p className="mt-1.5 text-xs text-muted-foreground">Rush requires air shipping</p>
+            ) : form.rush_enabled ? (
+              <div className="mt-3">
+                <Label htmlFor={id("rush-days")}>Rush production time (days)</Label>
+                <Input
+                  id={id("rush-days")}
+                  type="number"
+                  min={1}
+                  value={form.rush_production_days}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, rush_production_days: event.target.value }))
+                  }
+                  placeholder="Must be less than the normal production time"
+                />
+                <RushPreview
+                  rushProduction={form.rush_production_days}
+                  source={form.inventory_source}
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
         <div>
           <Label htmlFor={id("material")}>Material</Label>

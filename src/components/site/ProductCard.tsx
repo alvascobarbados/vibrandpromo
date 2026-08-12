@@ -1,8 +1,8 @@
-import { Pencil, Plane, Ship } from "lucide-react";
+import { Pencil, Plane, Ship, Zap } from "lucide-react";
 import { useState } from "react";
 
 import { airAvailable, seaAvailable, specValue, type Product } from "@/lib/catalog";
-import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
 import { AddToQuoteRow } from "@/components/site/AddToQuoteRow";
@@ -65,6 +65,7 @@ export function ProductCard({
   const hidden = editMode && !product.is_active;
   const air = airLeadLabel(product, shipping);
   const sea = seaLeadLabel(product, shipping);
+  const rush = rushLeadLabel(product, shipping);
   const hasLead = air != null && sea != null;
   const hasMoq = product.moq != null;
   const showAir = airAvailable(product.shipping_methods);
@@ -111,7 +112,7 @@ export function ProductCard({
           {product.name}
         </h3>
 
-        <div className="relative mt-3 flex h-[69px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
+        <div className="relative mt-3 flex h-[89px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
             <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
               <div className="min-w-0 text-left">
                 <SpecLabel>MOQ</SpecLabel>
@@ -135,7 +136,8 @@ export function ProductCard({
             <div className="flex min-w-0 flex-1 justify-start pr-[12px] [@container(min-width:200px)]:justify-center [@container(min-width:200px)]:pl-[12px] [@container(min-width:200px)]:pr-0">
               <div className="min-w-0 text-left">
                 <SpecLabel>Lead time</SpecLabel>
-                <div className="mt-1 flex h-[38px] flex-col justify-center space-y-0.5">
+                <div className="mt-1 flex h-[58px] flex-col justify-start space-y-0.5">
+                  {rush ? <LeadRow icon={Zap} value={rush} /> : null}
                   {showAir ? <LeadRow icon={Plane} value={hasLead ? air : null} /> : null}
                   {showSea ? <LeadRow icon={Ship} value={hasLead ? sea : null} /> : null}
                 </div>

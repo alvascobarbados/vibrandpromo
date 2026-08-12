@@ -82,6 +82,8 @@ export type Database = {
           name: string
           price: number | null
           production_days: number | null
+          rush_enabled: boolean
+          rush_production_days: number | null
           shipping_methods: string
           show_price: boolean
           size: string | null
@@ -110,6 +112,8 @@ export type Database = {
           name: string
           price?: number | null
           production_days?: number | null
+          rush_enabled?: boolean
+          rush_production_days?: number | null
           shipping_methods?: string
           show_price?: boolean
           size?: string | null
@@ -138,6 +142,8 @@ export type Database = {
           name?: string
           price?: number | null
           production_days?: number | null
+          rush_enabled?: boolean
+          rush_production_days?: number | null
           shipping_methods?: string
           show_price?: boolean
           size?: string | null
