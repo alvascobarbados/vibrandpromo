@@ -66,8 +66,9 @@ export const sendTestEmail = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        template: z.enum(["staff", "customer"]),
+        template: templateTypeSchema,
         to: z.string().trim().email().max(255),
+        draft: copySchema.optional(),
       })
       .parse(data),
   )
@@ -80,17 +81,21 @@ export const sendTestEmail = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const {
       SAMPLE_QUOTE,
-      customerTemplate,
       isDomainVerified,
       loadEmailSettings,
+      loadTemplate,
+      findUnknownTags,
+      renderEmail,
       sendAndLog,
-      staffTemplate,
     } = await import("@/lib/email.server");
+
+    const copy = data.draft ?? (await loadTemplate(supabaseAdmin, data.template));
+    const unknown = findUnknownTags(copy);
+    if (unknown.length) throw new Error(`Unknown merge tags: ${unknown.join(", ")}`);
 
     const settings = await loadEmailSettings(supabaseAdmin);
     const verified = await isDomainVerified();
-    const built =
-      data.template === "staff" ? staffTemplate(SAMPLE_QUOTE) : customerTemplate(SAMPLE_QUOTE);
+    const built = renderEmail(data.template, copy, SAMPLE_QUOTE);
 
     const result = await sendAndLog(supabaseAdmin, {
       type: data.template === "staff" ? "test_staff" : "test_customer",
@@ -103,4 +108,96 @@ export const sendTestEmail = createServerFn({ method: "POST" })
     });
 
     return result;
+  });
+
+/** Renders the draft copy with sample data using the production renderer. */
+export const previewEmailTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ template: templateTypeSchema, draft: copySchema }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("is_admin", {
+      _user_id: context.userId,
+    });
+    if (!isAdmin) throw new Error("Forbidden: admin access required");
+
+    const { SAMPLE_QUOTE, findUnknownTags, renderEmail } = await import("@/lib/email.server");
+    const unknownTags = findUnknownTags(data.draft);
+    const built = renderEmail(data.template, data.draft, SAMPLE_QUOTE);
+    return { subject: built.subject, html: built.html, unknownTags };
+  });
+
+export const saveEmailTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ template: templateTypeSchema, draft: copySchema }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin, error } = await context.supabase.rpc("is_admin", {
+      _user_id: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    if (!isAdmin) throw new Error("Forbidden: admin access required");
+
+    const { findUnknownTags, MERGE_TAGS } = await import("@/lib/email.server");
+    const unknown = findUnknownTags(data.draft);
+    if (unknown.length) {
+      throw new Error(
+        `These merge tags aren't recognised: ${unknown
+          .map((tag) => `{{${tag}}}`)
+          .join(", ")}. Valid tags are ${MERGE_TAGS.map((tag) => `{{${tag}}}`).join(", ")}.`,
+      );
+    }
+
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("display_name, email")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: writeError } = await supabaseAdmin.from("email_templates").upsert(
+      {
+        template_type: data.template,
+        ...data.draft,
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId,
+        updated_by_name: profile?.display_name || profile?.email || "",
+      },
+      { onConflict: "template_type" },
+    );
+    if (writeError) throw new Error(writeError.message);
+    return { ok: true as const };
+  });
+
+export const resetEmailTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ template: templateTypeSchema }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("is_admin", {
+      _user_id: context.userId,
+    });
+    if (!isAdmin) throw new Error("Forbidden: admin access required");
+
+    const { DEFAULT_TEMPLATES } = await import("@/lib/email.server");
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("display_name, email")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("email_templates").upsert(
+      {
+        template_type: data.template,
+        ...DEFAULT_TEMPLATES[data.template],
+        updated_at: new Date().toISOString(),
+        updated_by: context.userId,
+        updated_by_name: profile?.display_name || profile?.email || "",
+      },
+      { onConflict: "template_type" },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true as const, draft: DEFAULT_TEMPLATES[data.template] };
   });
