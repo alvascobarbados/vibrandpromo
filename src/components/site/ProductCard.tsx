@@ -115,13 +115,13 @@ export function ProductCard({
         </h3>
 
         {!hasMoq && !hasLead ? (
-          <div className="mt-3 border-t border-n-200 pt-3">
-            <div className="flex h-[56px] items-center">
+          <div className="mt-3 flex h-[69px] items-center border-t border-n-200 pt-3">
+            <div className="flex w-full items-center">
               <QuotedPerOrder />
             </div>
           </div>
         ) : (
-          <div className="relative mt-3 flex h-[68px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
+          <div className="relative mt-3 flex h-[69px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
             <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
               <div className="min-w-0 text-left">
                 <SpecLabel>MOQ</SpecLabel>
