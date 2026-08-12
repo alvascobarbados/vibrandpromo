@@ -41,6 +41,117 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          company: string
+          created_at: string
+          email: string
+          first_request_at: string
+          id: string
+          last_request_at: string
+          marketing_opt_in: boolean
+          name: string
+          phone: string | null
+          request_count: number
+          territory: string
+          updated_at: string
+        }
+        Insert: {
+          company?: string
+          created_at?: string
+          email: string
+          first_request_at?: string
+          id?: string
+          last_request_at?: string
+          marketing_opt_in?: boolean
+          name?: string
+          phone?: string | null
+          request_count?: number
+          territory?: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          email?: string
+          first_request_at?: string
+          id?: string
+          last_request_at?: string
+          marketing_opt_in?: boolean
+          name?: string
+          phone?: string | null
+          request_count?: number
+          territory?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          quote_request_id: string | null
+          recipient: string
+          status: string
+          subject: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          quote_request_id?: string | null
+          recipient: string
+          status: string
+          subject: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          quote_request_id?: string | null
+          recipient?: string
+          status?: string
+          subject?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      email_settings: {
+        Row: {
+          created_at: string
+          customer_confirm_enabled: boolean
+          from_name: string
+          id: string
+          recipients: string[]
+          reply_to: string
+          staff_notify_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_confirm_enabled?: boolean
+          from_name?: string
+          id?: string
+          recipients?: string[]
+          reply_to?: string
+          staff_notify_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_confirm_enabled?: boolean
+          from_name?: string
+          id?: string
+          recipients?: string[]
+          reply_to?: string
+          staff_notify_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       page_access_locks: {
         Row: {
           created_at: string
