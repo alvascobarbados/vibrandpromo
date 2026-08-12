@@ -4,7 +4,6 @@ import { X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -17,6 +16,7 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
 import { FilterPanel } from "@/components/site/FilterPanel";
 import { FilterBar } from "@/components/site/FilterBar";
+import { FilterSheet } from "@/components/site/FilterSheet";
 import { categoriesQuery, subcategoriesQuery } from "@/lib/catalog";
 import { useCatalogProducts } from "@/lib/staff-session";
 import {
@@ -246,15 +246,9 @@ function CatalogPage() {
         suppressed={filtersOpen}
       />
 
-      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
-          <FilterPanel
-            {...panelProps}
-            variant="drawer"
-            onClose={() => setFiltersOpen(false)}
-          />
-        </SheetContent>
-      </Sheet>
+      <FilterSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <FilterPanel {...panelProps} variant="drawer" onClose={() => setFiltersOpen(false)} />
+      </FilterSheet>
     </SiteLayout>
   );
 }

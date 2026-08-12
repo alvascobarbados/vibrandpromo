@@ -341,9 +341,8 @@ function CategoryPage() {
         suppressed={filtersOpen}
       />
 
-      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
-          <FilterPanel
+      <FilterSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <FilterPanel
             variant="drawer"
             products={inCategory}
             categories={categories.data ?? []}
@@ -355,9 +354,8 @@ function CategoryPage() {
             activeCount={activeCount}
             {...(category ? { fixedCategoryId: category.id } : {})}
             onClose={() => setFiltersOpen(false)}
-          />
-        </SheetContent>
-      </Sheet>
+        />
+      </FilterSheet>
     </SiteLayout>
   );
 }
