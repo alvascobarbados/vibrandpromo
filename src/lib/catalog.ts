@@ -42,6 +42,8 @@ export type Product = {
   weight: string | null;
   features: string | null;
   shipping_methods: string;
+  rush_enabled: boolean;
+  rush_production_days: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -67,6 +69,11 @@ export function airAvailable(value: string | null | undefined) {
 /** Sea freight is offered unless the product is air-only. */
 export function seaAvailable(value: string | null | undefined) {
   return value !== "air_only";
+}
+
+/** Rush production is only possible when the item can travel by air. */
+export function rushEligible(shippingMethods: string | null | undefined) {
+  return airAvailable(shippingMethods);
 }
 
 export const DECORATION_METHODS = [
