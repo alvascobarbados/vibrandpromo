@@ -19,7 +19,7 @@ export type Supplier = {
   id: string;
   name: string;
   code: string;
-  country: string;
+  origin_id: string | null;
   default_shipping_mode: string;
   unit_system: string;
   contact: string | null;
@@ -28,6 +28,53 @@ export type Supplier = {
   created_at: string;
   updated_at: string;
 };
+
+export type Origin = {
+  id: string;
+  code: string;
+  name: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export const originsQuery = queryOptions({
+  queryKey: ["origins"],
+  queryFn: async (): Promise<Origin[]> => {
+    const { data, error } = await supabase
+      .from("origins")
+      .select("*")
+      .order("name", { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as Origin[];
+  },
+});
+
+/** Origin codes are uppercase snake case, matching the pricing engine. */
+export function normalizeOriginCode(code: string) {
+  return code
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+export function originCodeProblem(code: string) {
+  const value = normalizeOriginCode(code);
+  if (!value) return "Enter an origin code.";
+  if (!/^[A-Z0-9_]+$/.test(value)) return "Use letters, numbers and underscores only.";
+  return null;
+}
+
+export async function createOrigin(input: { code: string; name: string }) {
+  const { data, error } = await supabase
+    .from("origins")
+    .insert({ code: normalizeOriginCode(input.code), name: input.name.trim() })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as Origin;
+}
 
 export type ProductSourcing = {
   id: string;
