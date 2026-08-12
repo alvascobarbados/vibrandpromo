@@ -22,6 +22,7 @@ export type Supplier = {
   country: string;
   default_shipping_mode: string;
   unit_system: string;
+  contact: string | null;
   notes: string;
   is_archived: boolean;
   created_at: string;
