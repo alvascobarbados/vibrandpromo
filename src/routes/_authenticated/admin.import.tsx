@@ -132,6 +132,40 @@ function AdminImport() {
         const parsed = Number(raw);
         return Number.isFinite(parsed) ? parsed : null;
       };
+      const rushRaw = (row["rush_enabled"] ?? "").trim().toLowerCase();
+      if (rushRaw && !["true", "false", "yes", "no", "1", "0"].includes(rushRaw)) {
+        found.push({
+          line,
+          sku,
+          reason: `Rush "${(row["rush_enabled"] ?? "").trim()}" is not valid — use true or false (or leave blank for false)`,
+        });
+        return;
+      }
+      const rushEnabled = ["true", "yes", "1"].includes(rushRaw);
+      const rushDays = num("rush_production_days");
+      const normalDays = days ? Number(days) : null;
+      if (rushEnabled) {
+        if (shipping === "sea_only") {
+          found.push({ line, sku, reason: "Rush requires air shipping — this row is sea only" });
+          return;
+        }
+        if (rushDays == null || rushDays < 1) {
+          found.push({
+            line,
+            sku,
+            reason: "Rush is on, so rush_production_days must be a whole number of 1 or more",
+          });
+          return;
+        }
+        if (normalDays == null || rushDays >= normalDays) {
+          found.push({
+            line,
+            sku,
+            reason: "rush_production_days must be less than production_days",
+          });
+          return;
+        }
+      }
       prepared.push({
         sku,
         payload: {
@@ -144,6 +178,8 @@ function AdminImport() {
           moq: moq ? Number(moq) : null,
           production_days: days ? Number(days) : null,
           shipping_methods: shipping,
+          rush_enabled: rushEnabled,
+          rush_production_days: rushEnabled ? rushDays : null,
           colour_option: (row["colour_option"] ?? "").trim() || null,
           decoration_methods: methods,
           material: (row["material"] ?? "").trim() || null,
