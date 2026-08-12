@@ -300,9 +300,6 @@
   padding-inline: var(--gutter);
 }
 
-
-}
-
 /* Edge-to-edge horizontal scroller whose first item aligns to the container. */
 @utility site-scroller {
   margin-inline: calc(var(--gutter) * -1);
