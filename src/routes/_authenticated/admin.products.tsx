@@ -22,7 +22,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -448,9 +448,8 @@ function AdminProducts() {
                     ? "bg-navy-50 [&>td:first-child]:border-l-2 [&>td:first-child]:border-l-lime-500"
                     : "hover:bg-secondary/50";
                   return (
-                    <>
+                    <Fragment key={product.id}>
                       <tr
-                        key={product.id}
                         className={`h-[41px] cursor-pointer border-b border-border ${rail}`}
                         onClick={() => {
                           setOpenIds((prev) =>
@@ -540,7 +539,6 @@ function AdminProducts() {
                       </tr>
                       {isOpen ? (
                         <tr
-                          key={`${product.id}-panel`}
                           className="border-b border-border bg-navy-50 [&>td:first-child]:border-l-2 [&>td:first-child]:border-l-lime-500"
                         >
                           <td colSpan={11} className="p-4">
@@ -567,7 +565,7 @@ function AdminProducts() {
                           </td>
                         </tr>
                       ) : null}
-                    </>
+                    </Fragment>
                   );
                 })}
           </tbody>
