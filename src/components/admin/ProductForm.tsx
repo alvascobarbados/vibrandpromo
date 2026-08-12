@@ -359,7 +359,21 @@ export function ProductForm({
           <Label htmlFor={id("shipping-methods")}>Available shipping</Label>
           <Select
             value={form.shipping_methods}
-            onValueChange={(value) => setForm((prev) => ({ ...prev, shipping_methods: value }))}
+            onValueChange={(value) =>
+              setForm((prev) => {
+                if (value === "sea_only" && prev.rush_enabled) {
+                  if (
+                    !window.confirm(
+                      "Rush requires air shipping. Switching to Sea only will turn rush off. Continue?",
+                    )
+                  ) {
+                    return prev;
+                  }
+                  return { ...prev, shipping_methods: value, rush_enabled: false };
+                }
+                return { ...prev, shipping_methods: value };
+              })
+            }
           >
             <SelectTrigger id={id("shipping-methods")}>
               <SelectValue />
@@ -372,6 +386,41 @@ export function ProductForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="sm:col-span-2">
+          <div className="rounded-xl border border-border p-3">
+            <label className="flex items-center justify-between gap-3 text-sm font-medium">
+              Rush available
+              <Switch
+                checked={form.rush_enabled}
+                disabled={form.shipping_methods === "sea_only"}
+                onCheckedChange={(checked) =>
+                  setForm((prev) => ({ ...prev, rush_enabled: checked }))
+                }
+              />
+            </label>
+            {form.shipping_methods === "sea_only" ? (
+              <p className="mt-1.5 text-xs text-muted-foreground">Rush requires air shipping</p>
+            ) : form.rush_enabled ? (
+              <div className="mt-3">
+                <Label htmlFor={id("rush-days")}>Rush production time (days)</Label>
+                <Input
+                  id={id("rush-days")}
+                  type="number"
+                  min={1}
+                  value={form.rush_production_days}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, rush_production_days: event.target.value }))
+                  }
+                  placeholder="Must be less than the normal production time"
+                />
+                <RushPreview
+                  rushProduction={form.rush_production_days}
+                  source={form.inventory_source}
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
         <div>
           <Label htmlFor={id("material")}>Material</Label>
