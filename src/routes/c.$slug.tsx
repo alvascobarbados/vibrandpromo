@@ -24,6 +24,7 @@ import {
 } from "@/lib/catalog-filters";
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
+import { warnInvisibleFilter } from "@/lib/filter-hygiene";
 
 export const Route = createFileRoute("/c/$slug")({
   validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> & {
@@ -111,6 +112,13 @@ function CategoryPage() {
         shipping,
       }),
     [inCategory, search, categories.data, subcategories.data, shipping],
+  );
+
+  warnInvisibleFilter(
+    `/c/${slug}`,
+    matching.length,
+    inCategory.length,
+    activeCount + (search.q ? 1 : 0),
   );
 
   const sections = useMemo(() => {
