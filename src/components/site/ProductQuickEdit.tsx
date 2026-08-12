@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { SHIPPING_METHOD_OPTIONS, type Product } from "@/lib/catalog";
-import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 
 export function ProductQuickEdit({
   product,
@@ -37,6 +37,10 @@ export function ProductQuickEdit({
   const [price, setPrice] = useState(product.price == null ? "" : String(product.price));
   const [showPrice, setShowPrice] = useState(product.show_price);
   const [shippingMethods, setShippingMethods] = useState(product.shipping_methods ?? "air_sea");
+  const [rushEnabled, setRushEnabled] = useState(product.rush_enabled ?? false);
+  const [rushDays, setRushDays] = useState(
+    product.rush_production_days == null ? "" : String(product.rush_production_days),
+  );
   const [isActive, setIsActive] = useState(product.is_active);
   const [isFeatured, setIsFeatured] = useState(product.is_featured);
   const [saving, setSaving] = useState(false);
@@ -46,6 +50,31 @@ export function ProductQuickEdit({
     production_days: Number.isFinite(parsedProduction as number) ? parsedProduction : null,
     inventory_source: product.inventory_source,
   };
+  const parsedRush = rushDays.trim() ? Number(rushDays) : null;
+  const rushPreview = rushLeadLabel(
+    {
+      production_days: null,
+      rush_enabled: true,
+      rush_production_days: Number.isFinite(parsedRush as number) ? parsedRush : null,
+      inventory_source: product.inventory_source,
+      shipping_methods: shippingMethods,
+    },
+    shipping,
+  );
+
+  function changeShipping(value: string) {
+    if (value === "sea_only" && rushEnabled) {
+      if (
+        !window.confirm(
+          "Rush requires air shipping. Switching to Sea only will turn rush off. Continue?",
+        )
+      ) {
+        return;
+      }
+      setRushEnabled(false);
+    }
+    setShippingMethods(value);
+  }
 
   function numberOrNull(value: string) {
     const trimmed = value.trim();
@@ -59,6 +88,26 @@ export function ProductQuickEdit({
       toast.error("Name is required.");
       return;
     }
+    const normalProduction = numberOrNull(productionDays);
+    const rushProduction = numberOrNull(rushDays);
+    if (rushEnabled) {
+      if (shippingMethods === "sea_only") {
+        toast.error("Rush requires air shipping.");
+        return;
+      }
+      if (rushProduction == null || rushProduction < 1) {
+        toast.error("Please enter the rush production time in days.");
+        return;
+      }
+      if (normalProduction == null) {
+        toast.error("Add a normal production time before offering rush.");
+        return;
+      }
+      if (rushProduction >= normalProduction) {
+        toast.error("Rush production time must be shorter than the normal production time.");
+        return;
+      }
+    }
     setSaving(true);
     // Writes go through the user's own authenticated client, so the staff-only
     // RLS policies on public.products are the enforcement point.
@@ -67,7 +116,9 @@ export function ProductQuickEdit({
       .update({
         name: name.trim(),
         moq: numberOrNull(moq),
-        production_days: numberOrNull(productionDays),
+        production_days: normalProduction,
+        rush_enabled: rushEnabled,
+        rush_production_days: rushEnabled ? rushProduction : null,
         price: numberOrNull(price),
         show_price: showPrice,
         shipping_methods: shippingMethods,
@@ -129,7 +180,7 @@ export function ProductQuickEdit({
 
           <div>
             <Label htmlFor="qe-shipping">Available shipping</Label>
-            <Select value={shippingMethods} onValueChange={setShippingMethods}>
+            <Select value={shippingMethods} onValueChange={changeShipping}>
               <SelectTrigger id="qe-shipping">
                 <SelectValue />
               </SelectTrigger>
@@ -141,6 +192,34 @@ export function ProductQuickEdit({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-n-200 p-3">
+            <label className="flex items-center justify-between gap-3 text-sm font-medium">
+              Rush available
+              <Switch
+                checked={rushEnabled}
+                disabled={shippingMethods === "sea_only"}
+                onCheckedChange={setRushEnabled}
+              />
+            </label>
+            {shippingMethods === "sea_only" ? (
+              <p className="text-xs text-muted-foreground">Rush requires air shipping</p>
+            ) : rushEnabled ? (
+              <div>
+                <Label htmlFor="qe-rush">Rush production time (days)</Label>
+                <Input
+                  id="qe-rush"
+                  inputMode="numeric"
+                  value={rushDays}
+                  placeholder="Less than normal production"
+                  onChange={(e) => setRushDays(e.target.value)}
+                />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Rush lead time shown to customers: {rushPreview ?? "—"}
+                </p>
+              </div>
+            ) : null}
           </div>
 
           <div>
