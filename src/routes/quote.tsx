@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { Checkbox } from "@/components/ui/checkbox";
 import { QuantityStepper } from "@/components/site/QuantityStepper";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuoteList } from "@/lib/quote-list";
@@ -50,6 +51,7 @@ function QuotePage() {
   const [submitted, setSubmitted] = useState(false);
   const [artwork, setArtwork] = useState<File | null>(null);
   const [botField, setBotField] = useState("");
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [form, setForm] = useState({
     customer_name: "",
     company: "",
@@ -105,6 +107,7 @@ function QuotePage() {
           ...form,
           artwork_url: artworkUrl,
           website: botField,
+          marketing_opt_in: marketingOptIn,
           items: items.map((item) => ({
             product_id: item.productId,
             product_name: item.name,
