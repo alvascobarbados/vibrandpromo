@@ -9,6 +9,8 @@ import { AddToQuoteRow } from "@/components/site/AddToQuoteRow";
 import { useStaffSession } from "@/lib/staff-session";
 import { ProductQuickEdit } from "@/components/site/ProductQuickEdit";
 import { RushChip } from "@/components/site/RushChip";
+import { ProductTeamDetails } from "@/components/site/ProductTeamDetails";
+import { useViewMode } from "@/lib/view-mode";
 
 function FlagBadge({ source }: { source: string }) {
   const usa = source === "USA Inventory";
@@ -67,7 +69,8 @@ export function ProductCard({
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = product.images ?? [];
-  const { editMode } = useStaffSession();
+  const { editMode, isStaff } = useStaffSession();
+  const viewMode = useViewMode();
   const shipping = useShippingSettings();
   const [quickEditOpen, setQuickEditOpen] = useState(false);
   const hidden = editMode && !product.is_active;
@@ -157,6 +160,8 @@ export function ProductCard({
           <AddToQuoteRow product={product} />
         </div>
       </div>
+
+      {viewMode === "supplier" && isStaff ? <ProductTeamDetails product={product} /> : null}
 
       {lightboxIndex !== null ? (
         <ImageLightbox

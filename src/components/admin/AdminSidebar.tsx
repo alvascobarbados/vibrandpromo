@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ClipboardList,
   Contact,
+  Factory,
   FileSpreadsheet,
   ImageUp,
   LayoutDashboard,
@@ -54,6 +55,12 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/admin/quotes", label: "Quote Requests", icon: ClipboardList, page: "quotes" },
       { to: "/admin/contacts", label: "Contacts", icon: Contact },
+    ],
+  },
+  {
+    label: "Sourcing",
+    items: [
+      { to: "/admin/suppliers", label: "Suppliers", icon: Factory, page: "products" },
     ],
   },
   {

@@ -29,6 +29,7 @@ import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminQuotesRouteImport } from './routes/_authenticated/admin.quotes'
 import { Route as AuthenticatedAdminShippingRouteImport } from './routes/_authenticated/admin.shipping'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin.staff'
+import { Route as AuthenticatedAdminSuppliersRouteImport } from './routes/_authenticated/admin.suppliers'
 import { Route as ApiPublicProductImageSplatRouteImport } from './routes/api/public/product-image.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -138,6 +139,12 @@ const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
   path: '/admin/staff',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminSuppliersRoute =
+  AuthenticatedAdminSuppliersRouteImport.update({
+    id: '/admin/suppliers',
+    path: '/admin/suppliers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicProductImageSplatRoute =
   ApiPublicProductImageSplatRouteImport.update({
     id: '/api/public/product-image/$',
@@ -164,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/admin/quotes': typeof AuthenticatedAdminQuotesRoute
   '/admin/shipping': typeof AuthenticatedAdminShippingRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin/suppliers': typeof AuthenticatedAdminSuppliersRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
@@ -186,6 +194,7 @@ export interface FileRoutesByTo {
   '/admin/quotes': typeof AuthenticatedAdminQuotesRoute
   '/admin/shipping': typeof AuthenticatedAdminShippingRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin/suppliers': typeof AuthenticatedAdminSuppliersRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
@@ -210,6 +219,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/quotes': typeof AuthenticatedAdminQuotesRoute
   '/_authenticated/admin/shipping': typeof AuthenticatedAdminShippingRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/_authenticated/admin/suppliers': typeof AuthenticatedAdminSuppliersRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/quotes'
     | '/admin/shipping'
     | '/admin/staff'
+    | '/admin/suppliers'
     | '/admin/'
     | '/api/public/product-image/$'
   fileRoutesByTo: FileRoutesByTo
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/admin/quotes'
     | '/admin/shipping'
     | '/admin/staff'
+    | '/admin/suppliers'
     | '/admin'
     | '/api/public/product-image/$'
   id:
@@ -279,6 +291,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/quotes'
     | '/_authenticated/admin/shipping'
     | '/_authenticated/admin/staff'
+    | '/_authenticated/admin/suppliers'
     | '/_authenticated/admin/'
     | '/api/public/product-image/$'
   fileRoutesById: FileRoutesById
@@ -438,6 +451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/suppliers': {
+      id: '/_authenticated/admin/suppliers'
+      path: '/admin/suppliers'
+      fullPath: '/admin/suppliers'
+      preLoaderRoute: typeof AuthenticatedAdminSuppliersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/product-image/$': {
       id: '/api/public/product-image/$'
       path: '/api/public/product-image/$'
@@ -459,6 +479,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminQuotesRoute: typeof AuthenticatedAdminQuotesRoute
   AuthenticatedAdminShippingRoute: typeof AuthenticatedAdminShippingRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
+  AuthenticatedAdminSuppliersRoute: typeof AuthenticatedAdminSuppliersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -473,6 +494,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminQuotesRoute: AuthenticatedAdminQuotesRoute,
   AuthenticatedAdminShippingRoute: AuthenticatedAdminShippingRoute,
   AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
+  AuthenticatedAdminSuppliersRoute: AuthenticatedAdminSuppliersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
