@@ -67,7 +67,7 @@ function HomePage() {
   const subcategories = useQuery(subcategoriesQuery);
   const shipping = useShippingSettings();
   const navigate = useNavigate();
-  const { search, scope, setScope, toggle, clear, activeCount } = useCatalogFilters();
+  const { search, toggle, clear, activeCount } = useCatalogFilters();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeChip, setActiveChip] = useState("all");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -76,19 +76,20 @@ function HomePage() {
   const allCategories = categories.data ?? [];
   const allSubcategories = subcategories.data ?? [];
 
-  const scoped = useMemo(
+  /** Home never filters its own shelves — this count only feeds "Show N results". */
+  const filteredCount = useMemo(
     () =>
       filterProducts(allProducts, search, {
         categories: allCategories,
         subcategories: allSubcategories,
         shipping,
-      }),
+      }).length,
     [allProducts, allCategories, allSubcategories, search, shipping],
   );
 
   const shelves = useMemo(() => {
     const byCategory = new Map<string, Product[]>();
-    for (const product of scoped) {
+    for (const product of allProducts) {
       if (!product.category_id) continue;
       const list = byCategory.get(product.category_id) ?? [];
       list.push(product);
@@ -97,7 +98,7 @@ function HomePage() {
     return allCategories
       .map((category) => ({ category, items: byCategory.get(category.id) ?? [] }))
       .filter((shelf) => shelf.items.length > 0);
-  }, [scoped, allCategories]);
+  }, [allProducts, allCategories]);
 
   const loading = products.isLoading || categories.isLoading;
 
@@ -174,17 +175,6 @@ function HomePage() {
               </div>
             ))}
           </div>
-        ) : shelves.length === 0 ? (
-          <div className="py-16 text-center">
-            <p className="text-muted-foreground">No products match your filters.</p>
-            <button
-              type="button"
-              onClick={clear}
-              className="mt-4 rounded-full border border-n-200 px-4 py-2 text-sm font-semibold text-navy-700 hover:bg-navy-50"
-            >
-              Clear filters
-            </button>
-          </div>
         ) : (
           <div className="space-y-10 lg:space-y-16">
             {shelves.map(({ category, items }, index) => {
@@ -245,8 +235,6 @@ function HomePage() {
 
       <FilterBar
         activeCount={activeCount}
-        scope={scope}
-        onScope={setScope}
         onOpenFilters={() => setFiltersOpen(true)}
         suppressed={filtersOpen}
       />
@@ -259,9 +247,7 @@ function HomePage() {
             categories={allCategories}
             subcategories={allSubcategories}
             search={search}
-            resultCount={scoped.length}
-            scope={scope}
-            onScope={setScope}
+            resultCount={filteredCount}
             onToggle={toggle}
             onClear={clear}
             activeCount={activeCount}
