@@ -748,6 +748,7 @@ function Th({
     const startX = event.clientX;
     const startWidth = columns.widths[colId];
     let moved = false;
+    let last = startWidth;
     setDragging(true);
     if (dragged) dragged.current = false;
 
@@ -757,13 +758,16 @@ function Th({
         moved = true;
         if (dragged) dragged.current = true;
       }
-      if (moved) columns.setWidth(colId, Math.max(minWidthFor(colId), startWidth + delta), false);
+      if (moved) {
+        last = Math.max(minWidthFor(colId), startWidth + delta);
+        columns.setWidth(colId, last, false);
+      }
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       setDragging(false);
-      if (moved) columns.setWidth(colId, columns.widths[colId], true);
+      if (moved) columns.setWidth(colId, last, true);
       // Let the synthetic click that follows pointerup see the guard, then clear it.
       setTimeout(() => {
         if (dragged) dragged.current = false;
