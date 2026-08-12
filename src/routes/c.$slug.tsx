@@ -4,7 +4,6 @@ import { ArrowLeft, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
 import {
@@ -15,6 +14,9 @@ import {
 import { useCatalogProducts } from "@/lib/staff-session";
 import { FilterPanel } from "@/components/site/FilterPanel";
 import { FilterBar } from "@/components/site/FilterBar";
+import { FilterSheet } from "@/components/site/FilterSheet";
+import { DesktopCatalog } from "@/components/site/DesktopCatalog";
+import { useIsDesktop } from "@/hooks/use-desktop";
 import {
   GROUP_LABELS,
   filterProducts,
@@ -87,6 +89,8 @@ export const Route = createFileRoute("/c/$slug")({
 
 function CategoryPage() {
   const { slug } = Route.useParams();
+  const isDesktop = useIsDesktop();
+  const page = Route.useSearch().page ?? 1;
   const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
@@ -184,6 +188,17 @@ function CategoryPage() {
   const total = sections.reduce((sum, section) => sum + section.items.length, 0);
 
   if (!loading && !category) throw notFound();
+
+  if (isDesktop) {
+    return (
+      <SiteLayout>
+        <div className="site-container xl:max-w-[1344px] py-8 pb-16">
+          <h1 className="sr-only">{category?.name ?? "Category"} promotional products</h1>
+          <DesktopCatalog initialCategorySlug={slug} page={page} />
+        </div>
+      </SiteLayout>
+    );
+  }
 
   return (
     <SiteLayout>
@@ -326,9 +341,8 @@ function CategoryPage() {
         suppressed={filtersOpen}
       />
 
-      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
-          <FilterPanel
+      <FilterSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <FilterPanel
             variant="drawer"
             products={inCategory}
             categories={categories.data ?? []}
@@ -340,9 +354,8 @@ function CategoryPage() {
             activeCount={activeCount}
             {...(category ? { fixedCategoryId: category.id } : {})}
             onClose={() => setFiltersOpen(false)}
-          />
-        </SheetContent>
-      </Sheet>
+        />
+      </FilterSheet>
     </SiteLayout>
   );
 }

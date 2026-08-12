@@ -4,7 +4,6 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { LazySection } from "@/components/site/LazySection";
 import { CategoryRow } from "@/components/site/CategoryRow";
@@ -13,6 +12,9 @@ import { subcategoriesQuery } from "@/lib/catalog";
 import { useCatalogProducts } from "@/lib/staff-session";
 import { FilterPanel } from "@/components/site/FilterPanel";
 import { FilterBar } from "@/components/site/FilterBar";
+import { FilterSheet } from "@/components/site/FilterSheet";
+import { DesktopCatalog } from "@/components/site/DesktopCatalog";
+import { useIsDesktop } from "@/hooks/use-desktop";
 import { filterProducts, parseCatalogSearch, type CatalogSearch } from "@/lib/catalog-filters";
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
@@ -63,6 +65,8 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const products = useCatalogProducts();
+  const isDesktop = useIsDesktop();
+  const page = Route.useSearch().page ?? 1;
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const shipping = useShippingSettings();
@@ -125,6 +129,17 @@ function HomePage() {
     const node =
       target === "all" ? document.getElementById("home-top") : sectionRefs.current[target];
     node?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  if (isDesktop) {
+    return (
+      <SiteLayout>
+        <div className="site-container xl:max-w-[1344px] py-8 pb-16">
+          <h1 className="sr-only">Vibrand promotional products catalogue</h1>
+          <DesktopCatalog page={page} />
+        </div>
+      </SiteLayout>
+    );
   }
 
   return (
@@ -239,9 +254,8 @@ function HomePage() {
         suppressed={filtersOpen}
       />
 
-      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
-          <FilterPanel
+      <FilterSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <FilterPanel
             variant="drawer"
             products={allProducts}
             categories={allCategories}
@@ -255,9 +269,8 @@ function HomePage() {
               setFiltersOpen(false);
               void navigate({ to: "/products", search: { ...search, page: 1 } });
             }}
-          />
-        </SheetContent>
-      </Sheet>
+        />
+      </FilterSheet>
     </SiteLayout>
   );
 }
