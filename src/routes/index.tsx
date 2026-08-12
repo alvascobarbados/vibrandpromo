@@ -4,7 +4,6 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { LazySection } from "@/components/site/LazySection";
 import { CategoryRow } from "@/components/site/CategoryRow";
@@ -13,6 +12,9 @@ import { subcategoriesQuery } from "@/lib/catalog";
 import { useCatalogProducts } from "@/lib/staff-session";
 import { FilterPanel } from "@/components/site/FilterPanel";
 import { FilterBar } from "@/components/site/FilterBar";
+import { FilterSheet } from "@/components/site/FilterSheet";
+import { DesktopCatalog } from "@/components/site/DesktopCatalog";
+import { useIsDesktop } from "@/hooks/use-desktop";
 import { filterProducts, parseCatalogSearch, type CatalogSearch } from "@/lib/catalog-filters";
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
@@ -63,6 +65,8 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const products = useCatalogProducts();
+  const isDesktop = useIsDesktop();
+  const page = Route.useSearch().page ?? 1;
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const shipping = useShippingSettings();
