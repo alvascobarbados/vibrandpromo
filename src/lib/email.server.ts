@@ -60,22 +60,70 @@ export async function loadEmailSettings(supabaseAdmin: Admin): Promise<EmailSett
   return data ? (data as EmailSettings) : DEFAULT_SETTINGS;
 }
 
-/** Resend reports the domain as verified once DNS propagates. */
-export async function isDomainVerified(): Promise<boolean> {
+export type DomainStatus = {
+  /** Whether we send from the branded address. */
+  verified: boolean;
+  /** "verified" | "unverified" | "unreadable" (send-only key) | "no_key" */
+  state: "verified" | "unverified" | "unreadable" | "no_key";
+  detail?: string;
+};
+
+/**
+ * Asks Resend for the domain record. A send-only ("restricted") API key cannot read
+ * /domains and answers 401 restricted_api_key — that is NOT an unverified domain, so we
+ * keep using the branded sender in that case.
+ */
+export async function getDomainStatus(): Promise<DomainStatus> {
   const key = process.env["RESEND_API_KEY"];
-  if (!key) return false;
+  if (!key) return { verified: false, state: "no_key" };
   try {
     const response = await fetch(`${RESEND_URL}/domains`, {
       headers: { Authorization: `Bearer ${key}` },
     });
-    if (!response.ok) return false;
-    const body = (await response.json()) as { data?: { name?: string; status?: string }[] };
-    return (body.data ?? []).some(
-      (domain) => domain.name === SEND_DOMAIN && domain.status === "verified",
+    const body = (await response.json().catch(() => null)) as
+      | { data?: { name?: string; status?: string }[]; name?: string; message?: string }
+      | null;
+
+    if (!response.ok) {
+      const reason = body?.name ?? `http_${response.status}`;
+      if (response.status === 401 || response.status === 403) {
+        // Send-only key: no read access to domains. Trust the configured sending domain.
+        return {
+          verified: true,
+          state: "unreadable",
+          detail: body?.message ?? "API key cannot read domain status",
+        };
+      }
+      return { verified: false, state: "unverified", detail: reason };
+    }
+
+    const domains = body?.data ?? [];
+    const match = domains.find(
+      (domain) => domain.name === SEND_DOMAIN || domain.name?.endsWith(`.${SEND_DOMAIN}`),
     );
-  } catch {
-    return false;
+    if (!match) {
+      return {
+        verified: false,
+        state: "unverified",
+        detail: `${SEND_DOMAIN} is not on this Resend account`,
+      };
+    }
+    const verified = match.status === "verified";
+    return verified
+      ? { verified: true, state: "verified" }
+      : { verified: false, state: "unverified", detail: `status: ${match.status ?? "unknown"}` };
+  } catch (error) {
+    return {
+      verified: false,
+      state: "unverified",
+      detail: error instanceof Error ? error.message : String(error),
+    };
   }
+}
+
+/** Whether to send from the branded address. */
+export async function isDomainVerified(): Promise<boolean> {
+  return (await getDomainStatus()).verified;
 }
 
 export function escapeHtml(value: string) {
