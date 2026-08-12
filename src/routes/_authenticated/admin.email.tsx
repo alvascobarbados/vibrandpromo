@@ -319,6 +319,7 @@ function EmailSettingsPage() {
         </TabsContent>
 
         <TabsContent value="log" className="pt-4">
+          {/* log tab */}
           <div className="flex flex-wrap gap-2">
             <Input
               className="sm:max-w-xs"
