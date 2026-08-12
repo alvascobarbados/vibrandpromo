@@ -188,7 +188,7 @@ function CategoryPage() {
   return (
     <SiteLayout>
       <div className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="site-container">
+        <div className="site-container catalog-container">
           <div className="flex items-center gap-2 py-3">
             <Link
               to="/"
