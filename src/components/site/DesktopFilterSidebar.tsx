@@ -49,7 +49,7 @@ function Row({
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-center gap-2.5 rounded-md px-1.5 py-2 text-sm leading-[1.5] transition-colors duration-[150ms] ease-out ${
+      className={`flex min-h-8 cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-[13px] leading-[1.25] transition-colors duration-[150ms] ease-out ${
         checked ? "font-medium text-n-900" : "text-n-700"
       } hover:bg-n-50 ${indent ? "ml-4" : ""}`}
     >
@@ -58,14 +58,14 @@ function Row({
           type="radio"
           checked={checked}
           onChange={onChange}
-          className="size-4 shrink-0 accent-[var(--color-lime-500)]"
+          className="mt-px size-4 shrink-0 accent-[var(--color-lime-500)]"
         />
       ) : (
-        <Checkbox checked={checked} onCheckedChange={onChange} />
+        <Checkbox checked={checked} onCheckedChange={onChange} className="mt-px size-4 shrink-0" />
       )}
       {dot}
       <span className="min-w-0 flex-1">{label}</span>
-      <span className="shrink-0 text-[11px] text-n-500">({count})</span>
+      <span className="shrink-0 text-right text-[12px] leading-5 text-n-400">({count})</span>
     </label>
   );
 }
@@ -73,8 +73,8 @@ function Row({
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="py-1.5 text-[11px] font-semibold uppercase tracking-wide text-n-500">{label}</p>
-      <div className="mt-1">{children}</div>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-n-400">{label}</p>
+      <div className="mt-2">{children}</div>
     </div>
   );
 }
@@ -117,7 +117,7 @@ export function DesktopFilterSidebar({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-2 pb-3">
+      <div className="flex items-center justify-between gap-2 pb-4">
         <p className="text-sm font-semibold text-n-900">Filters</p>
         {activeCount ? (
           <button
@@ -130,7 +130,7 @@ export function DesktopFilterSidebar({
         ) : null}
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-6">
         <Group label={GROUP_LABELS.cat}>
           <Row
             radio
