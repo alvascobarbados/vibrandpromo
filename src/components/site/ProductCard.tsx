@@ -1,4 +1,4 @@
-import { Pencil, Plane, Ship, Zap } from "lucide-react";
+import { Pencil, Plane, Ship } from "lucide-react";
 import { useState } from "react";
 
 import { airAvailable, seaAvailable, specValue, type Product } from "@/lib/catalog";
@@ -8,6 +8,7 @@ import { ImageLightbox } from "@/components/site/ImageLightbox";
 import { AddToQuoteRow } from "@/components/site/AddToQuoteRow";
 import { useStaffSession } from "@/lib/staff-session";
 import { ProductQuickEdit } from "@/components/site/ProductQuickEdit";
+import { RushChip } from "@/components/site/RushChip";
 
 function FlagBadge({ source }: { source: string }) {
   const usa = source === "USA Inventory";
@@ -36,14 +37,21 @@ function SpecLabel({ children }: { children: React.ReactNode }) {
 function LeadRow({
   icon: Icon,
   value,
+  chip = false,
 }: {
-  icon: typeof Plane;
+  icon?: typeof Plane;
   value: string | null;
+  chip?: boolean;
 }) {
   return (
     <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:199px)]:text-[13px]">
-      <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
-      <span className={`whitespace-nowrap${value == null ? " text-n-500" : ""}`}>
+      {chip ? <RushChip /> : null}
+      {Icon ? <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} /> : null}
+      <span
+        className={`whitespace-nowrap${value == null ? " text-n-500" : ""}${
+          chip ? " [@container(max-width:199px)]:text-[12px]" : ""
+        }`}
+      >
         {value ?? "—"}
       </span>
     </p>
@@ -137,7 +145,7 @@ export function ProductCard({
               <div className="min-w-0 text-left">
                 <SpecLabel>Lead time</SpecLabel>
                 <div className="mt-1 flex h-[58px] flex-col justify-start space-y-0.5">
-                  {rush ? <LeadRow icon={Zap} value={rush} /> : null}
+                  {rush ? <LeadRow chip value={rush} /> : null}
                   {showAir ? <LeadRow icon={Plane} value={hasLead ? air : null} /> : null}
                   {showSea ? <LeadRow icon={Ship} value={hasLead ? sea : null} /> : null}
                 </div>
