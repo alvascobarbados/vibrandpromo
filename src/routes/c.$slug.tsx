@@ -27,6 +27,7 @@ export const Route = createFileRoute("/c/$slug")({
       stripSearchParams({
         q: "",
         sort: "default",
+        page: 1,
         cat: [],
         sub: [],
         moq: [],
