@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCsvRecords } from "@/lib/csv";
 import { categoriesQuery, subcategoriesQuery, slugify, productionLabel } from "@/lib/catalog";
+import { normalizeSupplierCode, suppliersQuery } from "@/lib/sourcing";
 
 export const Route = createFileRoute("/_authenticated/admin/import")({
   beforeLoad: ({ context }) => requirePage(context.access, "import"),
@@ -48,6 +49,8 @@ type Row = Record<string, string>;
 type Prepared = {
   sku: string;
   payload: Record<string, unknown>;
+  /** Sourcing is written to its own staff-only table after the product upsert. */
+  sourcing: { supplier_id: string | null; supplier_item_no: string | null } | null;
 };
 
 type Problem = { line: number; sku: string; reason: string };
@@ -58,6 +61,7 @@ function AdminImport() {
   const queryClient = useQueryClient();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
+  const suppliers = useQuery(suppliersQuery);
   const [fileName, setFileName] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [missingColumns, setMissingColumns] = useState<string[]>([]);
@@ -66,7 +70,7 @@ function AdminImport() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
 
-  const loading = categories.isLoading || subcategories.isLoading;
+  const loading = categories.isLoading || subcategories.isLoading || suppliers.isLoading;
 
   function prepare(records: Row[]) {
     const subIndex = new Map<string, { id: string; category_id: string }>();
@@ -82,6 +86,9 @@ function AdminImport() {
     const found: Problem[] = [];
     const prepared: Prepared[] = [];
     const seen = new Set<string>();
+    const supplierByCode = new Map(
+      (suppliers.data ?? []).map((supplier) => [supplier.code.toUpperCase(), supplier.id] as const),
+    );
 
     records.forEach((row, i) => {
       const line = i + 2;
@@ -141,6 +148,16 @@ function AdminImport() {
         return;
       }
       const rushEnabled = ["true", "yes", "1"].includes(rushRaw);
+      const supplierCode = normalizeSupplierCode(row["supplier_code"] ?? "");
+      const supplierItemNo = (row["supplier_item_no"] ?? "").trim();
+      if (supplierCode && !supplierByCode.has(supplierCode)) {
+        found.push({
+          line,
+          sku,
+          reason: `Supplier code "${supplierCode}" was not found — add the supplier first`,
+        });
+        return;
+      }
       // production_days stays supported as the fixed/minimum production time.
       const normalMin = num("production_min_days") ?? num("production_days");
       const normalMax = num("production_max_days");
@@ -211,6 +228,13 @@ function AdminImport() {
           features: (row["features"] ?? "").trim() || null,
           is_active: (row["is_active"] ?? "").trim().toLowerCase() !== "false",
         },
+        sourcing:
+          supplierCode || supplierItemNo
+            ? {
+                supplier_id: supplierCode ? (supplierByCode.get(supplierCode) ?? null) : null,
+                supplier_item_no: supplierItemNo || null,
+              }
+            : null,
       });
     });
 
