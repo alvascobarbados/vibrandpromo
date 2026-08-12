@@ -8,8 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import type { Product } from "@/lib/catalog";
+import { SHIPPING_METHOD_OPTIONS, type Product } from "@/lib/catalog";
 import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 
 export function ProductQuickEdit({
@@ -29,6 +36,7 @@ export function ProductQuickEdit({
   );
   const [price, setPrice] = useState(product.price == null ? "" : String(product.price));
   const [showPrice, setShowPrice] = useState(product.show_price);
+  const [shippingMethods, setShippingMethods] = useState(product.shipping_methods ?? "air_sea");
   const [isActive, setIsActive] = useState(product.is_active);
   const [isFeatured, setIsFeatured] = useState(product.is_featured);
   const [saving, setSaving] = useState(false);
@@ -62,6 +70,7 @@ export function ProductQuickEdit({
         production_days: numberOrNull(productionDays),
         price: numberOrNull(price),
         show_price: showPrice,
+        shipping_methods: shippingMethods,
         is_active: isActive,
         is_featured: isFeatured,
       })
@@ -116,6 +125,22 @@ export function ProductQuickEdit({
               {airLeadLabel(preview, shipping) ?? "On request"} · sea{" "}
               {seaLeadLabel(preview, shipping) ?? "On request"}
             </p>
+          </div>
+
+          <div>
+            <Label htmlFor="qe-shipping">Available shipping</Label>
+            <Select value={shippingMethods} onValueChange={setShippingMethods}>
+              <SelectTrigger id="qe-shipping">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SHIPPING_METHOD_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
