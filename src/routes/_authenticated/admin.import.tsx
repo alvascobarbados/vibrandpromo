@@ -117,6 +117,15 @@ function AdminImport() {
         .filter(Boolean);
       const moq = (row["moq"] ?? "").trim();
       const days = (row["production_days"] ?? "").trim();
+      const shipping = (row["shipping_methods"] ?? "").trim().toLowerCase() || "air_sea";
+      if (!["air_sea", "air_only", "sea_only"].includes(shipping)) {
+        found.push({
+          line,
+          sku,
+          reason: `Shipping "${(row["shipping_methods"] ?? "").trim()}" is not valid — use air_sea, air_only or sea_only (or leave blank for air_sea)`,
+        });
+        return;
+      }
       const num = (key: string) => {
         const raw = (row[key] ?? "").trim();
         if (!raw) return null;
@@ -134,6 +143,7 @@ function AdminImport() {
           inventory_source: (row["inventory_source"] ?? "").trim() || "Factory Direct",
           moq: moq ? Number(moq) : null,
           production_days: days ? Number(days) : null,
+          shipping_methods: shipping,
           colour_option: (row["colour_option"] ?? "").trim() || null,
           decoration_methods: methods,
           material: (row["material"] ?? "").trim() || null,
@@ -222,6 +232,11 @@ function AdminImport() {
         <p className="text-sm font-semibold">Your file needs these column headings</p>
         <p className="mt-2 break-words rounded-lg bg-secondary p-3 font-mono text-xs">
           {COLUMNS.join(", ")}
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Optional extra column: <span className="font-mono">shipping_methods</span> — accepts
+          air_sea, air_only or sea_only. Leave it out or blank and the product is treated as Air &
+          Sea.
         </p>
         <p className="mt-3 text-xs text-muted-foreground">
           Leave MOQ or production days blank if they are on request. Customer-facing lead times are

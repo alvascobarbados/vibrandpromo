@@ -1,7 +1,7 @@
 import { Pencil, Plane, Ship } from "lucide-react";
 import { useState } from "react";
 
-import { specValue, type Product } from "@/lib/catalog";
+import { airAvailable, seaAvailable, specValue, type Product } from "@/lib/catalog";
 import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
@@ -33,7 +33,23 @@ function SpecLabel({ children }: { children: React.ReactNode }) {
   return <p className="card-label">{children}</p>;
 }
 
-function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | null }) {
+function LeadRow({
+  icon: Icon,
+  value,
+  unavailable = false,
+}: {
+  icon: typeof Plane;
+  value: string | null;
+  unavailable?: boolean;
+}) {
+  if (unavailable) {
+    return (
+      <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:199px)]:text-[13px]">
+        <Icon className="size-[13px] shrink-0 text-n-400" strokeWidth={1.75} />
+        <span className="whitespace-nowrap text-n-400 line-through">Not available</span>
+      </p>
+    );
+  }
   return (
     <p className="card-value flex h-[18px] items-center gap-1.5 [@container(max-width:199px)]:text-[13px]">
       <Icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
@@ -61,6 +77,8 @@ export function ProductCard({
   const sea = seaLeadLabel(product, shipping);
   const hasLead = air != null && sea != null;
   const hasMoq = product.moq != null;
+  const noAir = !airAvailable(product.shipping_methods);
+  const noSea = !seaAvailable(product.shipping_methods);
 
   return (
     <article
@@ -128,8 +146,8 @@ export function ProductCard({
               <div className="min-w-0 text-left">
                 <SpecLabel>Lead time</SpecLabel>
                 <div className="mt-1 space-y-0.5">
-                  <LeadRow icon={Plane} value={hasLead ? air : null} />
-                  <LeadRow icon={Ship} value={hasLead ? sea : null} />
+                  <LeadRow icon={Plane} value={hasLead ? air : null} unavailable={noAir} />
+                  <LeadRow icon={Ship} value={hasLead ? sea : null} unavailable={noSea} />
                 </div>
               </div>
             </div>
@@ -150,7 +168,10 @@ export function ProductCard({
             <div className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-white">{product.name}</p>
-                <p className="text-xs text-white/60">{product.sku ?? "—"}</p>
+                <p className="text-xs text-white/60">
+                  {product.sku ?? "—"}
+                  {noAir || noSea ? ` · ${noAir ? "Sea only" : "Air only"}` : ""}
+                </p>
               </div>
               <div className="@container w-[15rem] shrink-0">
                 <AddToQuoteRow product={product} tone="dark" />

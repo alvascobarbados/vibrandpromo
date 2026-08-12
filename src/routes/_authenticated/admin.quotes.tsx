@@ -157,6 +157,12 @@ function AdminQuotes() {
                         <li key={item.id} className="flex justify-between gap-4">
                           <span>
                             {item.product_name}
+                            {item.shipping_methods === "air_only" ||
+                            item.shipping_methods === "sea_only" ? (
+                              <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
+                                {item.shipping_methods === "air_only" ? "Air only" : "Sea only"}
+                              </span>
+                            ) : null}
                             {item.notes ? (
                               <span className="text-muted-foreground"> — {item.notes}</span>
                             ) : null}

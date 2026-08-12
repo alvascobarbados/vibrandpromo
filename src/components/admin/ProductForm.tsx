@@ -20,6 +20,7 @@ import {
   COLOUR_OPTIONS,
   DECORATION_METHODS,
   INVENTORY_SOURCES,
+  SHIPPING_METHOD_OPTIONS,
   imageSrc,
   slugify,
   type Category,
@@ -33,6 +34,7 @@ export type FormState = {
   sku: string;
   moq: string;
   production_days: string;
+  shipping_methods: string;
   colour_option: string;
   decoration_methods: string[];
   inventory_source: string;
@@ -57,6 +59,7 @@ export const EMPTY_FORM: FormState = {
   sku: "",
   moq: "",
   production_days: "",
+  shipping_methods: "air_sea",
   colour_option: "Fully Customised",
   decoration_methods: [],
   inventory_source: "Factory Direct",
@@ -82,6 +85,7 @@ export function formFromProduct(product: Product): FormState {
     sku: product.sku ?? "",
     moq: product.moq == null ? "" : String(product.moq),
     production_days: product.production_days == null ? "" : String(product.production_days),
+    shipping_methods: product.shipping_methods ?? "air_sea",
     colour_option: product.colour_option ?? "Fully Customised",
     decoration_methods: product.decoration_methods ?? [],
     inventory_source: product.inventory_source ?? "Factory Direct",
@@ -108,6 +112,7 @@ export function payloadFromForm(form: FormState) {
     sku: form.sku.trim(),
     moq: form.moq.trim() ? Number(form.moq) : null,
     production_days: form.production_days.trim() ? Number(form.production_days) : null,
+    shipping_methods: form.shipping_methods || "air_sea",
     colour_option: form.colour_option,
     decoration_methods: form.decoration_methods,
     inventory_source: form.inventory_source,
@@ -304,6 +309,24 @@ export function ProductForm({
             placeholder="Leave blank for On request"
           />
           <LeadPreview production={form.production_days} source={form.inventory_source} />
+        </div>
+        <div>
+          <Label htmlFor={id("shipping-methods")}>Available shipping</Label>
+          <Select
+            value={form.shipping_methods}
+            onValueChange={(value) => setForm((prev) => ({ ...prev, shipping_methods: value }))}
+          >
+            <SelectTrigger id={id("shipping-methods")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SHIPPING_METHOD_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label htmlFor={id("material")}>Material</Label>

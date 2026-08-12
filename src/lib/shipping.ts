@@ -1,6 +1,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import { airAvailable } from "@/lib/catalog";
 
 export type ShippingSetting = {
   source: string;
@@ -70,7 +71,11 @@ function formatRange(range: Range | null, unit: "days" | "wks"): string | null {
   return range.min === range.max ? `${range.min} ${unit}` : `${range.min}–${range.max} ${unit}`;
 }
 
-export type LeadSource = { production_days: number | null; inventory_source: string | null };
+export type LeadSource = {
+  production_days: number | null;
+  inventory_source: string | null;
+  shipping_methods?: string | null;
+};
 
 export function airLeadLabel(product: LeadSource, map: ShippingMap): string | null {
   return formatRange(airLeadDays(product.production_days, settingFor(map, product.inventory_source)), "days");
@@ -82,6 +87,8 @@ export function seaLeadLabel(product: LeadSource, map: ShippingMap): string | nu
 
 /** Value the "Lead time (air)" filter buckets are measured against. */
 export function calculatedAirMin(product: LeadSource, map: ShippingMap): number | null {
+  // Sea-only products have no air lead time, so they can never match an air bucket.
+  if (!airAvailable(product.shipping_methods)) return null;
   const range = airLeadDays(product.production_days, settingFor(map, product.inventory_source));
   return range ? range.min : null;
 }

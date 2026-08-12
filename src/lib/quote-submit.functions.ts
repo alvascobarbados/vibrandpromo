@@ -90,13 +90,30 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
     }
 
     const { error: itemsError } = await supabaseAdmin.from("quote_request_items").insert(
-      items.map((item) => ({
-        quote_request_id: inserted.id,
-        product_id: item.product_id ?? null,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        notes: item.notes ? item.notes : null,
-      })),
+      await (async () => {
+        // Freight availability is read from the catalogue, never trusted from the client.
+        const ids = items.map((item) => item.product_id).filter((id): id is string => !!id);
+        const shippingById = new Map<string, string>();
+        if (ids.length) {
+          const { data: products } = await supabaseAdmin
+            .from("products")
+            .select("id, shipping_methods")
+            .in("id", ids);
+          for (const product of products ?? []) {
+            shippingById.set(product.id, product.shipping_methods ?? "air_sea");
+          }
+        }
+        return items.map((item) => ({
+          quote_request_id: inserted.id,
+          product_id: item.product_id ?? null,
+          product_name: item.product_name,
+          quantity: item.quantity,
+          notes: item.notes ? item.notes : null,
+          shipping_methods: item.product_id
+            ? (shippingById.get(item.product_id) ?? null)
+            : null,
+        }));
+      })(),
     );
 
     if (itemsError) {

@@ -82,6 +82,7 @@ export type Database = {
           name: string
           price: number | null
           production_days: number | null
+          shipping_methods: string
           show_price: boolean
           size: string | null
           sku: string | null
@@ -109,6 +110,7 @@ export type Database = {
           name: string
           price?: number | null
           production_days?: number | null
+          shipping_methods?: string
           show_price?: boolean
           size?: string | null
           sku?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           name?: string
           price?: number | null
           production_days?: number | null
+          shipping_methods?: string
           show_price?: boolean
           size?: string | null
           sku?: string | null
@@ -194,6 +197,7 @@ export type Database = {
           product_name: string
           quantity: number
           quote_request_id: string
+          shipping_methods: string | null
         }
         Insert: {
           created_at?: string
@@ -203,6 +207,7 @@ export type Database = {
           product_name: string
           quantity?: number
           quote_request_id: string
+          shipping_methods?: string | null
         }
         Update: {
           created_at?: string
@@ -212,6 +217,7 @@ export type Database = {
           product_name?: string
           quantity?: number
           quote_request_id?: string
+          shipping_methods?: string | null
         }
         Relationships: [
           {

@@ -41,9 +41,33 @@ export type Product = {
   capacity: string | null;
   weight: string | null;
   features: string | null;
+  shipping_methods: string;
   created_at: string;
   updated_at: string;
 };
+
+export const SHIPPING_METHODS = ["air_sea", "air_only", "sea_only"] as const;
+export type ShippingMethods = (typeof SHIPPING_METHODS)[number];
+
+export const SHIPPING_METHOD_OPTIONS: ReadonlyArray<{ value: ShippingMethods; label: string }> = [
+  { value: "air_sea", label: "Air & Sea (standard)" },
+  { value: "air_only", label: "Air only" },
+  { value: "sea_only", label: "Sea only" },
+];
+
+export function shippingMethodLabel(value: string | null | undefined) {
+  return SHIPPING_METHOD_OPTIONS.find((o) => o.value === value)?.label ?? "Air & Sea (standard)";
+}
+
+/** Air freight is offered unless the product is sea-only. */
+export function airAvailable(value: string | null | undefined) {
+  return value !== "sea_only";
+}
+
+/** Sea freight is offered unless the product is air-only. */
+export function seaAvailable(value: string | null | undefined) {
+  return value !== "air_only";
+}
 
 export const DECORATION_METHODS = [
   "3D Printing",

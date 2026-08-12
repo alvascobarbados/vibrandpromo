@@ -21,6 +21,7 @@ export type QuoteRequestItem = {
   product_name: string;
   quantity: number;
   notes: string | null;
+  shipping_methods: string | null;
 };
 
 export const QUOTE_STATUSES = ["new", "in_progress", "quoted", "closed"] as const;
