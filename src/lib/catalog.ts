@@ -32,7 +32,8 @@ export type Product = {
   is_featured: boolean;
   images: string[];
   moq: number | null;
-  production_days: number | null;
+  production_min_days: number | null;
+  production_max_days: number | null;
   colour_option: string | null;
   decoration_methods: string[];
   inventory_source: string;
@@ -43,7 +44,8 @@ export type Product = {
   features: string | null;
   shipping_methods: string;
   rush_enabled: boolean;
-  rush_production_days: number | null;
+  rush_production_min_days: number | null;
+  rush_production_max_days: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -151,6 +153,13 @@ export function productImage(product: Pick<Product, "images">): string | null {
 export function specValue(value: number | null, suffix?: string) {
   if (value == null) return "On request";
   return suffix ? `${value} ${suffix}` : String(value);
+}
+
+/** Production time is either fixed (min only) or a min–max range. */
+export function productionLabel(min: number | null, max: number | null) {
+  if (min == null) return "On request";
+  if (max == null || max === min) return `${min} days`;
+  return `${min}–${max} days`;
 }
 
 export function formatPrice(price: number | null) {
