@@ -48,8 +48,7 @@ function LeadRow({ icon: Icon, value }: { icon: typeof Plane; value: string | nu
         className="size-3 shrink-0 translate-y-[0.5px] text-n-500 [@container(min-width:170px)]:size-[13px]"
         strokeWidth={1.75}
       />
-      <span className="whitespace-nowrap text-[clamp(9px,6.2cqw,12px)]">
-        {/* lead value: 12–13px mobile → 13–14px desktop */}
+      <span className="whitespace-nowrap text-[clamp(9px,6.2cqw,12px)] lg:text-[clamp(10px,6.2cqw,13px)]">
         {value ?? "On request"}
       </span>
     </p>
