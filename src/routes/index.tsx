@@ -131,6 +131,17 @@ function HomePage() {
     node?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  if (isDesktop) {
+    return (
+      <SiteLayout>
+        <div className="site-container xl:max-w-[1344px] py-8 pb-16">
+          <h1 className="sr-only">Vibrand promotional products catalogue</h1>
+          <DesktopCatalog page={page} />
+        </div>
+      </SiteLayout>
+    );
+  }
+
   return (
     <SiteLayout>
       {shelves.length ? (
@@ -243,9 +254,8 @@ function HomePage() {
         suppressed={filtersOpen}
       />
 
-      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
-          <FilterPanel
+      <FilterSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <FilterPanel
             variant="drawer"
             products={allProducts}
             categories={allCategories}
@@ -259,9 +269,8 @@ function HomePage() {
               setFiltersOpen(false);
               void navigate({ to: "/products", search: { ...search, page: 1 } });
             }}
-          />
-        </SheetContent>
-      </Sheet>
+        />
+      </FilterSheet>
     </SiteLayout>
   );
 }
