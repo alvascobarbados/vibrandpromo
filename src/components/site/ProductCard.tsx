@@ -1,7 +1,7 @@
 import { Pencil, Plane, Ship } from "lucide-react";
 import { useState } from "react";
 
-import { formatPrice, specValue, type Product } from "@/lib/catalog";
+import { specValue, type Product } from "@/lib/catalog";
 import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
@@ -62,7 +62,6 @@ export function ProductCard({
   product: Product;
   coverOnly?: boolean;
 }) {
-  const price = product.show_price ? formatPrice(product.price) : null;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = product.images ?? [];
   const { editMode } = useStaffSession();
