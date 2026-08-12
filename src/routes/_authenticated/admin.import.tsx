@@ -233,6 +233,11 @@ function AdminImport() {
         <p className="mt-2 break-words rounded-lg bg-secondary p-3 font-mono text-xs">
           {COLUMNS.join(", ")}
         </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Optional extra column: <span className="font-mono">shipping_methods</span> — accepts
+          air_sea, air_only or sea_only. Leave it out or blank and the product is treated as Air &
+          Sea.
+        </p>
         <p className="mt-3 text-xs text-muted-foreground">
           Leave MOQ or production days blank if they are on request. Customer-facing lead times are
           calculated automatically from production time plus the global shipping settings, so
