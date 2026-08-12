@@ -77,7 +77,11 @@ export function EmailTemplateEditor({
 
   const saveMutation = useMutation({
     mutationFn: () => save({ data: { template: type, draft } }),
-    onSuccess: async () => {
+    onSuccess: async (result) => {
+      if (!result.ok) {
+        toast.error(result.error ?? "Those merge tags aren't recognised.");
+        return;
+      }
       toast.success(`${TEMPLATE_LABELS[type]} template saved.`);
       await queryClient.invalidateQueries({ queryKey: ["admin", "email-templates"] });
     },
