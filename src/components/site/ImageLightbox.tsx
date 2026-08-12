@@ -234,6 +234,9 @@ export function ImageLightbox({
       >
         <div
           className="flex size-full items-center"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) finish();
+          }}
           style={{
             transform: `translate3d(calc(${-index * 100}% + ${dragX}px), ${dragY}px, 0) scale(${
               entered ? 1 - Math.min(dragY, 300) / 1200 : 0.85
@@ -243,12 +246,23 @@ export function ImageLightbox({
           }}
         >
           {images.length === 0 ? (
-            <div className="flex size-full shrink-0 items-center justify-center p-4">
+            <div
+              className="flex size-full shrink-0 items-center justify-center p-4"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) finish();
+              }}
+            >
               <ProductPlaceholder variant="dark" className="aspect-square w-full max-w-lg rounded-2xl" />
             </div>
           ) : null}
           {images.map((src, i) => (
-            <div key={`${src}-${i}`} className="flex size-full shrink-0 items-center justify-center p-4">
+            <div
+              key={`${src}-${i}`}
+              className="flex size-full shrink-0 items-center justify-center p-4"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) finish();
+              }}
+            >
               {loaded.includes(i) ? (
                 <img
                   src={src}
