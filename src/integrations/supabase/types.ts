@@ -90,6 +90,7 @@ export type Database = {
         Row: {
           created_at: string
           error: string | null
+          html: string | null
           id: string
           quote_request_id: string | null
           recipient: string
@@ -100,6 +101,7 @@ export type Database = {
         Insert: {
           created_at?: string
           error?: string | null
+          html?: string | null
           id?: string
           quote_request_id?: string | null
           recipient: string
@@ -110,6 +112,7 @@ export type Database = {
         Update: {
           created_at?: string
           error?: string | null
+          html?: string | null
           id?: string
           quote_request_id?: string | null
           recipient?: string
@@ -149,6 +152,39 @@ export type Database = {
           reply_to?: string
           staff_notify_enabled?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body: string
+          heading: string
+          signoff: string
+          subject: string
+          template_type: string
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string
+        }
+        Insert: {
+          body?: string
+          heading: string
+          signoff?: string
+          subject: string
+          template_type: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string
+        }
+        Update: {
+          body?: string
+          heading?: string
+          signoff?: string
+          subject?: string
+          template_type?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string
         }
         Relationships: []
       }
