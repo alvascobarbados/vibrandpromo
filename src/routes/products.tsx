@@ -138,8 +138,8 @@ function CatalogPage() {
       <div className="site-container py-6 pb-28 lg:py-8 lg:pb-16">
         <h1 className="sr-only">All Vibrand promotional products</h1>
 
-        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
-          <aside className="hidden w-[250px] shrink-0 lg:block">
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-6 xl:gap-8">
+          <aside className="hidden w-[240px] shrink-0 lg:block">
             <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2">
               <FilterPanel {...panelProps} variant="sidebar" />
             </div>
