@@ -178,7 +178,7 @@ function AdminQuotes() {
           ),
         )
         .join(" ");
-      return `${quote.customer_name} ${quote.company} ${quote.email} ${quote.territory} ${skus}`
+      return `${quote.customer_name} ${quote.company} ${quote.email} ${quote.phone ?? ""} ${quote.territory} ${skus}`
         .toLowerCase()
         .includes(term);
     });
