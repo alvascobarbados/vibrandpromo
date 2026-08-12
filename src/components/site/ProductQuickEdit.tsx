@@ -19,6 +19,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { SHIPPING_METHOD_OPTIONS, type Product } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 import { RushChip } from "@/components/site/RushChip";
+import { SourcingSection } from "@/components/admin/SourcingSection";
+import { productSourcingQuery, saveProductSourcing } from "@/lib/sourcing";
+import { useQuery } from "@tanstack/react-query";
 
 export function ProductQuickEdit({
   product,
@@ -51,6 +54,16 @@ export function ProductQuickEdit({
   const [isActive, setIsActive] = useState(product.is_active);
   const [isFeatured, setIsFeatured] = useState(product.is_featured);
   const [saving, setSaving] = useState(false);
+  const sourcing = useQuery(productSourcingQuery);
+  const sourcingRow = (sourcing.data ?? []).find((row) => row.product_id === product.id) ?? null;
+  const [supplierId, setSupplierId] = useState("");
+  const [supplierItemNo, setSupplierItemNo] = useState("");
+  const [sourcingLoaded, setSourcingLoaded] = useState(false);
+  if (!sourcingLoaded && sourcing.isSuccess) {
+    setSourcingLoaded(true);
+    setSupplierId(sourcingRow?.supplier_id ?? "");
+    setSupplierItemNo(sourcingRow?.supplier_item_no ?? "");
+  }
   const shipping = useShippingSettings();
   const preview = {
     production_min_days: numberOrNull(productionMin),
@@ -159,6 +172,21 @@ export function ProductQuickEdit({
       return;
     }
     await queryClient.invalidateQueries({ queryKey: ["products"] });
+    try {
+      await saveProductSourcing({
+        product_id: product.id,
+        supplier_id: supplierId || null,
+        supplier_item_no: supplierItemNo,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["product_sourcing"] });
+    } catch (sourcingError) {
+      toast.error(
+        sourcingError instanceof Error
+          ? `Product saved, but sourcing didn't: ${sourcingError.message}`
+          : "Product saved, but the sourcing details didn't.",
+      );
+      return;
+    }
     toast.success("Product updated.");
     onOpenChange(false);
   }
@@ -286,6 +314,15 @@ export function ProductQuickEdit({
               onChange={(e) => setPrice(e.target.value)}
             />
           </div>
+
+          <SourcingSection
+            idPrefix="qe"
+            value={{ supplier_id: supplierId, supplier_item_no: supplierItemNo }}
+            onChange={(patch) => {
+              if (patch.supplier_id !== undefined) setSupplierId(patch.supplier_id);
+              if (patch.supplier_item_no !== undefined) setSupplierItemNo(patch.supplier_item_no);
+            }}
+          />
 
           <div className="space-y-3 rounded-xl border border-n-200 p-3">
             <label className="flex items-center justify-between gap-3 text-sm font-medium">

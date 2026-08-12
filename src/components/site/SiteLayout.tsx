@@ -10,6 +10,7 @@ import { QuoteBasketButton } from "@/components/site/QuoteBasketButton";
 import { AccountMenu } from "@/components/site/AccountMenu";
 import { AdminEditBar } from "@/components/site/AdminEditBar";
 import { useStaffSession } from "@/lib/staff-session";
+import { ViewModeProvider } from "@/lib/view-mode";
 import { categoriesQuery } from "@/lib/catalog";
 import { COMPANY } from "@/lib/territories";
 import wordmarkCharcoal from "@/assets/wordmark-charcoal.png";
@@ -23,6 +24,7 @@ import markLime from "@/assets/mark-lime.png";
  * UI (cost fields, margin tools) will hang off this prop later.
  */
 export type ViewMode = "customer" | "supplier";
+
 
 const NAV = [
   { to: "/", label: "Categories" },
@@ -205,7 +207,9 @@ export function SiteLayout({
         </div>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <ViewModeProvider mode={viewMode}>{children}</ViewModeProvider>
+      </main>
 
       <AdminEditBar workspace={viewMode} />
 

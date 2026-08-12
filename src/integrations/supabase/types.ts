@@ -209,6 +209,48 @@ export type Database = {
         }
         Relationships: []
       }
+      product_sourcing: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          supplier_id: string | null
+          supplier_item_no: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          supplier_id?: string | null
+          supplier_item_no?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          supplier_id?: string | null
+          supplier_item_no?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_sourcing_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_sourcing_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           capacity: string | null
@@ -531,6 +573,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppliers: {
+        Row: {
+          code: string
+          country: string
+          created_at: string
+          default_shipping_mode: string
+          id: string
+          is_archived: boolean
+          name: string
+          notes: string
+          unit_system: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          country?: string
+          created_at?: string
+          default_shipping_mode?: string
+          id?: string
+          is_archived?: boolean
+          name: string
+          notes?: string
+          unit_system?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          country?: string
+          created_at?: string
+          default_shipping_mode?: string
+          id?: string
+          is_archived?: boolean
+          name?: string
+          notes?: string
+          unit_system?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

@@ -29,6 +29,7 @@ import {
 } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 import { RushChip } from "@/components/site/RushChip";
+import { SourcingSection } from "@/components/admin/SourcingSection";
 
 export type FormState = {
   name: string;
@@ -57,6 +58,9 @@ export type FormState = {
   is_active: boolean;
   is_featured: boolean;
   images: string[];
+  /** Sourcing lives in its own table; these two are saved separately. */
+  supplier_id: string;
+  supplier_item_no: string;
 };
 
 export const EMPTY_FORM: FormState = {
@@ -86,9 +90,14 @@ export const EMPTY_FORM: FormState = {
   is_active: true,
   is_featured: false,
   images: [],
+  supplier_id: "",
+  supplier_item_no: "",
 };
 
-export function formFromProduct(product: Product): FormState {
+export function formFromProduct(
+  product: Product,
+  sourcing?: { supplier_id: string | null; supplier_item_no: string | null } | null,
+): FormState {
   return {
     name: product.name,
     sku: product.sku ?? "",
@@ -120,6 +129,8 @@ export function formFromProduct(product: Product): FormState {
     is_active: product.is_active,
     is_featured: product.is_featured,
     images: product.images ?? [],
+    supplier_id: sourcing?.supplier_id ?? "",
+    supplier_item_no: sourcing?.supplier_item_no ?? "",
   };
 }
 
@@ -613,6 +624,16 @@ export function ProductForm({
               </label>
             ))}
           </div>
+        </div>
+        <div className="sm:col-span-2">
+          <SourcingSection
+            idPrefix={id("sourcing")}
+            value={{
+              supplier_id: form.supplier_id,
+              supplier_item_no: form.supplier_item_no,
+            }}
+            onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+          />
         </div>
         <div className="flex flex-wrap items-center gap-6 sm:col-span-2">
           <label className="flex items-center gap-2 text-sm">

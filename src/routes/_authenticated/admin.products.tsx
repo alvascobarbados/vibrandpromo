@@ -1,4 +1,5 @@
 import { requirePage } from "@/lib/admin-guard";
+import { productSourcingQuery, saveProductSourcing } from "@/lib/sourcing";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -84,6 +85,7 @@ function AdminProducts() {
   const products = useQuery(allProductsQuery);
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
+  const sourcing = useQuery(productSourcingQuery);
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -127,12 +129,26 @@ function AdminProducts() {
   const save = useMutation({
     mutationFn: async ({ id, values }: { id: string | null; values: FormState }) => {
       const payload = payloadFromForm(values);
+      let productId = id;
       if (id) {
         const { error } = await supabase.from("products").update(payload).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("products").insert(payload);
+        const { data, error } = await supabase
+          .from("products")
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) throw error;
+        productId = data?.id ?? null;
+      }
+      // Sourcing lives in its own staff-only table, so it is a second write.
+      if (productId) {
+        await saveProductSourcing({
+          product_id: productId,
+          supplier_id: values.supplier_id || null,
+          supplier_item_no: values.supplier_item_no,
+        });
       }
     },
     onSuccess: (_result, variables) => {
@@ -141,6 +157,7 @@ function AdminProducts() {
       setCreating(false);
       setForm(EMPTY_FORM);
       void invalidate();
+      void queryClient.invalidateQueries({ queryKey: ["product_sourcing"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -160,15 +177,23 @@ function AdminProducts() {
   });
 
   function startEdit(product: Product) {
-    setForm(formFromProduct(product));
+    setForm(formFromProduct(product, sourcingFor(product.id)));
     setEditingId(product.id);
   }
 
   function startDuplicate(product: Product) {
-    setForm({ ...formFromProduct(product), name: `Copy of ${product.name}`, sku: "" });
+    setForm({
+      ...formFromProduct(product, sourcingFor(product.id)),
+      name: `Copy of ${product.name}`,
+      sku: "",
+    });
     setEditingId(null);
     setCreating(true);
     toast.info("Give the copy a new SKU before saving.");
+  }
+
+  function sourcingFor(productId: string) {
+    return (sourcing.data ?? []).find((row) => row.product_id === productId) ?? null;
   }
 
   const noPhotoCount = (products.data ?? []).filter((p) => (p.images ?? []).length === 0).length;
