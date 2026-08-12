@@ -1,7 +1,7 @@
 import { Pencil, Plane, Ship } from "lucide-react";
 import { useState } from "react";
 
-import { formatPrice, specValue, type Product } from "@/lib/catalog";
+import { specValue, type Product } from "@/lib/catalog";
 import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
@@ -15,7 +15,7 @@ function FlagBadge({ source }: { source: string }) {
     <span
       title={source}
       aria-label={source}
-      className="absolute bottom-[var(--badge-inset)] right-[var(--badge-inset)] size-[var(--badge-size)] overflow-hidden rounded-full border-2 border-white shadow-card"
+      className="absolute bottom-[10px] right-[10px] z-10 size-[var(--badge-size)] overflow-hidden rounded-full border-2 border-white shadow-card"
     >
       <img
         src={usa ? "https://flagcdn.com/w80/us.png" : "https://flagcdn.com/w80/cn.png"}
@@ -62,7 +62,6 @@ export function ProductCard({
   product: Product;
   coverOnly?: boolean;
 }) {
-  const price = product.show_price ? formatPrice(product.price) : null;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = product.images ?? [];
   const { editMode } = useStaffSession();
@@ -82,9 +81,9 @@ export function ProductCard({
             type="button"
             aria-label={`Quick edit ${product.name}`}
             onClick={() => setQuickEditOpen(true)}
-            className="absolute right-2 top-2 z-20 inline-flex size-8 items-center justify-center rounded-full border border-n-200 bg-white/95 text-navy-700 shadow-card hover:bg-lime-500 hover:text-n-700"
+            className="absolute right-2 top-2 z-20 inline-flex size-7 items-center justify-center rounded-full border border-n-200 bg-white/95 text-navy-700 shadow-card transition-opacity duration-[180ms] ease-out hover:bg-lime-500 hover:text-n-700 sm:size-8 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100"
           >
-            <Pencil className="size-4" />
+            <Pencil className="size-3.5 sm:size-4" />
           </button>
           {hidden ? (
             <span className="absolute left-2 top-2 z-20 rounded-full bg-n-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
@@ -93,42 +92,43 @@ export function ProductCard({
           ) : null}
         </>
       ) : null}
-      <div className="p-2 pb-0 [@container(min-width:170px)]:p-3 [@container(min-width:170px)]:pb-0">
+      <div className="overflow-hidden rounded-t-2xl bg-white">
         <ProductImageCarousel
           images={images}
           alt={product.name}
           coverOnly={coverOnly}
+          fieldClassName="image-field-bleed"
           onImageTap={(i) => setLightboxIndex(i)}
         >
           <FlagBadge source={product.inventory_source} />
         </ProductImageCarousel>
       </div>
 
-      <div className="flex flex-1 flex-col p-2 pt-3 [@container(min-width:170px)]:p-3 [@container(min-width:170px)]:pt-3">
+      <div className="flex flex-col p-2 pt-3 [@container(min-width:170px)]:p-3 [@container(min-width:170px)]:pt-3">
         <p className="truncate text-[10px] font-medium leading-4 text-n-500 lg:text-[11px]">
           {product.sku ?? "—"}
         </p>
         <h3 className="mt-1 line-clamp-2 h-[34px] overflow-hidden text-[13px] font-semibold leading-[1.3] text-n-900 lg:h-[39px] lg:text-[15px]">
           {product.name}
         </h3>
-        <p className="mt-2 h-[1.25rem] truncate text-[13px] font-semibold leading-5 text-n-700 lg:text-[14px]">
-          {price ?? "\u00a0"}
-        </p>
 
-        <div className="mt-auto flex min-h-[3.25rem] flex-col items-stretch border-t border-n-200 pt-3 [@container(min-width:150px)]:flex-row">
-          <div className="shrink-0 [@container(min-width:150px)]:pr-2">
+        <div className="mt-3 flex items-stretch border-t border-n-200 pt-3">
+          <div className="flex shrink-0 flex-col">
             <SpecLabel>MOQ</SpecLabel>
-            <p
-              className={`mt-0.5 whitespace-nowrap font-medium leading-4 tabular-nums text-n-700 ${
-                product.moq
-                  ? "text-[clamp(11px,7cqw,13px)] lg:text-[clamp(12px,7cqw,14px)]"
-                  : "text-[clamp(9px,5.6cqw,12px)] font-normal text-n-500"
-              }`}
-            >
-              {specValue(product.moq)}
-            </p>
+            <div className="mt-0.5 flex flex-1 items-center">
+              <p
+                className={`whitespace-nowrap font-medium leading-4 tabular-nums text-n-700 ${
+                  product.moq
+                    ? "text-[clamp(11px,7cqw,13px)] lg:text-[clamp(12px,7cqw,14px)]"
+                    : "text-[clamp(9px,5.6cqw,12px)] font-normal text-n-500"
+                }`}
+              >
+                {specValue(product.moq)}
+              </p>
+            </div>
           </div>
-          <div className="mt-1 min-w-0 flex-1 [@container(min-width:150px)]:mt-0 [@container(min-width:150px)]:border-l [@container(min-width:150px)]:border-n-200 [@container(min-width:150px)]:pl-2">
+          <div className="mx-[10px] w-px self-stretch bg-n-200" aria-hidden="true" />
+          <div className="flex min-w-0 flex-1 flex-col">
             <SpecLabel>Lead time</SpecLabel>
             <div className="mt-0.5 space-y-0.5">
               <LeadRow icon={Plane} value={airLeadLabel(product, shipping)} />
@@ -137,7 +137,7 @@ export function ProductCard({
           </div>
         </div>
 
-        <div className="mt-3 shrink-0">
+        <div className="mt-3">
           <AddToQuoteRow product={product} />
         </div>
       </div>
