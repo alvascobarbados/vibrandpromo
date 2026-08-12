@@ -249,7 +249,7 @@ export function FilterPanel({
   }
 
   const groups = (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {PANEL_GROUPS.map((group) => {
         if (group === "cat") {
           const rows = renderCategoryTree();
@@ -282,7 +282,7 @@ export function FilterPanel({
   if (variant === "sidebar") {
     return (
       <div>
-        <div className="flex items-center justify-between gap-2 pb-3">
+        <div className="flex items-center justify-between gap-2 pb-4">
           <p className="text-sm font-semibold text-n-900">Filters</p>
           {activeCount ? (
             <button
