@@ -327,19 +327,19 @@ function AdminQuotes() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 bg-white">
                 <tr className="border-b border-n-200">
-                  {COLUMNS.map((column, index) => (
+                  {columns.map((column) => (
                     <th
-                      key={`${column.label}-${index}`}
-                      className={`whitespace-nowrap px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-n-500 ${column.className ?? ""}`}
+                      key={column.id}
+                      className={`whitespace-nowrap px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-n-500 ${column.align === "right" ? "text-right" : "text-left"} ${column.className ?? ""}`}
                     >
-                      {column.key ? (
+                      {column.sortKey ? (
                         <button
                           type="button"
                           className="inline-flex items-center gap-1 hover:text-n-900"
-                          onClick={() => toggleSort(column.key as SortKey)}
+                          onClick={() => toggleSort(column.sortKey as SortKey)}
                         >
                           {column.label}
-                          {sort === column.key ? (
+                          {sort === column.sortKey ? (
                             dir === "asc" ? (
                               <ArrowUp className="size-3" />
                             ) : (
@@ -355,56 +355,25 @@ function AdminQuotes() {
                 </tr>
               </thead>
               <tbody>
-                {pageRows.map((quote) => {
-                  const isNew = quote.status === "new";
-                  return (
+                {pageRows.map((quote) => (
                     <tr
                       key={quote.id}
                       onClick={() => setSelected(quote.id)}
                       className="cursor-pointer border-b border-n-200 last:border-0 hover:bg-navy-50"
                     >
-                      <td
-                        className="whitespace-nowrap px-3 py-2 text-n-500"
-                        title={new Date(quote.created_at).toLocaleString()}
-                      >
-                        {relativeAge(quote.created_at)}
-                      </td>
-                      <td className="px-3 py-2">
-                        <StatusChip quote={quote} />
-                      </td>
-                      <td
-                        className={`whitespace-nowrap px-3 py-2 ${isNew ? "font-medium text-n-900" : "text-n-700"}`}
-                      >
-                        {isNew ? (
-                          <span className="mr-2 inline-block size-1.5 rounded-full bg-lime-500 align-middle" />
-                        ) : null}
-                        {quote.customer_name}
-                      </td>
-                      <td className={`px-3 py-2 ${isNew ? "font-medium text-n-900" : "text-n-700"}`}>
-                        {quote.company}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-n-700">{quote.territory}</td>
-                      <td className="px-3 py-2 text-right text-n-700">
-                        {(itemsByQuote.get(quote.id) ?? []).length}
-                      </td>
-                      <td className="px-3 py-2">
-                        <a
-                          href={`mailto:${quote.email}`}
-                          onClick={(event) => event.stopPropagation()}
-                          className="text-navy-500 hover:underline"
+                      {columns.map((column) => (
+                        <td
+                          key={column.id}
+                          className={`px-3 py-2 ${column.align === "right" ? "text-right" : ""} ${column.cellClassName ?? ""}`}
+                          {...(column.id === "age"
+                            ? { title: new Date(quote.created_at).toLocaleString() }
+                            : {})}
                         >
-                          {quote.email}
-                        </a>
-                        {quote.phone ? (
-                          <p className="text-xs text-n-500">{quote.phone}</p>
-                        ) : null}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-n-700">
-                        {new Date(quote.created_at).toLocaleDateString()}
-                      </td>
+                          {column.cell(quote)}
+                        </td>
+                      ))}
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>
