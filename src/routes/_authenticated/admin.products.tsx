@@ -67,6 +67,14 @@ import {
   type Product,
 } from "@/lib/catalog";
 import { airLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import {
+  CHEVRON_WIDTH,
+  DEFAULT_COL_WIDTHS,
+  THUMB_WIDTH,
+  minWidthFor,
+  useColumnWidths,
+  type ColId,
+} from "@/lib/column-widths";
 
 const searchSchema = z.object({
   q: fallback(z.string(), "").default(""),
@@ -108,6 +116,8 @@ function AdminProducts() {
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const suppliers = useQuery(suppliersQuery);
+  const columns = useColumnWidths();
+  const dragged = useRef(false);
 
   const [openIds, setOpenIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -395,25 +405,47 @@ function AdminProducts() {
       </p>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[1180px] border-collapse text-sm">
+        <table
+          className="w-full border-collapse text-sm"
+          style={{ tableLayout: "fixed", minWidth: `${columns.totalWidth}px` }}
+        >
+          <colgroup>
+            <col style={{ width: `${THUMB_WIDTH}px` }} />
+            {(Object.keys(DEFAULT_COL_WIDTHS) as ColId[]).map((id) => (
+              <col key={id} style={{ width: `${columns.widths[id]}px` }} />
+            ))}
+            <col style={{ width: `${CHEVRON_WIDTH}px` }} />
+          </colgroup>
           <thead className="sticky top-0 z-10 bg-card">
             <tr className="border-b border-border">
-              <Th className="w-[46px]" />
-              <Th sortKey="cat" search={search} onSort={toggleSort} className="w-[130px]">
+              <Th />
+              <Th sortKey="cat" search={search} onSort={toggleSort} colId="cat" columns={columns} dragged={dragged}>
                 Category
               </Th>
-              <Th className="w-[130px]">Subcategory</Th>
-              <Th sortKey="supplier" search={search} onSort={toggleSort} className="w-[180px]">
+              <Th colId="subcat" columns={columns} dragged={dragged}>
+                Subcategory
+              </Th>
+              <Th sortKey="supplier" search={search} onSort={toggleSort} colId="supplier" columns={columns} dragged={dragged}>
                 Supplier
               </Th>
-              <Th sortKey="name" search={search} onSort={toggleSort}>
+              <Th sortKey="name" search={search} onSort={toggleSort} colId="name" columns={columns} dragged={dragged}>
                 Item name
               </Th>
-              <Th sortKey="sku" search={search} onSort={toggleSort} className="w-[110px]">
+              <Th sortKey="sku" search={search} onSort={toggleSort} colId="sku" columns={columns} dragged={dragged}>
                 SKU
               </Th>
-              <Th className="w-[130px]">Supplier item #</Th>
-              <Th sortKey="moq" search={search} onSort={toggleSort} align="right" className="w-[70px]">
+              <Th colId="supitem" columns={columns} dragged={dragged}>
+                Supplier item #
+              </Th>
+              <Th
+                sortKey="moq"
+                search={search}
+                onSort={toggleSort}
+                align="right"
+                colId="moq"
+                columns={columns}
+                dragged={dragged}
+              >
                 MOQ
               </Th>
               <Th
@@ -421,12 +453,16 @@ function AdminProducts() {
                 search={search}
                 onSort={toggleSort}
                 align="right"
-                className="w-[100px]"
+                colId="production"
+                columns={columns}
+                dragged={dragged}
               >
                 Production
               </Th>
-              <Th className="w-[110px]">Status</Th>
-              <Th className="w-[40px]" />
+              <Th colId="status" columns={columns} dragged={dragged}>
+                Status
+              </Th>
+              <Th />
             </tr>
           </thead>
           <tbody>
@@ -460,7 +496,7 @@ function AdminProducts() {
                           setEditingId(null);
                         }}
                       >
-                        <Td className="w-[46px]">
+                        <Td>
                           {cover ? (
                             <img
                               src={cover}
@@ -580,6 +616,15 @@ function AdminProducts() {
           <span>{activeCount} active</span>
           <span>{noPhotoCount} without photos</span>
           <span>{supplierCounts.unassigned} supplier unassigned</span>
+          {!columns.isDefault ? (
+            <button
+              type="button"
+              onClick={columns.resetAll}
+              className="ml-auto underline underline-offset-2 hover:text-foreground"
+            >
+              Reset widths
+            </button>
+          ) : null}
         </div>
       </div>
 
