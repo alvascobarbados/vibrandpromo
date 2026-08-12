@@ -135,7 +135,7 @@ function CatalogPage() {
 
   return (
     <SiteLayout>
-      <div className="site-container catalog-container py-6 pb-28 lg:py-8 lg:pb-16">
+      <div className="site-container xl:max-w-[calc(1280px+4rem)] py-6 pb-28 lg:py-8 lg:pb-16">
         <h1 className="sr-only">All Vibrand promotional products</h1>
 
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-6 xl:gap-8">
