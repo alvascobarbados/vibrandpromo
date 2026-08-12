@@ -393,7 +393,8 @@ function EmailSettingsPage() {
           </div>
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Newest first · log entries are kept for 90 days.
+            Newest first · log entries are kept for 90 days. Click a row to see exactly what was
+            sent.
           </p>
 
           <div className="mt-3 overflow-x-auto rounded-xl border border-border bg-white">
@@ -416,7 +417,11 @@ function EmailSettingsPage() {
                   </tr>
                 ) : (
                   rows.map((row) => (
-                    <tr key={row.id} className="border-t border-n-200 align-top">
+                    <tr
+                      key={row.id}
+                      onClick={() => setOpenLog(row)}
+                      className="cursor-pointer border-t border-n-200 align-top hover:bg-navy-50"
+                    >
                       <td className="whitespace-nowrap px-3 py-2">
                         {new Date(row.created_at).toLocaleString()}
                       </td>
