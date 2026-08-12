@@ -24,6 +24,7 @@ import {
   quoteRequestItemsQuery,
   quoteRequestsQuery,
   type QuoteRequest,
+  type QuoteRequestItem,
 } from "@/lib/admin";
 
 const STATUS_BADGE: Record<string, string> = {
