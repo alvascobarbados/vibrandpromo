@@ -1,16 +1,41 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { LazySection } from "@/components/site/LazySection";
 import { CategoryRow } from "@/components/site/CategoryRow";
 import { categoriesQuery, type Product } from "@/lib/catalog";
+import { subcategoriesQuery } from "@/lib/catalog";
 import { useCatalogProducts } from "@/lib/staff-session";
+import { FilterPanel } from "@/components/site/FilterPanel";
+import { FilterBar } from "@/components/site/FilterBar";
+import { filterProducts, parseCatalogSearch, type CatalogSearch } from "@/lib/catalog-filters";
+import { useCatalogFilters } from "@/lib/use-catalog-filters";
+import { useShippingSettings } from "@/lib/shipping";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> =>
+    parseCatalogSearch(search),
+  search: {
+    middlewares: [
+      stripSearchParams({
+        q: "",
+        sort: "default",
+        cat: [],
+        sub: [],
+        moq: [],
+        prod: [],
+        colour: [],
+        deco: [],
+        src: [],
+        mat: [],
+      }),
+    ],
+  },
   head: () => ({
     meta: [
       { title: "Promotional Products by Category | Vibrand Barbados" },
@@ -34,21 +59,40 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
+  const subcategories = useQuery(subcategoriesQuery);
+  const shipping = useShippingSettings();
+  const navigate = useNavigate();
+  const { search, scope, setScope, toggle, clear, activeCount } = useCatalogFilters();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeChip, setActiveChip] = useState("all");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
+  const allProducts = products.data ?? [];
+  const allCategories = categories.data ?? [];
+  const allSubcategories = subcategories.data ?? [];
+
+  const scoped = useMemo(
+    () =>
+      filterProducts(allProducts, search, {
+        categories: allCategories,
+        subcategories: allSubcategories,
+        shipping,
+      }),
+    [allProducts, allCategories, allSubcategories, search, shipping],
+  );
+
   const shelves = useMemo(() => {
     const byCategory = new Map<string, Product[]>();
-    for (const product of products.data ?? []) {
+    for (const product of scoped) {
       if (!product.category_id) continue;
       const list = byCategory.get(product.category_id) ?? [];
       list.push(product);
       byCategory.set(product.category_id, list);
     }
-    return (categories.data ?? [])
+    return allCategories
       .map((category) => ({ category, items: byCategory.get(category.id) ?? [] }))
       .filter((shelf) => shelf.items.length > 0);
-  }, [products.data, categories.data]);
+  }, [scoped, allCategories]);
 
   const loading = products.isLoading || categories.isLoading;
 
@@ -103,7 +147,7 @@ function HomePage() {
         </div>
       ) : null}
 
-      <div id="home-top" className="site-container py-6 lg:py-8">
+      <div id="home-top" className="site-container py-6 pb-28 lg:py-8 lg:pb-16">
         <h1 className="sr-only">Vibrand promotional products by category</h1>
 
         {loading ? (
@@ -124,6 +168,17 @@ function HomePage() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : shelves.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-muted-foreground">No products match your filters.</p>
+            <button
+              type="button"
+              onClick={clear}
+              className="mt-4 rounded-full border border-n-200 px-4 py-2 text-sm font-semibold text-navy-700 hover:bg-navy-50"
+            >
+              Clear filters
+            </button>
           </div>
         ) : (
           <div className="space-y-10 lg:space-y-16">
@@ -182,6 +237,36 @@ function HomePage() {
           </Link>
         </div>
       </div>
+
+      <FilterBar
+        activeCount={activeCount}
+        scope={scope}
+        onScope={setScope}
+        onOpenFilters={() => setFiltersOpen(true)}
+        suppressed={filtersOpen}
+      />
+
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
+          <FilterPanel
+            variant="drawer"
+            products={allProducts}
+            categories={allCategories}
+            subcategories={allSubcategories}
+            search={search}
+            resultCount={scoped.length}
+            scope={scope}
+            onScope={setScope}
+            onToggle={toggle}
+            onClear={clear}
+            activeCount={activeCount}
+            onClose={() => {
+              setFiltersOpen(false);
+              void navigate({ to: "/products", search: { ...search, page: 1 } });
+            }}
+          />
+        </SheetContent>
+      </Sheet>
     </SiteLayout>
   );
 }
