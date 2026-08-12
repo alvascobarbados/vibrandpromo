@@ -1,6 +1,6 @@
-import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { SlidersHorizontal, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,18 +16,19 @@ import {
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
 import { FilterPanel } from "@/components/site/FilterPanel";
+import { FilterBar } from "@/components/site/FilterBar";
 import { categoriesQuery, subcategoriesQuery } from "@/lib/catalog";
 import { useCatalogProducts } from "@/lib/staff-session";
 import {
   GROUP_LABELS,
   SORT_OPTIONS,
-  activeFilterCount,
   filterProducts,
   parseCatalogSearch,
   sortProducts,
   type CatalogSearch,
   type FilterGroupId,
 } from "@/lib/catalog-filters";
+import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
 
 const PAGE_SIZE = 20;
@@ -73,8 +74,8 @@ export const Route = createFileRoute("/products")({
 });
 
 function CatalogPage() {
-  const search = Route.useSearch() as CatalogSearch & { page: number };
-  const navigate = useNavigate({ from: "/products" });
+  const rawPage = Route.useSearch().page ?? 1;
+  const { search, scope, setScope, toggle, clear, update, activeCount } = useCatalogFilters();
   const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
@@ -100,87 +101,54 @@ function CatalogPage() {
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const page = Math.min(Math.max(1, search.page), totalPages);
+  const page = Math.min(Math.max(1, rawPage), totalPages);
   const start = (page - 1) * PAGE_SIZE;
   const visible = filtered.slice(start, start + PAGE_SIZE);
 
-  function update(patch: Partial<CatalogSearch & { page: number }>, replace = false) {
-    void navigate({
-      search: (prev: Partial<CatalogSearch> & { page?: number }) => ({
-        ...prev,
-        page: 1,
-        ...patch,
-      }),
-      replace,
-      resetScroll: false,
-    });
-  }
-
-  function toggle(group: FilterGroupId, value: string) {
-    const current = search[group];
-    const next = current.includes(value)
-      ? current.filter((item: string) => item !== value)
-      : [...current, value];
-    update({ [group]: next } as Partial<CatalogSearch>);
-  }
-
-  function clearFilters() {
-    update({ cat: [], sub: [], moq: [], prod: [], colour: [], deco: [], src: [], mat: [] });
-  }
-
   const chips = (
     ["cat", "sub", "moq", "prod", "colour", "deco", "src", "mat"] as FilterGroupId[]
-  ).flatMap(
-    (group) =>
-      search[group].map((value: string) => ({
-        group,
-        value,
-        label:
-          group === "cat"
-            ? (allCategories.find((c) => c.slug === value)?.name ?? value)
-            : group === "sub"
-              ? (allSubcategories.find((s) => s.slug === value)?.name ?? value)
-              : value,
-      })),
+  ).flatMap((group) =>
+    search[group].map((value: string) => ({
+      group,
+      value,
+      label:
+        group === "cat"
+          ? (allCategories.find((c) => c.slug === value)?.name ?? value)
+          : group === "sub"
+            ? (allSubcategories.find((s) => s.slug === value)?.name ?? value)
+            : value,
+    })),
   );
+
+  const panelProps = {
+    products: allProducts,
+    categories: allCategories,
+    subcategories: allSubcategories,
+    search,
+    resultCount: total,
+    scope,
+    onScope: setScope,
+    onToggle: toggle,
+    onClear: clear,
+    activeCount,
+  };
 
   return (
     <SiteLayout>
-      <div className="site-container py-6 lg:py-8">
+      <div className="site-container py-6 pb-28 lg:py-8 lg:pb-16">
         <h1 className="sr-only">All Vibrand promotional products</h1>
 
-        <div className="flex flex-col gap-6 lg:flex-row">
-          <aside className="hidden w-56 shrink-0 lg:block">
-            <FilterPanel
-              variant="sidebar"
-              products={allProducts}
-              categories={allCategories}
-              subcategories={allSubcategories}
-              search={search}
-              resultCount={total}
-              onToggle={toggle}
-              onClear={clearFilters}
-            />
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+          <aside className="hidden w-[250px] shrink-0 lg:block">
+            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2">
+              <FilterPanel {...panelProps} variant="sidebar" />
+            </div>
           </aside>
 
           <div className="@container min-w-0 flex-1">
-            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
-              <Button
-                variant="outline"
-                className={`h-10 shrink-0 gap-2 rounded-full px-4 text-sm font-semibold lg:hidden ${
-                  activeFilterCount(search)
-                    ? "border-lime-500 bg-lime-500 text-n-700 hover:bg-lime-300 hover:text-n-700"
-                    : "border-navy-700 text-navy-700 hover:bg-navy-50 hover:text-navy-700"
-                }`}
-                onClick={() => setFiltersOpen(true)}
-              >
-                <SlidersHorizontal className="size-4" />
-                Filters
-                {activeFilterCount(search) ? ` • ${activeFilterCount(search)}` : ""}
-              </Button>
-              <div className="hidden lg:block" />
+            <div className="flex items-center justify-end">
               <Select value={search.sort} onValueChange={(value) => update({ sort: value })}>
-                <SelectTrigger className="ml-auto h-10 w-40 rounded-full sm:w-44">
+                <SelectTrigger className="h-10 w-40 rounded-full sm:w-44">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,7 +177,7 @@ function CatalogPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={clearFilters}
+                  onClick={clear}
                   className="text-xs font-semibold text-navy-500 hover:text-navy-700 hover:underline"
                 >
                   Clear all
@@ -224,9 +192,16 @@ function CatalogPage() {
                 ))}
               </div>
             ) : visible.length === 0 ? (
-              <p className="mt-16 text-center text-muted-foreground">
-                No products match your search.
-              </p>
+              <div className="mt-16 text-center">
+                <p className="text-muted-foreground">No products match your filters.</p>
+                <Button
+                  variant="outline"
+                  className="mt-4 border-n-200 text-navy-700 hover:bg-navy-50"
+                  onClick={clear}
+                >
+                  Clear filters
+                </Button>
+              </div>
             ) : (
               <>
                 <p className="mt-4 text-xs text-muted-foreground">
@@ -265,17 +240,19 @@ function CatalogPage() {
         </div>
       </div>
 
+      <FilterBar
+        activeCount={activeCount}
+        scope={scope}
+        onScope={setScope}
+        onOpenFilters={() => setFiltersOpen(true)}
+        suppressed={filtersOpen}
+      />
+
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
         <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
           <FilterPanel
+            {...panelProps}
             variant="drawer"
-            products={allProducts}
-            categories={allCategories}
-            subcategories={allSubcategories}
-            search={search}
-            resultCount={total}
-            onToggle={toggle}
-            onClear={clearFilters}
             onClose={() => setFiltersOpen(false)}
           />
         </SheetContent>
