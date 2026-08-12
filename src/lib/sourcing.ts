@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Product } from "@/lib/catalog";
 
 /**
  * Sourcing data (suppliers + the product ↔ supplier link) is staff-only. It
