@@ -31,7 +31,7 @@ export function FilterSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-[88vh] gap-0 rounded-t-2xl p-0 lg:hidden"
+        className="flex h-[88vh] flex-col gap-0 rounded-t-2xl p-0 lg:hidden"
         style={{ transform: drag ? `translateY(${drag}px)` : undefined }}
       >
         <div
