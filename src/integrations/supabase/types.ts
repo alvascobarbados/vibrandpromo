@@ -404,6 +404,9 @@ export type Database = {
           email: string
           id: string
           internal_notes: string | null
+          internal_notes_updated_at: string | null
+          internal_notes_updated_by: string | null
+          internal_notes_updated_by_name: string
           message: string | null
           phone: string | null
           status: string
@@ -417,6 +420,9 @@ export type Database = {
           email: string
           id?: string
           internal_notes?: string | null
+          internal_notes_updated_at?: string | null
+          internal_notes_updated_by?: string | null
+          internal_notes_updated_by_name?: string
           message?: string | null
           phone?: string | null
           status?: string
@@ -430,6 +436,9 @@ export type Database = {
           email?: string
           id?: string
           internal_notes?: string | null
+          internal_notes_updated_at?: string | null
+          internal_notes_updated_by?: string | null
+          internal_notes_updated_by_name?: string
           message?: string | null
           phone?: string | null
           status?: string
