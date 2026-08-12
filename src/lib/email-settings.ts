@@ -38,6 +38,7 @@ export type EmailLogRow = {
   subject: string;
   status: string;
   error: string | null;
+  html: string | null;
   created_at: string;
 };
 
@@ -46,11 +47,56 @@ export const emailLogQuery = queryOptions({
   queryFn: async (): Promise<EmailLogRow[]> => {
     const { data, error } = await supabase
       .from("email_log")
-      .select("id, type, recipient, subject, status, error, created_at")
+      .select("id, type, recipient, subject, status, error, html, created_at")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
     return (data ?? []) as EmailLogRow[];
+  },
+});
+
+export type TemplateType = "staff" | "customer";
+
+export type EmailTemplateRow = {
+  template_type: TemplateType;
+  subject: string;
+  heading: string;
+  body: string;
+  signoff: string;
+  updated_at: string;
+  updated_by_name: string;
+};
+
+export const TEMPLATE_LABELS: Record<TemplateType, string> = {
+  staff: "Staff notification",
+  customer: "Customer confirmation",
+};
+
+export const TEMPLATE_DESCRIPTIONS: Record<TemplateType, string> = {
+  staff: "Sent to your notification recipients when a quote request arrives.",
+  customer: "Sent to the customer as a receipt of their request.",
+};
+
+/** Merge tags available in template copy, with a plain-English note each. */
+export const MERGE_TAG_HELP: { tag: string; note: string }[] = [
+  { tag: "customer_name", note: "The person's full name" },
+  { tag: "company", note: "Their company name" },
+  { tag: "customer_email", note: "Their email address" },
+  { tag: "phone", note: "Their phone number (— if blank)" },
+  { tag: "territory", note: "The territory they selected" },
+  { tag: "message", note: "Their message (— if blank)" },
+  { tag: "items_count", note: "How many products they requested" },
+  { tag: "quote_date", note: "The date of the request" },
+];
+
+export const emailTemplatesQuery = queryOptions({
+  queryKey: ["admin", "email-templates"],
+  queryFn: async (): Promise<EmailTemplateRow[]> => {
+    const { data, error } = await supabase
+      .from("email_templates")
+      .select("template_type, subject, heading, body, signoff, updated_at, updated_by_name");
+    if (error) throw error;
+    return (data ?? []) as EmailTemplateRow[];
   },
 });
 
