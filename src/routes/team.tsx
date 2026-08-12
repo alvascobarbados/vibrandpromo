@@ -10,9 +10,12 @@ export const Route = createFileRoute("/team")({
   ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
-    const access = await getMyAccess();
-    if (!access.isStaff) {
+    if (error || !data.user) {
+      toast.error("This account doesn't have admin access.");
+      throw redirect({ to: "/" });
+    }
+    const access = await getMyAccess().catch(() => null);
+    if (!access?.isStaff) {
       toast.error("This account doesn't have admin access.");
       throw redirect({ to: "/" });
     }
