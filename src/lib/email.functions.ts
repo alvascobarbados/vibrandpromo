@@ -37,12 +37,18 @@ export const getEmailStatus = createServerFn({ method: "GET" })
     });
     if (!isAdmin) throw new Error("Forbidden: admin access required");
 
-    const { isDomainVerified, PREFERRED_FROM, TEST_FROM } = await import("@/lib/email.server");
-    const verified = await isDomainVerified();
+    const { getDomainStatus, PREFERRED_FROM, TEST_FROM, SEND_DOMAIN } = await import(
+      "@/lib/email.server"
+    );
+    const status = await getDomainStatus();
+    console.log("[email] domain status check", status);
     return {
       apiKeyConfigured: Boolean(process.env["RESEND_API_KEY"]),
-      domainVerified: verified,
-      fromAddress: verified ? PREFERRED_FROM : TEST_FROM,
+      domainVerified: status.verified,
+      domainState: status.state,
+      domainDetail: status.detail ?? null,
+      sendDomain: SEND_DOMAIN,
+      fromAddress: status.verified ? PREFERRED_FROM : TEST_FROM,
     };
   });
 

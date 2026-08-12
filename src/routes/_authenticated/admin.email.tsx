@@ -127,10 +127,19 @@ function EmailSettingsPage() {
         {status.isLoading ? (
           <p className="text-sm text-muted-foreground">Checking sending status…</p>
         ) : status.data?.domainVerified ? (
-          <p className="flex items-center gap-2 text-sm font-medium">
-            <CheckCircle2 className="size-4 text-lime-700" />
-            vibrand.com is verified — sending as {status.data.fromAddress}
-          </p>
+          <div className="text-sm">
+            <p className="flex items-center gap-2 font-medium">
+              <CheckCircle2 className="size-4 text-lime-700" />
+              {status.data.sendDomain ?? "vibrand.com"} is verified — sending as{" "}
+              {status.data.fromAddress}
+            </p>
+            {status.data.domainState === "unreadable" ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                The saved Resend key is send-only, so verification status can't be read back — live
+                sends still use {status.data.fromAddress}.
+              </p>
+            ) : null}
+          </div>
         ) : (
           <p className="flex items-start gap-2 text-sm">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
@@ -141,6 +150,7 @@ function EmailSettingsPage() {
               {status.data && !status.data.apiKeyConfigured
                 ? " The Resend API key is also missing."
                 : ""}
+              {status.data?.domainDetail ? ` (${status.data.domainDetail})` : ""}
             </span>
           </p>
         )}
