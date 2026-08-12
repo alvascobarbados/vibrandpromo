@@ -28,6 +28,9 @@ const TITLES: Record<string, string> = {
   "/admin/bulk-images": "Bulk Images",
   "/admin/import": "Import Products",
   "/admin/quotes": "Quote Requests",
+  "/admin/contacts": "Contacts",
+  "/admin/email": "Email",
+  "/admin/shipping": "Shipping Times",
   "/admin/staff": "Staff",
   "/admin/account": "My Account",
 };

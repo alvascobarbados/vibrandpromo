@@ -21,6 +21,8 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminAccountRouteImport } from './routes/_authenticated/admin.account'
 import { Route as AuthenticatedAdminBulkImagesRouteImport } from './routes/_authenticated/admin.bulk-images'
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
+import { Route as AuthenticatedAdminContactsRouteImport } from './routes/_authenticated/admin.contacts'
+import { Route as AuthenticatedAdminEmailRouteImport } from './routes/_authenticated/admin.email'
 import { Route as AuthenticatedAdminImportRouteImport } from './routes/_authenticated/admin.import'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
 import { Route as AuthenticatedAdminQuotesRouteImport } from './routes/_authenticated/admin.quotes'
@@ -90,6 +92,17 @@ const AuthenticatedAdminCategoriesRoute =
     path: '/admin/categories',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminContactsRoute =
+  AuthenticatedAdminContactsRouteImport.update({
+    id: '/admin/contacts',
+    path: '/admin/contacts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminEmailRoute = AuthenticatedAdminEmailRouteImport.update({
+  id: '/admin/email',
+  path: '/admin/email',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminImportRoute =
   AuthenticatedAdminImportRouteImport.update({
     id: '/admin/import',
@@ -137,6 +150,8 @@ export interface FileRoutesByFullPath {
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/admin/contacts': typeof AuthenticatedAdminContactsRoute
+  '/admin/email': typeof AuthenticatedAdminEmailRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/admin/quotes': typeof AuthenticatedAdminQuotesRoute
@@ -156,6 +171,8 @@ export interface FileRoutesByTo {
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/admin/contacts': typeof AuthenticatedAdminContactsRoute
+  '/admin/email': typeof AuthenticatedAdminEmailRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/admin/quotes': typeof AuthenticatedAdminQuotesRoute
@@ -177,6 +194,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/account': typeof AuthenticatedAdminAccountRoute
   '/_authenticated/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/_authenticated/admin/contacts': typeof AuthenticatedAdminContactsRoute
+  '/_authenticated/admin/email': typeof AuthenticatedAdminEmailRoute
   '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
   '/_authenticated/admin/quotes': typeof AuthenticatedAdminQuotesRoute
@@ -198,6 +217,8 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/admin/bulk-images'
     | '/admin/categories'
+    | '/admin/contacts'
+    | '/admin/email'
     | '/admin/import'
     | '/admin/products'
     | '/admin/quotes'
@@ -217,6 +238,8 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/admin/bulk-images'
     | '/admin/categories'
+    | '/admin/contacts'
+    | '/admin/email'
     | '/admin/import'
     | '/admin/products'
     | '/admin/quotes'
@@ -237,6 +260,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/account'
     | '/_authenticated/admin/bulk-images'
     | '/_authenticated/admin/categories'
+    | '/_authenticated/admin/contacts'
+    | '/_authenticated/admin/email'
     | '/_authenticated/admin/import'
     | '/_authenticated/admin/products'
     | '/_authenticated/admin/quotes'
@@ -344,6 +369,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCategoriesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/contacts': {
+      id: '/_authenticated/admin/contacts'
+      path: '/admin/contacts'
+      fullPath: '/admin/contacts'
+      preLoaderRoute: typeof AuthenticatedAdminContactsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/email': {
+      id: '/_authenticated/admin/email'
+      path: '/admin/email'
+      fullPath: '/admin/email'
+      preLoaderRoute: typeof AuthenticatedAdminEmailRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/import': {
       id: '/_authenticated/admin/import'
       path: '/admin/import'
@@ -393,6 +432,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminAccountRoute: typeof AuthenticatedAdminAccountRoute
   AuthenticatedAdminBulkImagesRoute: typeof AuthenticatedAdminBulkImagesRoute
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
+  AuthenticatedAdminContactsRoute: typeof AuthenticatedAdminContactsRoute
+  AuthenticatedAdminEmailRoute: typeof AuthenticatedAdminEmailRoute
   AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
   AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRoute
   AuthenticatedAdminQuotesRoute: typeof AuthenticatedAdminQuotesRoute
@@ -405,6 +446,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminAccountRoute: AuthenticatedAdminAccountRoute,
   AuthenticatedAdminBulkImagesRoute: AuthenticatedAdminBulkImagesRoute,
   AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
+  AuthenticatedAdminContactsRoute: AuthenticatedAdminContactsRoute,
+  AuthenticatedAdminEmailRoute: AuthenticatedAdminEmailRoute,
   AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
   AuthenticatedAdminProductsRoute: AuthenticatedAdminProductsRoute,
   AuthenticatedAdminQuotesRoute: AuthenticatedAdminQuotesRoute,

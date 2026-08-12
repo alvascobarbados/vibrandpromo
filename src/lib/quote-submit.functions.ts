@@ -20,6 +20,7 @@ const quoteSchema = z.object({
     .optional(),
   // Honeypot: real customers never see or fill this.
   website: z.string().max(200).optional(),
+  marketing_opt_in: z.boolean().optional(),
   items: z
     .array(
       z.object({
@@ -40,7 +41,7 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { items, website, ...request } = data;
+    const { items, website, marketing_opt_in, ...request } = data;
 
     if (website && website.trim().length > 0) {
       // Silently accept and drop obvious bot submissions.
@@ -122,6 +123,49 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
     }
 
     await supabaseAdmin.from("quote_submission_log").insert({ ip_hash: ipHash });
+
+    // Everything below is best-effort: the quote is already committed.
+    const { upsertContact } = await import("@/lib/contacts.server");
+    await upsertContact(supabaseAdmin, {
+      email: request.email,
+      name: request.customer_name,
+      company: request.company,
+      phone: request.phone ? request.phone : null,
+      territory: request.territory,
+      marketing_opt_in: marketing_opt_in ?? false,
+    });
+
+    try {
+      const skuById = new Map<string, string | null>();
+      const productIds = items.map((item) => item.product_id).filter((id): id is string => !!id);
+      if (productIds.length) {
+        const { data: products } = await supabaseAdmin
+          .from("products")
+          .select("id, sku")
+          .in("id", productIds);
+        for (const product of products ?? []) skuById.set(product.id, product.sku);
+      }
+
+      const { sendQuoteEmails } = await import("@/lib/email.server");
+      await sendQuoteEmails(supabaseAdmin, {
+        id: inserted.id,
+        customer_name: request.customer_name,
+        company: request.company,
+        email: request.email,
+        phone: request.phone ? request.phone : null,
+        territory: request.territory,
+        message: request.message ? request.message : null,
+        items: items.map((item) => ({
+          sku: item.product_id ? (skuById.get(item.product_id) ?? null) : null,
+          product_name: item.product_name,
+          quantity: item.quantity,
+          notes: item.notes ?? null,
+        })),
+      });
+    } catch (emailError) {
+      // A failed email must never fail the submission.
+      console.error("[quote] notification emails failed", emailError);
+    }
 
     return { ok: true as const };
   });

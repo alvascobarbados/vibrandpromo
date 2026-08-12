@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { Checkbox } from "@/components/ui/checkbox";
 import { QuantityStepper } from "@/components/site/QuantityStepper";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuoteList } from "@/lib/quote-list";
@@ -50,6 +51,7 @@ function QuotePage() {
   const [submitted, setSubmitted] = useState(false);
   const [artwork, setArtwork] = useState<File | null>(null);
   const [botField, setBotField] = useState("");
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [form, setForm] = useState({
     customer_name: "",
     company: "",
@@ -105,6 +107,7 @@ function QuotePage() {
           ...form,
           artwork_url: artworkUrl,
           website: botField,
+          marketing_opt_in: marketingOptIn,
           items: items.map((item) => ({
             product_id: item.productId,
             product_name: item.name,
@@ -305,6 +308,18 @@ function QuotePage() {
               <p className="mt-1.5 text-xs text-muted-foreground">
                 JPG, PNG, PDF, AI, EPS, SVG or ZIP · up to 20MB
               </p>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="marketing_opt_in"
+                checked={marketingOptIn}
+                onCheckedChange={(value) => setMarketingOptIn(value === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="marketing_opt_in" className="text-sm font-normal text-n-500">
+                Keep me updated on new products and offers
+              </Label>
             </div>
 
             <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
