@@ -55,6 +55,12 @@ function sanitize(raw: unknown): Partial<Record<ColId, number>> {
 export function useColumnWidths() {
   const [widths, setWidths] = useState<Record<ColId, number>>(DEFAULT_COL_WIDTHS);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latest = useRef<Record<ColId, number>>(DEFAULT_COL_WIDTHS);
+
+  const apply = useCallback((next: Record<ColId, number>) => {
+    latest.current = next;
+    setWidths(next);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,12 +75,12 @@ export function useColumnWidths() {
       const stored = (data?.prefs as Record<string, any> | null)?.[PREFS_KEY]?.col_widths;
       const clean = sanitize(stored);
       if (!cancelled && Object.keys(clean).length)
-        setWidths({ ...DEFAULT_COL_WIDTHS, ...clean });
+        apply({ ...DEFAULT_COL_WIDTHS, ...clean });
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [apply]);
 
   /** Debounced ~500ms write, merged into any other prefs the user has. */
   const persist = useCallback((next: Record<ColId, number>) => {
@@ -89,13 +95,14 @@ export function useColumnWidths() {
           .eq("user_id", auth.user.id)
           .maybeSingle();
         const existing = (data?.prefs as Record<string, any> | null) ?? {};
-        await supabase.from("user_prefs").upsert({
+        const { error } = await supabase.from("user_prefs").upsert({
           user_id: auth.user.id,
           prefs: {
             ...existing,
             [PREFS_KEY]: { ...(existing[PREFS_KEY] ?? {}), col_widths: next },
           },
         });
+        if (error) console.error("Could not save column widths", error.message);
       })();
     }, 500);
   }, []);
@@ -109,30 +116,29 @@ export function useColumnWidths() {
 
   const setWidth = useCallback(
     (id: ColId, value: number, commit: boolean) => {
-      setWidths((prev) => {
-        const next = { ...prev, [id]: Math.max(minWidthFor(id), Math.round(value)) };
-        if (commit) persist(next);
-        return next;
-      });
+      const next = {
+        ...latest.current,
+        [id]: Math.max(minWidthFor(id), Math.round(value)),
+      };
+      apply(next);
+      if (commit) persist(next);
     },
-    [persist],
+    [apply, persist],
   );
 
   const resetColumn = useCallback(
     (id: ColId) => {
-      setWidths((prev) => {
-        const next = { ...prev, [id]: DEFAULT_COL_WIDTHS[id] };
-        persist(next);
-        return next;
-      });
+      const next = { ...latest.current, [id]: DEFAULT_COL_WIDTHS[id] };
+      apply(next);
+      persist(next);
     },
-    [persist],
+    [apply, persist],
   );
 
   const resetAll = useCallback(() => {
-    setWidths(DEFAULT_COL_WIDTHS);
+    apply(DEFAULT_COL_WIDTHS);
     persist(DEFAULT_COL_WIDTHS);
-  }, [persist]);
+  }, [apply, persist]);
 
   const isDefault = (Object.keys(DEFAULT_COL_WIDTHS) as ColId[]).every(
     (id) => widths[id] === DEFAULT_COL_WIDTHS[id],
