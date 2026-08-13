@@ -16,7 +16,7 @@ export function AdminEditBar({ workspace = "customer" }: { workspace?: Workspace
   const showEditTools = workspace !== "admin" && !barDismissed;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-3 z-50 flex justify-center px-3">
+    <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-3">
       <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-n-700 bg-n-900/95 px-4 py-2 text-white shadow-lift backdrop-blur">
         {showEditTools ? (
           <>
