@@ -56,7 +56,7 @@ export function FilterBar({
     <div
       className="pointer-events-none fixed inset-x-0 z-40 flex justify-center px-4 transition-transform duration-200 ease-out lg:hidden"
       style={{
-        bottom: `calc(env(safe-area-inset-bottom, 0px) + ${stacked ? 64 : 12}px)`,
+        bottom: `calc(env(safe-area-inset-bottom, 0px) + ${stacked ? 148 : 12}px)`,
         transform: hidden ? "translateY(160%)" : "translateY(0)",
       }}
     >
