@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can upload artwork" ON storage.objects;
