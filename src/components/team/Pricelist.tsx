@@ -27,10 +27,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { IncludedItems } from "@/components/team/IncludedItems";
 import { costingReadyMissing, type MissingField } from "@/lib/costing-gate";
 import { buildPricelistItems, memberDisplayName } from "@/lib/pricelist-groups";
-import {
-  productIncludesQuery,
-  type ProductInclude,
-} from "@/lib/product-includes";
+import { productIncludesQuery, type ProductInclude } from "@/lib/product-includes";
 import {
   imageSrc,
   productionLabel,
@@ -93,8 +90,7 @@ import {
  * takes ALL remaining width so wide monitors show more price tables before the
  * strip's own sideways scroll starts.
  */
-const COLS =
-  "grid grid-cols-[232px_252px_216px_324px_minmax(0,1fr)] gap-6 px-4";
+const COLS = "grid grid-cols-[232px_252px_216px_324px_minmax(0,1fr)] gap-6 px-4";
 
 const DASH = <span className="text-muted-foreground">—</span>;
 
@@ -324,15 +320,13 @@ function PricelistRow({
 
   const refreshProducts = () => queryClient.invalidateQueries({ queryKey: ["products"] });
   const refreshSourcing = () => queryClient.invalidateQueries({ queryKey: ["product_sourcing"] });
-  const refreshAttributes = () =>
-    queryClient.invalidateQueries({ queryKey: ["product_details"] });
+  const refreshAttributes = () => queryClient.invalidateQueries({ queryKey: ["product_details"] });
   const refreshIncludes = () => queryClient.invalidateQueries({ queryKey: ["product_includes"] });
   const missing = costingReadyMissing(product, sourcing);
   const labelName = (id: string) =>
     attributeLabels.find((row) => row.id === id)?.label ?? "Attribute";
   const usedLabelIds = new Set(attributes.map((row) => row.detail_label_id));
-  const nextAttributeSort =
-    attributes.reduce((max, row) => Math.max(max, row.sort_order), 0) + 10;
+  const nextAttributeSort = attributes.reduce((max, row) => Math.max(max, row.sort_order), 0) + 10;
 
   const saveProduct = async (patch: Record<string, unknown>) => {
     await updateProductFields(product.id, patch);
@@ -348,11 +342,7 @@ function PricelistRow({
     .map((row) => ({ value: row.id, label: row.name }));
 
   return (
-    <div
-      className={`${COLS} items-start py-3.5 ${
-        product.is_active ? "" : "bg-n-50/70"
-      }`}
-    >
+    <div className={`${COLS} items-start py-3.5 ${product.is_active ? "" : "bg-n-50/70"}`}>
       {/* Image */}
       <div className="flex flex-col gap-2">
         <div className="grid grid-cols-2 gap-2">
@@ -616,10 +606,10 @@ function PricelistRow({
               className="truncate text-[11px] leading-5 text-muted-foreground"
             >
               {cartonDims(
-              sourcing?.carton_length ?? null,
-              sourcing?.carton_width ?? null,
-              sourcing?.carton_height ?? null,
-              units.dimension,
+                sourcing?.carton_length ?? null,
+                sourcing?.carton_width ?? null,
+                sourcing?.carton_height ?? null,
+                units.dimension,
               )}
               {` · ${cbm} CBM`}
             </span>

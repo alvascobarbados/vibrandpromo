@@ -134,7 +134,9 @@ export function InlineField({
             {shown}
           </span>
         )}
-        {pending ? <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" /> : null}
+        {pending ? (
+          <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
+        ) : null}
       </span>
       {error ? <span className="text-[10px] font-medium text-destructive">{error}</span> : null}
     </span>
@@ -195,13 +197,14 @@ export function InlineChoice({
               setEditing(true);
             }}
           >
-            {display ??
-              options.find((option) => option.value === value)?.label ?? (
-                <span className="text-muted-foreground">—</span>
-              )}
+            {display ?? options.find((option) => option.value === value)?.label ?? (
+              <span className="text-muted-foreground">—</span>
+            )}
           </span>
         )}
-        {pending ? <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" /> : null}
+        {pending ? (
+          <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
+        ) : null}
       </span>
       {error ? <span className="text-[10px] font-medium text-destructive">{error}</span> : null}
     </span>

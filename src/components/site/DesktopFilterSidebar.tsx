@@ -171,7 +171,8 @@ export function DesktopFilterSidebar({
 
         {[...BASE_GROUPS, ...(selectedCategory ? CONDITIONAL_GROUPS : [])].map((group) => {
           const rows = options[group].filter(
-            (option) => (counts[group][option.value] ?? 0) > 0 || search[group].includes(option.value),
+            (option) =>
+              (counts[group][option.value] ?? 0) > 0 || search[group].includes(option.value),
           );
           if (!rows.length) return null;
           return (
