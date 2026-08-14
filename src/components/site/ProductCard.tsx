@@ -9,7 +9,7 @@ import { AddToQuoteRow } from "@/components/site/AddToQuoteRow";
 import { useStaffSession } from "@/lib/staff-session";
 import { ProductQuickEdit } from "@/components/site/ProductQuickEdit";
 import { RushChip } from "@/components/site/RushChip";
-import { ProductTeamDetails } from "@/components/site/ProductTeamDetails";
+import { ProductSourcingFetch } from "@/components/site/ProductTeamDetails";
 import { useViewMode } from "@/lib/view-mode";
 
 function FlagBadge({ source }: { source: string }) {
@@ -60,6 +60,65 @@ function LeadRow({
   );
 }
 
+/**
+ * Spec row (MOQ | Lead time) shared by the portrait customer card and the
+ * landscape /team row — one implementation, never copied.
+ */
+function SpecRow({
+  hasMoq,
+  moq,
+  rush,
+  air,
+  sea,
+  showAir,
+  showSea,
+  hasLead,
+}: {
+  hasMoq: boolean;
+  moq: number | null;
+  rush: string | null;
+  air: string | null;
+  sea: string | null;
+  showAir: boolean;
+  showSea: boolean;
+  hasLead: boolean;
+}) {
+  return (
+    <div className="relative mt-3 flex h-[89px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
+      <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
+        <div className="min-w-0 text-left">
+          <SpecLabel>MOQ</SpecLabel>
+          <p
+            className={`card-value mt-1 h-[18px] [@container(max-width:199px)]:text-[13px]${
+              hasMoq ? "" : " !text-n-500"
+            }`}
+          >
+            {hasMoq ? specValue(moq) : "—"}
+          </p>
+        </div>
+      </div>
+      <div
+        className="mr-[12px] w-px shrink-0 self-stretch bg-n-200 [@container(min-width:200px)]:hidden"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute bottom-0 left-[40%] top-3 hidden w-px bg-n-200 [@container(min-width:200px)]:block"
+        aria-hidden="true"
+      />
+      <div className="flex min-w-0 flex-1 justify-start pr-[12px] [@container(min-width:200px)]:justify-center [@container(min-width:200px)]:pl-[12px] [@container(min-width:200px)]:pr-0">
+        <div className="min-w-0 text-left">
+          <SpecLabel>Lead time</SpecLabel>
+          <div className="mt-1 flex h-[58px] flex-col justify-start space-y-0.5">
+            {rush ? <LeadRow chip value={rush} /> : null}
+            {showAir ? <LeadRow icon={Plane} value={hasLead ? air : null} /> : null}
+            {showSea ? <LeadRow icon={Ship} value={hasLead ? sea : null} /> : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ProductCard({
   product,
   coverOnly = false,
@@ -81,30 +140,115 @@ export function ProductCard({
   const hasMoq = product.moq != null;
   const showAir = airAvailable(product.shipping_methods);
   const showSea = seaAvailable(product.shipping_methods);
+  const team = viewMode === "supplier" && isStaff;
 
+  const editAffordance = editMode ? (
+    <>
+      <button
+        type="button"
+        aria-label={`Quick edit ${product.name}`}
+        onClick={() => setQuickEditOpen(true)}
+        className="absolute right-2 top-2 z-20 inline-flex size-7 items-center justify-center rounded-full border border-n-200 bg-white/95 text-navy-700 shadow-card transition-opacity duration-[180ms] ease-out hover:bg-lime-500 hover:text-n-700 sm:size-8 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100"
+      >
+        <Pencil className="size-3.5 sm:size-4" />
+      </button>
+      {hidden ? (
+        <span className="card-label absolute left-2 top-2 z-20 rounded-full bg-n-700 px-2 py-0.5 !text-white">
+          Hidden
+        </span>
+      ) : null}
+    </>
+  ) : null;
+
+  const specRow = (
+    <SpecRow
+      hasMoq={hasMoq}
+      moq={product.moq}
+      rush={rush}
+      air={air}
+      sea={sea}
+      showAir={showAir}
+      showSea={showSea}
+      hasLead={hasLead}
+    />
+  );
+
+  const lightbox =
+    lightboxIndex !== null ? (
+      <ImageLightbox
+        images={images}
+        alt={product.name}
+        startIndex={lightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+        footer={
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-white">{product.name}</p>
+              <p className="text-xs text-white/60">
+                {product.sku ?? "—"}
+                {!showAir || !showSea ? ` · ${showAir ? "Air only" : "Sea only"}` : ""}
+              </p>
+            </div>
+            <div className="@container w-[15rem] shrink-0">
+              <AddToQuoteRow product={product} tone="dark" />
+            </div>
+          </div>
+        }
+      />
+    ) : null;
+
+  const quickEdit =
+    editMode && quickEditOpen ? (
+      <ProductQuickEdit product={product} open={quickEditOpen} onOpenChange={setQuickEditOpen} />
+    ) : null;
+
+  if (team) {
+    return (
+      <article
+        className={`group relative flex overflow-hidden rounded-2xl border bg-white transition-shadow duration-[180ms] ease-out [@media(hover:hover)]:hover:shadow-hover ${
+          hidden ? "border-dashed border-n-300 opacity-60" : "border-n-200"
+        }`}
+      >
+        <ProductSourcingFetch />
+        {editAffordance}
+
+        <div className="@container size-24 shrink-0 self-start overflow-hidden rounded-l-2xl bg-white md:size-[180px]">
+          <ProductImageCarousel
+            images={images}
+            alt={product.name}
+            fieldClassName="image-field-bleed"
+            onImageTap={(i) => setLightboxIndex(i)}
+          >
+            <FlagBadge source={product.inventory_source} />
+          </ProductImageCarousel>
+        </div>
+
+        <div className="@container flex w-full min-w-0 flex-col p-3 md:w-[320px] md:shrink-0">
+          <p className="card-label truncate">{product.sku ?? "—"}</p>
+          <h3 className="card-title mt-1 line-clamp-2 h-[39px] overflow-hidden lg:h-[42px]">
+            {product.name}
+          </h3>
+          {specRow}
+          <div className="mt-3">
+            <AddToQuoteRow product={product} />
+          </div>
+        </div>
+
+        {/* Reserved for internal details (follow-up). Intentionally empty. */}
+        <div className="hidden flex-1 md:block" aria-hidden="true" />
+
+        {lightbox}
+        {quickEdit}
+      </article>
+    );
+  }
   return (
     <article
       className={`group @container relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white transition-shadow duration-[180ms] ease-out [@media(hover:hover)]:hover:shadow-hover ${
         hidden ? "border-dashed border-n-300 opacity-60" : "border-n-200"
       }`}
     >
-      {editMode ? (
-        <>
-          <button
-            type="button"
-            aria-label={`Quick edit ${product.name}`}
-            onClick={() => setQuickEditOpen(true)}
-            className="absolute right-2 top-2 z-20 inline-flex size-7 items-center justify-center rounded-full border border-n-200 bg-white/95 text-navy-700 shadow-card transition-opacity duration-[180ms] ease-out hover:bg-lime-500 hover:text-n-700 sm:size-8 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100"
-          >
-            <Pencil className="size-3.5 sm:size-4" />
-          </button>
-          {hidden ? (
-            <span className="card-label absolute left-2 top-2 z-20 rounded-full bg-n-700 px-2 py-0.5 !text-white">
-              Hidden
-            </span>
-          ) : null}
-        </>
-      ) : null}
+      {editAffordance}
       <div className="overflow-hidden rounded-t-2xl bg-white">
         <ProductImageCarousel
           images={images}
@@ -123,72 +267,15 @@ export function ProductCard({
           {product.name}
         </h3>
 
-        <div className="relative mt-3 flex h-[89px] items-stretch border-t border-n-200 pt-3 [@container(min-width:200px)]:grid [@container(min-width:200px)]:grid-cols-[40%_60%]">
-            <div className="flex min-w-0 shrink-0 justify-start pr-[12px] [@container(min-width:200px)]:justify-center">
-              <div className="min-w-0 text-left">
-                <SpecLabel>MOQ</SpecLabel>
-                <p
-                  className={`card-value mt-1 h-[18px] [@container(max-width:199px)]:text-[13px]${
-                    hasMoq ? "" : " !text-n-500"
-                  }`}
-                >
-                  {hasMoq ? specValue(product.moq) : "—"}
-                </p>
-              </div>
-            </div>
-            <div
-              className="mr-[12px] w-px shrink-0 self-stretch bg-n-200 [@container(min-width:200px)]:hidden"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute bottom-0 left-[40%] top-3 hidden w-px bg-n-200 [@container(min-width:200px)]:block"
-              aria-hidden="true"
-            />
-            <div className="flex min-w-0 flex-1 justify-start pr-[12px] [@container(min-width:200px)]:justify-center [@container(min-width:200px)]:pl-[12px] [@container(min-width:200px)]:pr-0">
-              <div className="min-w-0 text-left">
-                <SpecLabel>Lead time</SpecLabel>
-                <div className="mt-1 flex h-[58px] flex-col justify-start space-y-0.5">
-                  {rush ? <LeadRow chip value={rush} /> : null}
-                  {showAir ? <LeadRow icon={Plane} value={hasLead ? air : null} /> : null}
-                  {showSea ? <LeadRow icon={Ship} value={hasLead ? sea : null} /> : null}
-                </div>
-              </div>
-            </div>
-        </div>
+        {specRow}
 
         <div className="mt-3">
           <AddToQuoteRow product={product} />
         </div>
       </div>
 
-      {viewMode === "supplier" && isStaff ? <ProductTeamDetails product={product} /> : null}
-
-      {lightboxIndex !== null ? (
-        <ImageLightbox
-          images={images}
-          alt={product.name}
-          startIndex={lightboxIndex}
-          onClose={() => setLightboxIndex(null)}
-          footer={
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-white">{product.name}</p>
-                <p className="text-xs text-white/60">
-                  {product.sku ?? "—"}
-                  {!showAir || !showSea ? ` · ${showAir ? "Air only" : "Sea only"}` : ""}
-                </p>
-              </div>
-              <div className="@container w-[15rem] shrink-0">
-                <AddToQuoteRow product={product} tone="dark" />
-              </div>
-            </div>
-          }
-        />
-      ) : null}
-
-      {editMode && quickEditOpen ? (
-        <ProductQuickEdit product={product} open={quickEditOpen} onOpenChange={setQuickEditOpen} />
-      ) : null}
+      {lightbox}
+      {quickEdit}
     </article>
   );
 }
