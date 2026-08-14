@@ -24,12 +24,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { IncludedItems } from "@/components/team/IncludedItems";
 import { costingReadyMissing, type MissingField } from "@/lib/costing-gate";
 import { buildPricelistItems, memberDisplayName } from "@/lib/pricelist-groups";
@@ -244,23 +238,12 @@ function CostingBadge({ missing }: { missing: MissingField[] }) {
     );
   }
   return (
-    <TooltipProvider delayDuration={150}>
-      <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="w-fit cursor-help rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-600">
-          Incomplete · {missing.length} missing
-        </span>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-[220px] text-left">
-        <p className="font-semibold">Missing for costing</p>
-        <ul className="mt-1 list-inside list-disc">
-          {missing.map((field) => (
-            <li key={field.key}>{field.label}</li>
-          ))}
-        </ul>
-      </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <span
+      title={`Missing for costing: ${missing.map((field) => field.label).join(", ")}`}
+      className="w-fit cursor-help rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-600"
+    >
+      Incomplete · {missing.length} missing
+    </span>
   );
 }
 
