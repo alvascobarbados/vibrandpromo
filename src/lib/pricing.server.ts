@@ -54,41 +54,27 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
   if (!productIds.length) return [];
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const [products, sourcing, suppliers, origins, settingsRows, methods, routeRows, tiers, dests, decorations, cats, subs] =
-    await Promise.all([
-      supabaseAdmin
-        .from("products")
-        .select("id, category_id, subcategory_id, status")
-        .in("id", productIds)
-        .eq("status", "live"),
-      supabaseAdmin
-        .from("product_sourcing")
-        .select(
-          "id, product_id, supplier_id, supplier_item_no, supplier_item_name, variant_label, carton_pack, carton_length, carton_width, carton_height, carton_weight, dimension_unit, weight_unit",
-        )
-        .in("product_id", productIds),
-      supabaseAdmin.from("suppliers").select("id, unit_system, origin_id"),
-      supabaseAdmin.from("origins").select("id, code"),
-      supabaseAdmin.from("app_settings").select("id, section, key, value, value_type, display_label, display_order, description"),
-      supabaseAdmin
-        .from("shipping_methods")
-        .select("id, code, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit, transport_mode"),
-      supabaseAdmin
-        .from("shipping_method_routes")
-        .select(
-          "id, shipping_method_id, origin_id, destination_id, fixed_cost, lac_fixed_bbd, lac_per_cbm_bbd, include_inland_freight",
-        ),
-      supabaseAdmin.from("shipping_method_tiers").select("route_id, band_from, band_to, rate"),
-      supabaseAdmin.from("destinations").select("id, code"),
-      supabaseAdmin
-        .from("product_decorations")
-        .select(
-          "id, product_id, method_detail_id, sort_order, updated_at, notes, ref_image_url, product_decoration_bands(id, product_decoration_id, qty, unit_cost, setup_cost, inland_freight_usd)",
-        )
-        .in("product_id", productIds),
-      supabaseAdmin.from("categories").select("id, duty_rate_pct"),
-      supabaseAdmin.from("subcategories").select("id, duty_rate_pct"),
-    ]);
+  const [products, sourcing, decorations, statics] = await Promise.all([
+    supabaseAdmin
+      .from("products")
+      .select("id, category_id, subcategory_id, status")
+      .in("id", productIds)
+      .eq("status", "live"),
+    supabaseAdmin
+      .from("product_sourcing")
+      .select(
+        "id, product_id, supplier_id, supplier_item_no, supplier_item_name, variant_label, carton_pack, carton_length, carton_width, carton_height, carton_weight, dimension_unit, weight_unit",
+      )
+      .in("product_id", productIds),
+    supabaseAdmin
+      .from("product_decorations")
+      .select(
+        "id, product_id, method_detail_id, sort_order, updated_at, notes, ref_image_url, product_decoration_bands(id, product_decoration_id, qty, unit_cost, setup_cost, inland_freight_usd)",
+      )
+      .in("product_id", productIds),
+    getStaticCostingTables(),
+  ]);
+  const { suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs } = statics;
 
   if (!products.data?.length) return [];
 
