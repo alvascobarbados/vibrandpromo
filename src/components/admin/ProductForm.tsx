@@ -28,6 +28,7 @@ import {
   type Subcategory,
 } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import { numberOrNull, productionProblem } from "@/lib/product-rules";
 import { RushChip } from "@/components/site/RushChip";
 import { SourcingSection } from "@/components/admin/SourcingSection";
 
@@ -134,14 +135,6 @@ export function formFromProduct(
   };
 }
 
-/** Blank/invalid text becomes null so "on request" and fixed times both work. */
-function numberOrNull(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 export function payloadFromForm(form: FormState) {
   return {
     name: form.name.trim(),
@@ -183,25 +176,7 @@ export function validateForm(form: FormState): string | null {
   if (!form.name.trim()) return "Please give the product a name.";
   if (!form.sku.trim()) return "Please enter a SKU (product code).";
   if (!form.subcategory_id) return "Please choose a category and subcategory.";
-  const normalMin = numberOrNull(form.production_min_days);
-  const normalMax = numberOrNull(form.production_max_days);
-  if (normalMax != null) {
-    if (normalMin == null) return "Enter a minimum production time before adding a maximum.";
-    if (normalMax < normalMin)
-      return "The maximum production time must be the same as or longer than the minimum.";
-  }
-  if (form.rush_enabled) {
-    if (form.shipping_methods === "sea_only") return "Rush requires air shipping.";
-    const rushMin = numberOrNull(form.rush_production_min_days);
-    const rushMax = numberOrNull(form.rush_production_max_days);
-    if (rushMin == null || rushMin < 1) return "Please enter the rush production time in days.";
-    if (rushMax != null && rushMax < rushMin)
-      return "The maximum rush production time must be the same as or longer than the minimum.";
-    if (normalMin == null) return "Add a normal production time before offering rush.";
-    if (rushMin >= normalMin)
-      return "Rush production time must be shorter than the normal production time.";
-  }
-  return null;
+  return productionProblem(form);
 }
 
 /** Rush shares the normal air shipping buffer — only the production time changes. */
