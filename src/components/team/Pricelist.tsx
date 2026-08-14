@@ -34,6 +34,7 @@ import {
 import { AddAttributePopover } from "@/components/team/AddAttributePopover";
 import { DecorationPricing } from "@/components/team/DecorationPricing";
 import { InlineChoice, InlineField } from "@/components/team/inline-field";
+import { RangeRow } from "@/components/team/range-row";
 import { UnitSwitch } from "@/components/team/PackingUnits";
 import { ProductionExtras } from "@/components/team/ProductionExtras";
 import {
@@ -72,7 +73,6 @@ import {
   positiveProblem,
   relativeTime,
   updateProductFields,
-  decimals3,
   weight3,
 } from "@/lib/pricelist";
 import { moqProblem, nameProblem } from "@/lib/product-rules";
@@ -94,8 +94,6 @@ import {
   type Supplier,
 } from "@/lib/sourcing";
 import {
-  cartonCbm,
-  chargeableWeightKg,
   constantsFrom,
   convertLength,
   convertWeight,
@@ -114,8 +112,8 @@ import {
 const COLS =
   "grid grid-cols-[120px_190px_196px_260px_268px_minmax(0,1fr)] gap-3 px-4";
 
-/** ONE vertical rhythm token — every KV row and section header uses it. */
-const ROW = "min-h-[26px]";
+/** ONE vertical rhythm token — matched to the decoration pricing QTY rows. */
+const ROW = "min-h-[22px]";
 /** Shared label gutter so all four data columns align on one vertical line. */
 const GUTTER = "grid grid-cols-[88px_minmax(0,1fr)] gap-x-3";
 
@@ -256,11 +254,11 @@ function Kv({
 }) {
   return (
     <div className={`${GUTTER} ${ROW} items-baseline`}>
-      <span className="flex min-w-0 items-baseline gap-1 text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
+      <span className="flex min-w-0 items-baseline gap-1 text-[11px] uppercase leading-5 tracking-[0.04em] text-muted-foreground">
         <span className="truncate whitespace-nowrap">{label}</span>
         {alert ? <MissingDot /> : null}
       </span>
-      <span className="min-w-0 text-[14px] leading-6 text-navy-700">{children}</span>
+      <span className="min-w-0 text-[14px] leading-5 text-navy-700">{children}</span>
     </div>
   );
 }
@@ -280,7 +278,7 @@ function MissingDot() {
 function SectionHead({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className={`${ROW} flex items-center text-[11px] font-semibold uppercase leading-6 tracking-[0.06em] text-muted-foreground`}
+      className={`${ROW} flex items-center text-[11px] font-semibold uppercase leading-5 tracking-[0.06em] text-muted-foreground`}
     >
       {children}
     </p>
@@ -371,22 +369,11 @@ function PricelistRow({
   const [addingInclude, setAddingInclude] = useState(false);
   const supplier = suppliers.find((row) => row.id === sourcing?.supplier_id) ?? null;
   const units = effectiveUnits(sourcing, supplier?.unit_system);
-  /** CBM is always normalized from the effective dimension unit, never assumed metric. */
-  const cbm = cartonCbm(
-    sourcing?.carton_length ?? null,
-    sourcing?.carton_width ?? null,
-    sourcing?.carton_height ?? null,
-    units.dimension,
-    constants,
-  );
   const origin = origins.find((row) => row.id === supplier?.origin_id) ?? null;
-  /** Display-only chargeable weight: max(actual, volume × volumetric factor). */
-  const chargeable = chargeableWeightKg(
-    sourcing?.carton_weight ?? null,
-    units.weight,
-    cbm,
-    constants,
-  );
+  /**
+   * CBM / chargeable weight are NOT displayed on the card any more — the shared
+   * helpers in src/lib/units.ts stay put for the pricing engine.
+   */
   const images = product.images ?? [];
 
   const refreshProducts = () => queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -416,33 +403,34 @@ function PricelistRow({
 
   return (
     <div
-      className={`${COLS} items-start border-l-2 py-3.5 ${
-        product.status === "live" ? "border-transparent" : "border-amber-400"
+      className={`${COLS} items-start border-l-[3px] py-3.5 ${
+        product.status === "live"
+          ? "border-transparent"
+          : "border-amber-400 bg-amber-50/80"
       }`}
     >
       {/* Image */}
-      <div className="flex flex-col gap-1.5">
+      {/* Fixed-width cell, one item per row: hero, thumb, Upload, timestamp. */}
+      <div className="flex w-[120px] flex-col gap-1.5">
         <ImageSlot
           label="Product image"
           path={images[0]}
           onOpen={() => setImagesOpen(true)}
         />
-        <div className="flex items-center gap-2">
-          <ImageSlot
-            label="Reference"
-            path={images[1]}
-            className="size-[68px] shrink-0"
-            extra={images.length > 2 ? images.length - 2 : 0}
-            onOpen={() => setImagesOpen(true)}
-          />
-          <button
-            type="button"
-            onClick={() => setImagesOpen(true)}
-            className="inline-flex w-fit items-center gap-1.5 rounded-full border border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-navy-700 hover:bg-navy-50"
-          >
-            <Upload className="size-3" /> Upload
-          </button>
-        </div>
+        <ImageSlot
+          label="Reference"
+          path={images[1]}
+          className="size-[68px] shrink-0"
+          extra={images.length > 2 ? images.length - 2 : 0}
+          onOpen={() => setImagesOpen(true)}
+        />
+        <button
+          type="button"
+          onClick={() => setImagesOpen(true)}
+          className="inline-flex w-fit items-center gap-1.5 rounded-full border border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-navy-700 hover:bg-navy-50"
+        >
+          <Upload className="size-3" /> Upload
+        </button>
         <p className="text-[11px] text-muted-foreground">
           Updated {relativeTime(product.updated_at)}
         </p>
@@ -681,31 +669,32 @@ function PricelistRow({
             missingKeys.has("carton_height")
           }
         >
-          <span className="flex flex-nowrap items-center gap-0.5">
+          {/* ONE flex row, equal gaps: each × sits dead-centre between inputs and
+              the unit dropdown is snug at the end with the same gap. */}
+          <span className="flex flex-nowrap items-center gap-1.5">
             <InlineField
-              className="w-8 shrink-0"
+              className="w-8 shrink-0 text-center"
               value={numberText(sourcing?.carton_length)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_length: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-center text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-[11px] leading-none text-muted-foreground">×</span>
             <InlineField
-              className="w-8 shrink-0"
+              className="w-8 shrink-0 text-center"
               value={numberText(sourcing?.carton_width)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_width: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-center text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-[11px] leading-none text-muted-foreground">×</span>
             <InlineField
-              className="w-8 shrink-0"
+              className="w-8 shrink-0 text-center"
               value={numberText(sourcing?.carton_height)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_height: numOrNull(raw) })}
             />
-            <span className="shrink-0 pl-0.5" />
             <UnitSwitch
               options={["cm", "in"] as const}
               value={units.dimension}
@@ -729,7 +718,7 @@ function PricelistRow({
             <InlineField
               className="w-16 shrink-0"
               value={numberText(sourcing?.carton_weight)}
-              display={weight3(sourcing?.carton_weight ?? null, units.weight)}
+              display={weight3(sourcing?.carton_weight ?? null)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_weight: numOrNull(raw) })}
@@ -750,16 +739,6 @@ function PricelistRow({
             />
           </span>
         </Kv>
-        {/* Derived footnote of the packing block — anchored under WEIGHT, aligned
-            to the VALUE column. Omitted entirely when inputs are missing. */}
-        {cbm != null && chargeable != null ? (
-          <div className={GUTTER}>
-            <span />
-            <p className="text-[11px] leading-5 text-muted-foreground">
-              = {cbm} CBM · chargeable {decimals3(chargeable)} kg
-            </p>
-          </div>
-        ) : null}
 
         <SectionHead>Production</SectionHead>
         <Kv label="MOQ">
@@ -772,26 +751,13 @@ function PricelistRow({
           />
         </Kv>
         <Kv label="Lead time" alert={missingKeys.has("production_min_days")}>
-          <span className="flex flex-nowrap items-center gap-0.5">
-            <InlineField
-              className="w-9 shrink-0"
-              value={product.production_min_days == null ? "" : String(product.production_min_days)}
-              numeric
-              save={(raw) => saveProduct({ production_min_days: numOrNull(raw) })}
-            />
-            <span className="shrink-0 text-[11px] text-muted-foreground">–</span>
-            <InlineField
-              className="w-9 shrink-0"
-              value={product.production_max_days == null ? "" : String(product.production_max_days)}
-              numeric
-              save={(raw) => saveProduct({ production_max_days: numOrNull(raw) })}
-            />
-            <span className="ml-1 whitespace-nowrap text-[11px] text-muted-foreground">
-              {product.production_min_days == null && product.production_max_days == null
-                ? productionLabel(product.production_min_days, product.production_max_days)
-                : "days"}
-            </span>
-          </span>
+          <RangeRow
+            min={product.production_min_days == null ? "" : String(product.production_min_days)}
+            max={product.production_max_days == null ? "" : String(product.production_max_days)}
+            saveMin={(raw) => saveProduct({ production_min_days: numOrNull(raw) })}
+            saveMax={(raw) => saveProduct({ production_max_days: numOrNull(raw) })}
+            suffix="days"
+          />
         </Kv>
         <ProductionExtras product={product} save={saveProduct} />
       </div>

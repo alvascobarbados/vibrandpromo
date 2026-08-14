@@ -16,7 +16,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { InlineField } from "@/components/team/inline-field";
+import { RangeRow } from "@/components/team/range-row";
 import type { Product } from "@/lib/catalog";
 import { numOrNull } from "@/lib/pricelist";
 import { productionProblem } from "@/lib/product-rules";
@@ -98,32 +98,22 @@ export function ProductionExtras({
 
   return (
     <>
-      <div className="grid min-h-[26px] grid-cols-[88px_minmax(0,1fr)] items-center gap-x-3">
-        <span className="truncate whitespace-nowrap text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
+      <div className="grid min-h-[22px] grid-cols-[88px_minmax(0,1fr)] items-center gap-x-3">
+        <span className="truncate whitespace-nowrap text-[11px] uppercase leading-5 tracking-[0.04em] text-muted-foreground">
           Rush
         </span>
-        <span className="flex min-w-0 flex-nowrap items-center gap-0.5">
-          <InlineField
-            className="w-9 shrink-0"
-            value={text(product.rush_production_min_days)}
-            numeric
-            save={saveRushDay("min")}
-          />
-          <span className="shrink-0 text-[11px] text-muted-foreground">–</span>
-          <InlineField
-            className="w-9 shrink-0"
-            value={text(product.rush_production_max_days)}
-            numeric
-            save={saveRushDay("max")}
-          />
-          <span className="ml-1 whitespace-nowrap text-[11px] text-muted-foreground">
-            {product.rush_enabled ? "days" : "off"}
-          </span>
-        </span>
+        {/* Identical range rendering to LEAD TIME — one shared component. */}
+        <RangeRow
+          min={text(product.rush_production_min_days)}
+          max={text(product.rush_production_max_days)}
+          saveMin={saveRushDay("min")}
+          saveMax={saveRushDay("max")}
+          suffix={product.rush_enabled ? "days" : "· off"}
+        />
       </div>
 
-      <div className="grid min-h-[26px] grid-cols-[88px_minmax(0,1fr)] items-center gap-x-3">
-        <span className="truncate whitespace-nowrap text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
+      <div className="grid min-h-[22px] grid-cols-[88px_minmax(0,1fr)] items-center gap-x-3">
+        <span className="truncate whitespace-nowrap text-[11px] uppercase leading-5 tracking-[0.04em] text-muted-foreground">
           Ships by
         </span>
         <span className="flex min-w-0 items-center gap-1.5">

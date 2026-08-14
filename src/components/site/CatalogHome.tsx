@@ -31,7 +31,8 @@ export function CatalogHome({
   page: number;
   viewMode?: ViewMode;
 }) {
-  const products = useCatalogProducts();
+  /** /team is the staff work surface — draft + live; the shop stays live-only. */
+  const products = useCatalogProducts({ includeDrafts: viewMode === "supplier" });
   const isDesktop = useIsDesktop();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);

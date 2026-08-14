@@ -45,13 +45,14 @@ export function DesktopCatalog({
   page?: number;
 }) {
   const { search, toggle, clear, update, activeCount } = useCatalogFilters();
-  const products = useCatalogProducts();
+  /** /team lists one landscape row per product; the shop keeps its portrait grid. */
+  const team = useViewMode() === "supplier";
+  /** /team is the staff work surface — it always reads draft + live. */
+  const products = useCatalogProducts({ includeDrafts: team });
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const shipping = useShippingSettings();
   const preselected = useRef(false);
-  /** /team lists one landscape row per product; the shop keeps its portrait grid. */
-  const team = useViewMode() === "supplier";
   /** Staff-only sourcing rows feed the costing gate; never fetched in the shop. */
   const sourcing = useQuery({ ...sourcingRowsQuery, enabled: team });
   const sourcingByProduct = useMemo(
