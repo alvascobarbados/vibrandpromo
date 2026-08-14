@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { allProductsQuery } from "@/lib/catalog";
+import { generateVariantsFor, uploadWithVariants } from "@/lib/image-upload";
+import { isVariantPath, variantPath, VARIANT_KEYS } from "@/lib/image-variants";
+import { listProductImageObjects } from "@/lib/image-variants.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/bulk-images")({
   beforeLoad: ({ context }) => requirePage(context.access, "bulk_images"),
@@ -25,6 +28,14 @@ export const Route = createFileRoute("/_authenticated/admin/bulk-images")({
 });
 
 type Report = { attached: string[]; unmatched: string[] };
+
+type VariantReport = {
+  originals: number;
+  generated: number;
+  skipped: number;
+  failures: number;
+  notes: string[];
+};
 
 function parseName(fileName: string) {
   const base = fileName.replace(/\.[^.]+$/, "").trim();
@@ -82,9 +93,8 @@ function BulkImages() {
         const sorted = [...list].sort((a, b) => a.order - b.order);
         const urls: string[] = [];
         for (const entry of sorted) {
-          const path = `${crypto.randomUUID()}-${entry.file.name.replace(/[^\w.-]+/g, "_")}`;
-          const { error } = await supabase.storage.from("product-images").upload(path, entry.file);
-          if (error) throw error;
+          // Uploads write the original plus both derivatives.
+          const path = await uploadWithVariants(entry.file);
           urls.push(path);
         }
         const previous = (product.images ?? []).filter(
