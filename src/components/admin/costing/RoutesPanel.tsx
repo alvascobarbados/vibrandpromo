@@ -355,7 +355,14 @@ export function RoutesPanel() {
                   <SelectContent>
                     {TRANSPORT_MODES.map((mode) => (
                       <SelectItem key={mode} value={mode}>
-                        {mode === "air" ? "✈ Air" : "🚢 Sea"}
+                        <span className="flex items-center gap-1.5">
+                          {mode === "air" ? (
+                            <Plane className="size-3.5" />
+                          ) : (
+                            <Ship className="size-3.5" />
+                          )}
+                          {mode === "air" ? "Air" : "Sea"}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
