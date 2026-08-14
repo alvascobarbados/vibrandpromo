@@ -13,6 +13,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ImageManager } from "@/components/admin/ImageManager";
+import { AddAttributePopover } from "@/components/team/AddAttributePopover";
 import { DecorationPricing } from "@/components/team/DecorationPricing";
 import { InlineChoice, InlineField } from "@/components/team/inline-field";
 import {
@@ -50,6 +51,14 @@ import {
 } from "@/lib/pricelist";
 import { moqProblem, nameProblem } from "@/lib/product-rules";
 import {
+  deleteProductDetail,
+  detailLabelsQuery,
+  productDetailsQuery,
+  updateProductDetailValue,
+  type DetailLabel,
+  type ProductDetailRow,
+} from "@/lib/product-details";
+import {
   originsQuery,
   saveSourcingPatch,
   sourcingRowsQuery,
@@ -80,10 +89,18 @@ export function Pricelist({
   const methods = useQuery(decorationMethodsQuery);
   const details = useQuery(methodDetailsQuery);
   const decorations = useQuery(productDecorationsQuery);
+  const attributeLabels = useQuery(detailLabelsQuery);
+  const attributes = useQuery(productDetailsQuery);
 
   const sourcingByProduct = new Map(
     (sourcing.data ?? []).map((row) => [row.product_id, row] as const),
   );
+  const attributesByProduct = new Map<string, ProductDetailRow[]>();
+  for (const row of attributes.data ?? []) {
+    const list = attributesByProduct.get(row.product_id) ?? [];
+    list.push(row);
+    attributesByProduct.set(row.product_id, list);
+  }
   const decorationsByProduct = new Map<string, ProductDecoration[]>();
   for (const row of decorations.data ?? []) {
     const list = decorationsByProduct.get(row.product_id) ?? [];
@@ -117,6 +134,8 @@ export function Pricelist({
       decorations={decorationsByProduct.get(product.id) ?? []}
       methods={methods.data ?? []}
       details={details.data ?? []}
+      attributeLabels={attributeLabels.data ?? []}
+      attributes={attributesByProduct.get(product.id) ?? []}
     />
   );
 
@@ -204,6 +223,8 @@ function PricelistRow({
   decorations,
   methods,
   details,
+  attributeLabels,
+  attributes,
 }: {
   product: Product;
   categories: Category[];
@@ -214,6 +235,8 @@ function PricelistRow({
   decorations: ProductDecoration[];
   methods: DecorationMethod[];
   details: MethodDetail[];
+  attributeLabels: DetailLabel[];
+  attributes: ProductDetailRow[];
 }) {
   const queryClient = useQueryClient();
   const [imagesOpen, setImagesOpen] = useState(false);
