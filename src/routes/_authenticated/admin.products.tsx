@@ -628,28 +628,10 @@ function AdminProducts() {
                           {subName.get(product.subcategory_id ?? "") ?? "—"}
                         </Td>
                         <Td>
-                          <InlineSelect
-                            {...cellProps(product, "supplier")}
-                            value={sourcing?.supplier_id ?? ""}
-                            options={supplierOptions}
-                            display={
-                              supplier ? (
-                                <span className="flex min-w-0 items-center gap-1.5">
-                                  <span className="shrink-0 rounded bg-navy-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-navy-700">
-                                    {supplier.code}
-                                  </span>
-                                  <span className="truncate" title={supplier.name}>
-                                    {supplier.name}
-                                  </span>
-                                </span>
-                              ) : (
-                                <span className="text-amber-600">Unassigned</span>
-                              )
-                            }
-                            onSave={(next, advance) =>
-                              void saveCell(product, "supplier", { supplier_id: next }, advance)
-                            }
-                          />
+                          <span className="flex items-center gap-1.5 font-mono text-[12px]">
+                            <SourceDot source={product.inventory_source} />
+                            {product.sku ?? "—"}
+                          </span>
                         </Td>
                         <Td title={product.name}>
                           <InlineText
@@ -664,10 +646,23 @@ function AdminProducts() {
                           />
                         </Td>
                         <Td>
-                          <span className="flex items-center gap-1.5 font-mono text-[12px]">
-                            <SourceDot source={product.inventory_source} />
-                            {product.sku ?? "—"}
-                          </span>
+                          <InlineSelect
+                            {...cellProps(product, "supplier")}
+                            value={sourcing?.supplier_id ?? ""}
+                            options={supplierOptions}
+                            display={
+                              supplier ? (
+                                <span className="block truncate" title={supplier.name}>
+                                  {supplier.name}
+                                </span>
+                              ) : (
+                                <span className="text-amber-600">Unassigned</span>
+                              )
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(product, "supplier", { supplier_id: next }, advance)
+                            }
+                          />
                         </Td>
                         <Td>
                           <InlineText
