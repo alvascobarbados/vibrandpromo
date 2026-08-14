@@ -1,0 +1,2 @@
+UPDATE public.shipping_method_routes SET include_inland_freight = true WHERE id IN ('8d1b7ad4-af9e-4292-95bc-efc33f972a9c','1080000f-88e9-43a1-95cb-bd047e90b64a','fc37bb75-b257-48db-9727-b49f84b9ef62','559ac28f-4b0d-46fd-b5cc-d1710056af06');
+UPDATE public.shipping_method_routes SET include_inland_freight = false WHERE id = '0c0ab042-0c7e-4f95-b62f-e595a564e001';
