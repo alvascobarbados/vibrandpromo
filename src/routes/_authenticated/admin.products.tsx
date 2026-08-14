@@ -187,6 +187,15 @@ function AdminProducts() {
 
   const rows = products.data ?? [];
 
+  /** "Unassigned" first, then every supplier as "CODE — Name". */
+  const supplierOptions = useMemo(
+    () => [
+      { value: "", label: "Unassigned" },
+      ...(suppliers.data ?? []).map((s) => ({ value: s.id, label: supplierLabel(s) })),
+    ],
+    [suppliers.data],
+  );
+
   /** Supplier counts drive both the dropdown labels and the footer bar. */
   const supplierCounts = useMemo(() => {
     const map = new Map<string, number>();
