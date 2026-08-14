@@ -468,7 +468,7 @@ function PricelistRow({
 
         {/* STATUS chips — one consistent row, directly under the product name. */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <StatusChip product={product} saveProduct={saveProduct} />
+          <StatusControl product={product} saveProduct={saveProduct} />
           <CostingBadge missing={missing} />
         </div>
 
