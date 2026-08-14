@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
-import { ProductExpandedCard } from "@/components/site/ProductExpandedCard";
 import { ViewToggle, useCatalogView } from "@/components/site/ViewToggle";
 import { FilterPanel } from "@/components/site/FilterPanel";
 import { FilterBar } from "@/components/site/FilterBar";
@@ -229,7 +228,8 @@ function CatalogPage() {
                 {expanded ? (
                   <div className="mt-2 flex flex-col gap-4">
                     {visible.map((product) => (
-                      <ProductExpandedCard
+                      <ProductCard
+                viewMode="expanded"
                         key={product.id}
                         product={product}
                         pricing={pricingById.get(product.id)}
