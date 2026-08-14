@@ -156,8 +156,19 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
       .in("product_id", productIds),
     getStaticCostingTables(),
   ]);
-  const { suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs } =
-    statics;
+  const {
+    suppliers,
+    origins,
+    settingsRows,
+    methods,
+    routeRows,
+    tiers,
+    dests,
+    cats,
+    subs,
+    methodDetails,
+    decorationMethods,
+  } = statics;
 
   if (!products.data?.length) return [];
 
@@ -194,6 +205,20 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
     decorationsByProduct.set(decoration.product_id, list);
   }
 
+  // Decoration method label per method_detail — the ONLY decoration metadata
+  // that becomes public (names, never costs or bands).
+  const methodNameById = new Map((decorationMethods.data ?? []).map((row) => [row.id, row.name]));
+  const labelByDetailId = new Map(
+    (methodDetails.data ?? []).map((row) => [
+      row.id,
+      {
+        method: methodNameById.get(row.decoration_method_id) ?? row.detail,
+        detail: row.detail,
+      },
+    ]),
+  );
+  const constants = constantsFrom((settingsRows.data ?? []) as never);
+
   const out: PublicPricing[] = [];
   for (const product of products.data) {
     const row = sourcingByProduct.get(product.id) ?? null;
@@ -213,7 +238,85 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
     if (!input) continue;
     const calc = computeProductCalc(input, routes, settings);
     const tables = tablesFrom(calc, routes, modeByRouteId);
-    if (tables.length) out.push({ productId: product.id, tables });
+    if (!tables.length) continue;
+
+    // One bubble per decoration that carries real quantity bands. Same engine,
+    // same adapter — only the tier set narrows to that decoration.
+    const list = (decorationsByProduct.get(product.id) ?? [])
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order);
+    const named = list.map((decoration) => {
+      const label = labelByDetailId.get(decoration.method_detail_id);
+      return { decoration, label };
+    });
+    const methodCounts = new Map<string, number>();
+    for (const entry of named) {
+      const key = entry.label?.method ?? "Decoration";
+      methodCounts.set(key, (methodCounts.get(key) ?? 0) + 1);
+    }
+    const bubbles: PublicDecorationPricing[] = [];
+    for (const entry of named) {
+      const bands = entry.decoration.product_decoration_bands ?? [];
+      if (!bands.some((band) => (num(band.qty) ?? 0) > 0)) continue;
+      const decorationInput = calcProductInput({
+        productId: product.id,
+        sourcing: row,
+        supplier,
+        originCode,
+        decorations: [entry.decoration],
+        dutyRate: input.dutyRate,
+      });
+      if (!decorationInput) continue;
+      const decorationTables = tablesFrom(
+        computeProductCalc(decorationInput, routes, settings),
+        routes,
+        modeByRouteId,
+      );
+      if (!decorationTables.length) continue;
+      const method = entry.label?.method ?? "Decoration";
+      const methodName =
+        (methodCounts.get(method) ?? 0) > 1 && entry.label?.detail
+          ? `${method} · ${entry.label.detail}`
+          : method;
+      bubbles.push({ methodName, tables: decorationTables });
+    }
+
+    // Packing projection (Task 5) — display strings only, computed with the
+    // shared helpers in src/lib/units.ts (cartonCbm / chargeableWeightKg).
+    const units = effectiveUnits(row, supplier?.unit_system ?? null);
+    const cbm = cartonCbm(
+      num(row?.carton_length),
+      num(row?.carton_width),
+      num(row?.carton_height),
+      units.dimension,
+      constants,
+    );
+    const weight = num(row?.carton_weight);
+    const chargeable = chargeableWeightKg(weight, units.weight, cbm, constants);
+    const pack = num(row?.carton_pack);
+    const packing: PublicPacking | undefined =
+      pack != null &&
+      cbm != null &&
+      weight != null &&
+      chargeable != null &&
+      num(row?.carton_length) != null
+        ? {
+            pcsPerCtn: pack,
+            ctnDims: `${num(row?.carton_length)} × ${num(row?.carton_width)} × ${num(
+              row?.carton_height,
+            )} ${units.dimension}`,
+            ctnWeight: `${weight.toFixed(3)} ${units.weight}`,
+            volPerCtn: `${cbm.toFixed(4)} CBM`,
+            chargeablePerCtn: `${chargeable.toFixed(3)} kg`,
+          }
+        : undefined;
+
+    out.push({
+      productId: product.id,
+      tables,
+      decorations: bubbles,
+      ...(packing ? { packing } : {}),
+    });
   }
   return out;
 }
