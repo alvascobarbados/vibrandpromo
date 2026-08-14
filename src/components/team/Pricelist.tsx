@@ -673,7 +673,7 @@ function PricelistRow({
               the unit dropdown is snug at the end with the same gap. */}
           <span className="flex flex-nowrap items-center gap-1.5">
             <InlineField
-              className="w-8 shrink-0"
+              className="w-8 shrink-0 text-center"
               value={numberText(sourcing?.carton_length)}
               numeric
               validate={positiveProblem}
@@ -681,7 +681,7 @@ function PricelistRow({
             />
             <span className="shrink-0 text-[11px] leading-none text-muted-foreground">×</span>
             <InlineField
-              className="w-8 shrink-0"
+              className="w-8 shrink-0 text-center"
               value={numberText(sourcing?.carton_width)}
               numeric
               validate={positiveProblem}
@@ -689,7 +689,7 @@ function PricelistRow({
             />
             <span className="shrink-0 text-[11px] leading-none text-muted-foreground">×</span>
             <InlineField
-              className="w-8 shrink-0"
+              className="w-8 shrink-0 text-center"
               value={numberText(sourcing?.carton_height)}
               numeric
               validate={positiveProblem}
