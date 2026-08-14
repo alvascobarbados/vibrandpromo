@@ -20,6 +20,7 @@ import {
   deleteStaffUser,
   listStaffUsers,
   setPageLock,
+  setStaffPassword,
   setStaffRole,
   type StaffRole,
 } from "@/lib/staff.functions";
@@ -48,6 +49,7 @@ function StaffPage() {
   const changeRole = useServerFn(setStaffRole);
   const removeUser = useServerFn(deleteStaffUser);
   const togglePage = useServerFn(setPageLock);
+  const savePassword = useServerFn(setStaffPassword);
 
   const users = useQuery({ queryKey: ["admin", "staff-users"], queryFn: () => fetchUsers() });
   const [form, setForm] = useState({
@@ -56,6 +58,30 @@ function StaffPage() {
     password: "",
     role: "staff" as StaffRole,
   });
+  const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+  const [passwordDone, setPasswordDone] = useState<Record<string, boolean>>({});
+  const [savingFor, setSavingFor] = useState<string | null>(null);
+
+  async function submitPassword(userId: string) {
+    const value = passwordDrafts[userId] ?? "";
+    if (value.length < 8) {
+      setPasswordErrors((p) => ({ ...p, [userId]: "Use at least 8 characters." }));
+      return;
+    }
+    setPasswordErrors((p) => ({ ...p, [userId]: "" }));
+    setSavingFor(userId);
+    try {
+      await savePassword({ data: { user_id: userId, new_password: value } });
+      setPasswordDrafts((p) => ({ ...p, [userId]: "" }));
+      setPasswordDone((p) => ({ ...p, [userId]: true }));
+      window.setTimeout(() => setPasswordDone((p) => ({ ...p, [userId]: false })), 3000);
+    } catch {
+      setPasswordErrors((p) => ({ ...p, [userId]: "Couldn't set the password. Try again." }));
+    } finally {
+      setSavingFor(null);
+    }
+  }
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["admin", "staff-users"] });
 
@@ -176,6 +202,7 @@ function StaffPage() {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Role</th>
+              <th className="px-4 py-3">Password</th>
               <th className="px-4 py-3">Added</th>
               <th className="px-4 py-3">Page access</th>
               <th className="px-4 py-3" />
@@ -184,7 +211,7 @@ function StaffPage() {
           <tbody>
             {users.isLoading ? (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={7}>
                   Loading…
                 </td>
               </tr>
@@ -213,6 +240,44 @@ function StaffPage() {
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
+                </td>
+                <td className="px-4 py-3">
+                  <form
+                    className="flex items-center gap-2"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void submitPassword(user.id);
+                    }}
+                  >
+                    <Input
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="New password"
+                      className="h-9 w-40"
+                      aria-label={`New password for ${user.display_name || user.email}`}
+                      value={passwordDrafts[user.id] ?? ""}
+                      onChange={(event) => {
+                        setPasswordDrafts((p) => ({ ...p, [user.id]: event.target.value }));
+                        setPasswordErrors((p) => ({ ...p, [user.id]: "" }));
+                      }}
+                    />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      variant="secondary"
+                      disabled={savingFor === user.id}
+                    >
+                      {savingFor === user.id ? "Setting…" : "Set"}
+                    </Button>
+                  </form>
+                  {passwordErrors[user.id] ? (
+                    <p role="alert" className="mt-1 text-xs text-destructive">
+                      {passwordErrors[user.id]}
+                    </p>
+                  ) : null}
+                  {passwordDone[user.id] ? (
+                    <p className="mt-1 text-xs text-muted-foreground">Password set</p>
+                  ) : null}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {new Date(user.created_at).toLocaleDateString()}
