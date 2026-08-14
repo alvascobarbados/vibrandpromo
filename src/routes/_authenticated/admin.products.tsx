@@ -575,17 +575,15 @@ function AdminProducts() {
                   return (
                     <Fragment key={product.id}>
                       <tr
-                        className={`h-[41px] cursor-pointer border-b border-border ${rail}`}
-                        onClick={() => {
-                          setOpenIds((prev) =>
-                            prev.includes(product.id)
-                              ? prev.filter((id) => id !== product.id)
-                              : [...prev, product.id],
-                          );
-                          setEditingId(null);
-                        }}
+                        className={`h-[41px] border-b border-border ${rail}`}
                       >
                         <Td>
+                          <button
+                            type="button"
+                            aria-label={isOpen ? "Collapse product" : "Expand product"}
+                            onClick={() => toggleOpen(product.id)}
+                            className="block cursor-pointer"
+                          >
                           {cover ? (
                             <img
                               src={cover}
@@ -596,6 +594,7 @@ function AdminProducts() {
                           ) : (
                             <ProductPlaceholder className="size-[30px] rounded border border-dashed border-border" />
                           )}
+                          </button>
                         </Td>
                         <Td truncate title={categoryName.get(product.category_id ?? "") ?? ""}>
                           {categoryName.get(product.category_id ?? "") ?? "—"}
@@ -604,21 +603,40 @@ function AdminProducts() {
                           {subName.get(product.subcategory_id ?? "") ?? "—"}
                         </Td>
                         <Td>
-                          {supplier ? (
-                            <span className="flex min-w-0 items-center gap-1.5">
-                              <span className="shrink-0 rounded bg-navy-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-navy-700">
-                                {supplier.code}
-                              </span>
-                              <span className="truncate" title={supplier.name}>
-                                {supplier.name}
-                              </span>
-                            </span>
-                          ) : (
-                            <span className="text-amber-600">Unassigned</span>
-                          )}
+                          <InlineSelect
+                            {...cellProps(product, "supplier")}
+                            value={sourcing?.supplier_id ?? ""}
+                            options={supplierOptions}
+                            display={
+                              supplier ? (
+                                <span className="flex min-w-0 items-center gap-1.5">
+                                  <span className="shrink-0 rounded bg-navy-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-navy-700">
+                                    {supplier.code}
+                                  </span>
+                                  <span className="truncate" title={supplier.name}>
+                                    {supplier.name}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-amber-600">Unassigned</span>
+                              )
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(product, "supplier", { supplier_id: next }, advance)
+                            }
+                          />
                         </Td>
-                        <Td truncate title={product.name}>
-                          <span className="font-medium">{product.name}</span>
+                        <Td title={product.name}>
+                          <InlineText
+                            {...cellProps(product, "name")}
+                            value={product.name}
+                            display={
+                              <span className="block truncate font-medium">{product.name}</span>
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(product, "name", { name: next }, advance)
+                            }
+                          />
                         </Td>
                         <Td>
                           <span className="flex items-center gap-1.5 font-mono text-[12px]">
@@ -627,18 +645,66 @@ function AdminProducts() {
                           </span>
                         </Td>
                         <Td>
-                          <span className="font-mono text-[11px] text-muted-foreground">
-                            {sourcing?.supplier_item_no || "—"}
-                          </span>
+                          <InlineText
+                            {...cellProps(product, "supitem")}
+                            mono
+                            value={sourcing?.supplier_item_no ?? ""}
+                            display={
+                              <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                                {sourcing?.supplier_item_no || "—"}
+                              </span>
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(product, "supitem", { supplier_item_no: next }, advance)
+                            }
+                          />
                         </Td>
-                        <Td align="right">{product.moq ?? "—"}</Td>
                         <Td align="right">
-                          {product.production_min_days == null
-                            ? "—"
-                            : product.production_max_days &&
-                                product.production_max_days !== product.production_min_days
-                              ? `${product.production_min_days}–${product.production_max_days} d`
-                              : `${product.production_min_days} d`}
+                          <InlineText
+                            {...cellProps(product, "moq")}
+                            numeric
+                            value={product.moq == null ? "" : String(product.moq)}
+                            display={<>{product.moq ?? "—"}</>}
+                            onSave={(next, advance) =>
+                              void saveCell(product, "moq", { moq: next }, advance)
+                            }
+                          />
+                        </Td>
+                        <Td align="right">
+                          <InlineProduction
+                            {...cellProps(product, "production")}
+                            min={
+                              product.production_min_days == null
+                                ? ""
+                                : String(product.production_min_days)
+                            }
+                            max={
+                              product.production_max_days == null
+                                ? ""
+                                : String(product.production_max_days)
+                            }
+                            display={
+                              <>
+                                {product.production_min_days == null
+                                  ? "—"
+                                  : product.production_max_days &&
+                                      product.production_max_days !== product.production_min_days
+                                    ? `${product.production_min_days}–${product.production_max_days} d`
+                                    : `${product.production_min_days} d`}
+                              </>
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(
+                                product,
+                                "production",
+                                {
+                                  production_min_days: next.min,
+                                  production_max_days: next.max,
+                                },
+                                advance,
+                              )
+                            }
+                          />
                         </Td>
                         <Td>
                           <span className="flex items-center gap-1.5">
