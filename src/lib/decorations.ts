@@ -133,6 +133,15 @@ export async function deleteProductDecoration(id: string) {
   if (error) throw error;
 }
 
+/** Staff-only notes + reference image on a single price table. */
+export async function updateProductDecoration(
+  id: string,
+  patch: { notes?: string | null; ref_image_url?: string | null },
+) {
+  const { error } = await supabase.from("product_decorations").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
 export async function addDecorationBand(
   product_decoration_id: string,
   qty: number,
