@@ -373,10 +373,11 @@ export function RoutesPanel() {
                   <th className="px-3 py-2 text-left">LAC fixed (BBD)</th>
                   <th className="px-3 py-2 text-left">LAC / CBM (BBD)</th>
                   <th className="px-3 py-2 text-left">Inland freight</th>
+                  <th className="w-10" />
                 </tr>
               </thead>
               <tbody>
-                {methodRoutes.map((route: RouteRow) => {
+                {visibleRoutes.map((route: RouteRow) => {
                   const ladder = [...(tiers.data ?? [])]
                     .filter((tier) => tier.route_id === route.id)
                     .sort((a, b) => a.band_from - b.band_from);
@@ -494,11 +495,36 @@ export function RoutesPanel() {
                             }
                           />
                         </td>
+                      <td className="px-2 py-1.5">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="icon" variant="ghost" aria-label="Route actions">
+                                <MoreVertical className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="z-[60]">
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onSelect={() =>
+                                  setConfirm({
+                                    kind: "route",
+                                    id: route.id,
+                                    label: `${originById.get(route.origin_id)?.code ?? "?"} → ${
+                                      destinationById.get(route.destination_id)?.code ?? "?"
+                                    }`,
+                                  })
+                                }
+                              >
+                                <Trash2 className="mr-2 size-4" /> Delete route
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
                       </tr>
                       {isOpen ? (
                         <tr className="border-b border-n-100 bg-navy-50/60">
                           <td />
-                          <td colSpan={6} className="px-3 py-3">
+                          <td colSpan={7} className="px-3 py-3">
                             {warnings.length > 0 ? (
                               <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
                                 <AlertTriangle className="size-3.5" />
