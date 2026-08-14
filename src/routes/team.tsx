@@ -41,6 +41,7 @@ export const Route = createFileRoute("/team")({
         deco: [],
         src: [],
         mat: [],
+        ready: [],
       }),
     ],
   },
