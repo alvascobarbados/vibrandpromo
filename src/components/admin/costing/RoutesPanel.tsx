@@ -5,8 +5,10 @@ import {
   ChevronRight,
   Info,
   MoreVertical,
+  Plane,
   Plus,
   Search,
+  Ship,
   Trash2,
 } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
