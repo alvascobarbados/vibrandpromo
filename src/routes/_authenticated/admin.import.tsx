@@ -41,8 +41,22 @@ const COLUMNS = [
   "capacity",
   "weight",
   "features",
-  "is_active",
 ] as const;
+
+/**
+ * Visibility from the CSV: the `status` column (draft/live) is preferred, the
+ * legacy `is_active` column still works, and when NEITHER is present the row
+ * leaves visibility untouched (new products fall back to the draft default).
+ */
+function statusFromRow(row: Row): { status?: string } {
+  const raw = (row["status"] ?? "").trim().toLowerCase();
+  if (raw === "live" || raw === "true") return { status: "live" };
+  if (raw === "draft" || raw === "false") return { status: "draft" };
+  const legacy = (row["is_active"] ?? "").trim().toLowerCase();
+  if (legacy === "true") return { status: "live" };
+  if (legacy === "false") return { status: "draft" };
+  return {};
+}
 
 type Row = Record<string, string>;
 
@@ -226,7 +240,7 @@ function AdminImport() {
           capacity: (row["capacity"] ?? "").trim() || null,
           weight: (row["weight"] ?? "").trim() || null,
           features: (row["features"] ?? "").trim() || null,
-          is_active: (row["is_active"] ?? "").trim().toLowerCase() !== "false",
+          ...statusFromRow(row),
         },
         sourcing:
           supplierCode || supplierItemNo
@@ -405,8 +419,11 @@ function AdminImport() {
           Leave MOQ or production days blank if they are on request. Customer-facing lead times are
           calculated automatically from production time plus the global shipping settings, so
           never put a smaller number in the max column than in the min column. Separate several
-          decoration methods with a vertical bar, like Screen Printing | Heat Transfer. Put false in
-          the is_active column to keep a product hidden from the public site.
+          decoration methods with a vertical bar, like Screen Printing | Heat Transfer. Add an
+          optional <span className="font-mono">status</span> column with draft or live to control
+          whether customers see the product (the legacy{" "}
+          <span className="font-mono">is_active</span> column still works). New products stay in
+          draft when the column is missing.
         </p>
 
         <label
@@ -477,7 +494,11 @@ function AdminImport() {
                             )}
                           </td>
                           <td className="py-2 pr-4">
-                            {item.payload["is_active"] ? "Yes" : "Hidden"}
+                            {item.payload["status"] === "live"
+                              ? "Live"
+                              : item.payload["status"] === "draft"
+                                ? "Draft"
+                                : "Unchanged"}
                           </td>
                         </tr>
                       ))}
