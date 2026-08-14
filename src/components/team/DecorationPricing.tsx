@@ -100,7 +100,7 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
                   >
                     <MoreVertical className="size-3.5" />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="z-[60]">
                     <DropdownMenuItem onSelect={() => setPendingDelete(decoration)}>
                       <Trash2 className="mr-2 size-3.5" /> Delete price table
                     </DropdownMenuItem>
