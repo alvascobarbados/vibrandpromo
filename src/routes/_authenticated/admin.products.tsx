@@ -161,6 +161,11 @@ function AdminProducts() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Product | null>(null);
+  const [activeCell, setActiveCell] = useState<{ rowId: string; col: EditableCell } | null>(null);
+  const [cellPending, setCellPending] = useState<string | null>(null);
+  const [cellError, setCellError] = useState<{ key: string; message: string } | null>(null);
+  /** Rows hold their position while a cell is being edited. */
+  const [frozenOrder, setFrozenOrder] = useState<string[] | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
 
