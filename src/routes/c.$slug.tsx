@@ -31,9 +31,11 @@ import { warnInvisibleFilter } from "@/lib/filter-hygiene";
 export const Route = createFileRoute("/c/$slug")({
   validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> & {
     page?: number;
+    view?: string;
   } => ({
     ...parseCatalogSearch(search),
     page: Number(search['page']) > 0 ? Number(search['page']) : 1,
+    view: search['view'] === "expanded" ? "expanded" : "grid",
   }),
   search: {
     middlewares: [
@@ -41,6 +43,7 @@ export const Route = createFileRoute("/c/$slug")({
         q: "",
         sort: "default",
         page: 1,
+        view: "grid",
         cat: [],
         sub: [],
         moq: [],
