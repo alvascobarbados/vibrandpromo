@@ -420,21 +420,30 @@ function PricelistRow({
         </p>
       </div>
 
-      {/* Product */}
+      {/* Identity — read-mostly: who this product is, in one compact block. */}
       <div className="flex min-w-0 flex-col gap-1.5">
         <div className="flex items-start justify-between gap-1">
-          <InlineField
-            className="flex-1"
-            value={product.name}
-            wrap
-            display={
-              <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-navy-700">
-                {memberDisplayName(product, sourcing)}
-              </span>
-            }
-            validate={nameProblem}
-            save={(raw) => saveProduct({ name: raw.trim() })}
-          />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="flex items-center gap-1">
+              <InlineField
+                className="min-w-0 flex-1"
+                value={product.name}
+                wrap
+                display={
+                  <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-navy-700">
+                    {memberDisplayName(product, sourcing)}
+                  </span>
+                }
+                validate={nameProblem}
+                save={(raw) => saveProduct({ name: raw.trim() })}
+              />
+              {missingKeys.has("name") ? <MissingDot /> : null}
+            </span>
+            {/* SKU sits with the name so an unnamed row still has identity. */}
+            <span className="font-mono text-[11px] leading-4 text-muted-foreground">
+              {product.sku ?? "No SKU"}
+            </span>
+          </div>
           <RowKebab product={product} saveProduct={saveProduct} onDuplicated={onDuplicated} />
         </div>
 
@@ -464,8 +473,44 @@ function PricelistRow({
           save={(raw) => savePacking({ variant_label: raw.trim() || null })}
         />
 
-        <div className="mt-0.5 flex flex-col gap-1">
-          <Kv label="Supplier">
+        {/* System facts as plain text — still the pickers on click. */}
+        <div className="mt-0.5 flex flex-col gap-0.5">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-[12px] leading-5">
+            {missingKeys.has("subcategory") ? <MissingDot /> : null}
+            <span className="min-w-0 max-w-full">
+              <InlineChoice
+                value={product.category_id ?? ""}
+                wrap
+                options={[
+                  { value: "", label: "—" },
+                  ...categories.map((row) => ({ value: row.id, label: row.name })),
+                ]}
+                save={(next) => saveProduct({ category_id: next || null })}
+              />
+            </span>
+            <span className="text-muted-foreground">›</span>
+            <span className="min-w-0 max-w-full">
+              {subOptions.length === 0 ? (
+                DASH
+              ) : (
+                <InlineChoice
+                  value={product.subcategory_id ?? ""}
+                  wrap
+                  options={subOptions}
+                  save={(next) => saveProduct({ subcategory_id: next })}
+                />
+              )}
+            </span>
+          </div>
+          <p className="text-[11px] leading-5 text-muted-foreground">
+            Origin {origin?.name ?? "—"} · auto
+          </p>
+        </div>
+      </div>
+
+      {/* Sourcing entry — the three fields staff actually type here. */}
+      <div className="flex min-w-0 flex-col gap-1">
+        <Kv label="Supplier" alert={missingKeys.has("supplier")}>
             <InlineChoice
               value={sourcing?.supplier_id ?? ""}
               options={[
@@ -503,34 +548,6 @@ function PricelistRow({
               save={(raw) => savePacking({ supplier_item_name: raw.trim() || null })}
             />
           </Kv>
-          <Kv label="Origin">{origin?.name ?? DASH}</Kv>
-          <Kv label="Category">
-            <InlineChoice
-              value={product.category_id ?? ""}
-              wrap
-              options={[
-                { value: "", label: "—" },
-                ...categories.map((row) => ({ value: row.id, label: row.name })),
-              ]}
-              save={(next) => saveProduct({ category_id: next || null })}
-            />
-          </Kv>
-          <Kv label="Subcategory">
-            {subOptions.length === 0 ? (
-              DASH
-            ) : (
-              <InlineChoice
-                value={product.subcategory_id ?? ""}
-                wrap
-                options={subOptions}
-                save={(next) => saveProduct({ subcategory_id: next })}
-              />
-            )}
-          </Kv>
-          <Kv label="SKU">
-            <span className="font-mono text-xs text-muted-foreground">{product.sku ?? "—"}</span>
-          </Kv>
-        </div>
       </div>
 
       {/* Product details */}
