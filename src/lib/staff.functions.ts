@@ -177,6 +177,28 @@ export const setStaffRole = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// The single password-setting path in the codebase. The caller is re-verified as an
+// admin through the is_admin RPC BEFORE the service-role client is imported. The
+// password is write-only: never stored in a table, never logged, never returned.
+export const setStaffPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ user_id: z.string().uuid(), new_password: z.string().min(8).max(72) })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase as SupabaseClient<Database>, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      password: data.new_password,
+    });
+    if (error) throw new Error("Unable to set the password. Please try again.");
+
+    return { ok: true as const };
+  });
+
 export const deleteStaffUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ user_id: z.string().uuid() }).parse(data))
