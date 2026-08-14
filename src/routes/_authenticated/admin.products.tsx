@@ -101,7 +101,8 @@ const PAGE_SIZE = 50;
 type SortKey = "cat" | "supplier" | "name" | "sku" | "moq" | "prod";
 
 /** Cells that can be edited in place, left to right (Tab order). */
-const EDITABLE_CELLS = ["supplier", "name", "supitem", "moq", "production", "status"] as const;
+/** Tab order follows the table's visual column order. */
+const EDITABLE_CELLS = ["name", "supplier", "supitem", "moq", "production", "status"] as const;
 type EditableCell = (typeof EDITABLE_CELLS)[number];
 
 const STATUS_OPTIONS = [
@@ -190,11 +191,13 @@ function AdminProducts() {
 
   const rows = products.data ?? [];
 
-  /** "Unassigned" first, then every supplier as "CODE — Name". */
+  /** "Unassigned" first, then every supplier by name, alphabetical. */
   const supplierOptions = useMemo(
     () => [
       { value: "", label: "Unassigned" },
-      ...(suppliers.data ?? []).map((s) => ({ value: s.id, label: supplierLabel(s) })),
+      ...(suppliers.data ?? [])
+        .map((s) => ({ value: s.id, label: s.name }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
     ],
     [suppliers.data],
   );
@@ -536,14 +539,14 @@ function AdminProducts() {
               <Th colId="subcat" columns={columns} dragged={dragged}>
                 Subcategory
               </Th>
-              <Th sortKey="supplier" search={search} onSort={toggleSort} colId="supplier" columns={columns} dragged={dragged}>
-                Supplier
+              <Th sortKey="sku" search={search} onSort={toggleSort} colId="sku" columns={columns} dragged={dragged}>
+                SKU
               </Th>
               <Th sortKey="name" search={search} onSort={toggleSort} colId="name" columns={columns} dragged={dragged}>
                 Item name
               </Th>
-              <Th sortKey="sku" search={search} onSort={toggleSort} colId="sku" columns={columns} dragged={dragged}>
-                SKU
+              <Th sortKey="supplier" search={search} onSort={toggleSort} colId="supplier" columns={columns} dragged={dragged}>
+                Supplier
               </Th>
               <Th colId="supitem" columns={columns} dragged={dragged}>
                 Supplier item #
@@ -625,28 +628,10 @@ function AdminProducts() {
                           {subName.get(product.subcategory_id ?? "") ?? "—"}
                         </Td>
                         <Td>
-                          <InlineSelect
-                            {...cellProps(product, "supplier")}
-                            value={sourcing?.supplier_id ?? ""}
-                            options={supplierOptions}
-                            display={
-                              supplier ? (
-                                <span className="flex min-w-0 items-center gap-1.5">
-                                  <span className="shrink-0 rounded bg-navy-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-navy-700">
-                                    {supplier.code}
-                                  </span>
-                                  <span className="truncate" title={supplier.name}>
-                                    {supplier.name}
-                                  </span>
-                                </span>
-                              ) : (
-                                <span className="text-amber-600">Unassigned</span>
-                              )
-                            }
-                            onSave={(next, advance) =>
-                              void saveCell(product, "supplier", { supplier_id: next }, advance)
-                            }
-                          />
+                          <span className="flex items-center gap-1.5 font-mono text-[12px]">
+                            <SourceDot source={product.inventory_source} />
+                            {product.sku ?? "—"}
+                          </span>
                         </Td>
                         <Td title={product.name}>
                           <InlineText
@@ -661,10 +646,23 @@ function AdminProducts() {
                           />
                         </Td>
                         <Td>
-                          <span className="flex items-center gap-1.5 font-mono text-[12px]">
-                            <SourceDot source={product.inventory_source} />
-                            {product.sku ?? "—"}
-                          </span>
+                          <InlineSelect
+                            {...cellProps(product, "supplier")}
+                            value={sourcing?.supplier_id ?? ""}
+                            options={supplierOptions}
+                            display={
+                              supplier ? (
+                                <span className="block truncate" title={supplier.name}>
+                                  {supplier.name}
+                                </span>
+                              ) : (
+                                <span className="text-amber-600">Unassigned</span>
+                              )
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(product, "supplier", { supplier_id: next }, advance)
+                            }
+                          />
                         </Td>
                         <Td>
                           <InlineText
