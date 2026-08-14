@@ -78,19 +78,26 @@ export function rushEligible(shippingMethods: string | null | undefined) {
   return airAvailable(shippingMethods);
 }
 
+/**
+ * Filter labels for the public decoration list. These are the canonical
+ * `decoration_methods.name` values the staff price tables project onto
+ * `products.decoration_methods`, so the customer filter shows exactly one
+ * label per method. The three trailing values are legacy labels still present
+ * on products that have no canonical equivalent yet.
+ */
 export const DECORATION_METHODS = [
-  "3D Printing",
-  "Debossed Logo",
+  "3D Doming",
+  "Deboss",
   "Digital Printing",
   "Embroidery",
-  "Epoxy Dome",
-  "Gold Stamping",
-  "Heat Transfer",
+  "Foil Stamping",
+  "Full Colour Dye Sublimation",
+  "Heat Transfer Print",
   "Laser Engraving",
-  "Screen Printing",
-  "Sticker Logo",
-  "Sublimation (Full Colour)",
+  "Screen Print",
   "UV Printing",
+  "3D Printing",
+  "Sticker Logo",
   "Woven Patch",
 ] as const;
 
