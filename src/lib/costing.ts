@@ -106,7 +106,8 @@ export const shippingRoutesQuery = queryOptions({
       .select(
         "id, shipping_method_id, origin_id, destination_id, fixed_cost, lac_fixed_bbd, lac_per_cbm_bbd, include_inland_freight, notes",
       )
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true });
     if (error) throw new Error(error.message);
     return (data ?? []) as RouteRow[];
   },
@@ -118,7 +119,8 @@ export const shippingTiersQuery = queryOptions({
     const { data, error } = await supabase
       .from("shipping_method_tiers")
       .select("id, route_id, band_from, band_to, rate, notes")
-      .order("band_from", { ascending: true });
+      .order("band_from", { ascending: true })
+      .order("id", { ascending: true });
     if (error) throw new Error(error.message);
     return (data ?? []) as TierRow[];
   },
