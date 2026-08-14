@@ -54,8 +54,16 @@ import {
   ProductForm,
   formFromProduct,
   payloadFromForm,
+  validateForm,
   type FormState,
 } from "@/components/admin/ProductForm";
+import {
+  InlineProduction,
+  InlineSelect,
+  InlineText,
+  CellView,
+} from "@/components/admin/inline-cells";
+import { moqProblem } from "@/lib/product-rules";
 import { supabase } from "@/integrations/supabase/client";
 import {
   categoriesQuery,
@@ -92,6 +100,35 @@ type ProductSearch = z.infer<typeof searchSchema>;
 const PAGE_SIZE = 50;
 
 type SortKey = "cat" | "supplier" | "name" | "sku" | "moq" | "prod";
+
+/** Cells that can be edited in place, left to right (Tab order). */
+const EDITABLE_CELLS = ["supplier", "name", "supitem", "moq", "production", "status"] as const;
+type EditableCell = (typeof EDITABLE_CELLS)[number];
+
+/**
+ * The one product write path used by the expanded editor, the "New product"
+ * sheet and the inline cells: products.update/insert plus the sourcing upsert.
+ */
+async function persistProduct(id: string | null, values: FormState) {
+  const payload = payloadFromForm(values);
+  let productId = id;
+  if (id) {
+    const { error } = await supabase.from("products").update(payload).eq("id", id);
+    if (error) throw error;
+  } else {
+    const { data, error } = await supabase.from("products").insert(payload).select("id").single();
+    if (error) throw error;
+    productId = data?.id ?? null;
+  }
+  // Sourcing lives in its own staff-only table, so it is a second write.
+  if (productId) {
+    await saveProductSourcing({
+      product_id: productId,
+      supplier_id: values.supplier_id || null,
+      supplier_item_no: values.supplier_item_no,
+    });
+  }
+}
 
 export const Route = createFileRoute("/_authenticated/admin/products")({
   beforeLoad: ({ context }) => requirePage(context.access, "products"),
@@ -212,30 +249,8 @@ function AdminProducts() {
   const pageItems = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const save = useMutation({
-    mutationFn: async ({ id, values }: { id: string | null; values: FormState }) => {
-      const payload = payloadFromForm(values);
-      let productId = id;
-      if (id) {
-        const { error } = await supabase.from("products").update(payload).eq("id", id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from("products")
-          .insert(payload)
-          .select("id")
-          .single();
-        if (error) throw error;
-        productId = data?.id ?? null;
-      }
-      // Sourcing lives in its own staff-only table, so it is a second write.
-      if (productId) {
-        await saveProductSourcing({
-          product_id: productId,
-          supplier_id: values.supplier_id || null,
-          supplier_item_no: values.supplier_item_no,
-        });
-      }
-    },
+    mutationFn: ({ id, values }: { id: string | null; values: FormState }) =>
+      persistProduct(id, values),
     onSuccess: (_result, variables) => {
       toast.success(variables.id ? "Product updated" : "Product created");
       setEditingId(null);
