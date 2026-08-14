@@ -8,7 +8,15 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Copy, ExternalLink, Image as ImageIcon, Link2, MoreVertical, Upload } from "lucide-react";
+import {
+  ChevronDown,
+  Copy,
+  ExternalLink,
+  Image as ImageIcon,
+  Link2,
+  MoreVertical,
+  Upload,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -37,6 +45,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { IncludedItems } from "@/components/team/IncludedItems";
 import { costingReadyMissing, type MissingField } from "@/lib/costing-gate";
+import { liveGateProblem } from "@/lib/live-gate";
 import { buildPricelistItems, memberDisplayName } from "@/lib/pricelist-groups";
 import { productIncludesQuery, type ProductInclude } from "@/lib/product-includes";
 import {
@@ -103,7 +112,7 @@ import {
  * strip's own sideways scroll starts.
  */
 const COLS =
-  "grid grid-cols-[120px_190px_170px_264px_280px_minmax(0,1fr)] gap-3 px-4";
+  "grid grid-cols-[120px_190px_196px_260px_268px_minmax(0,1fr)] gap-3 px-4";
 
 /** ONE vertical rhythm token — every KV row and section header uses it. */
 const ROW = "min-h-[26px]";
@@ -406,21 +415,23 @@ function PricelistRow({
     .map((row) => ({ value: row.id, label: row.name }));
 
   return (
-    <div className={`${COLS} items-start py-3.5 ${product.is_active ? "" : "bg-n-50/70"}`}>
+    <div
+      className={`${COLS} items-start border-l-2 py-3.5 ${
+        product.status === "live" ? "border-transparent" : "border-amber-400"
+      }`}
+    >
       {/* Image */}
       <div className="flex flex-col gap-1.5">
         <ImageSlot
           label="Product image"
           path={images[0]}
-          dim={!product.is_active}
           onOpen={() => setImagesOpen(true)}
         />
         <div className="flex items-center gap-2">
           <ImageSlot
             label="Reference"
             path={images[1]}
-            dim={!product.is_active}
-            className="size-11 shrink-0"
+            className="size-[68px] shrink-0"
             extra={images.length > 2 ? images.length - 2 : 0}
             onOpen={() => setImagesOpen(true)}
           />
@@ -466,7 +477,7 @@ function PricelistRow({
 
         {/* STATUS chips — one consistent row, directly under the product name. */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <PublishChip product={product} saveProduct={saveProduct} />
+          <StatusControl product={product} saveProduct={saveProduct} />
           <CostingBadge missing={missing} />
         </div>
 
@@ -575,6 +586,7 @@ function PricelistRow({
           <InlineField
             value={product.material ?? ""}
             wrap
+            wrapLines={3}
             save={(raw) => saveProduct({ material: raw.trim() || null })}
           />
         </Kv>
@@ -654,7 +666,7 @@ function PricelistRow({
         <SectionHead>Packing details</SectionHead>
         <Kv label="Pcs / ctn" alert={missingKeys.has("carton_pack")}>
           <InlineField
-            className="w-16"
+            className="w-14"
             value={numberText(sourcing?.carton_pack)}
             numeric
             validate={positiveProblem}
@@ -671,23 +683,23 @@ function PricelistRow({
         >
           <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
-              className="w-9 shrink-0"
+              className="w-8 shrink-0"
               value={numberText(sourcing?.carton_length)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_length: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-center text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-9 shrink-0"
+              className="w-8 shrink-0"
               value={numberText(sourcing?.carton_width)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_width: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-center text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-9 shrink-0"
+              className="w-8 shrink-0"
               value={numberText(sourcing?.carton_height)}
               numeric
               validate={positiveProblem}
@@ -715,7 +727,7 @@ function PricelistRow({
         <Kv label="Weight" alert={missingKeys.has("carton_weight")}>
           <span className="flex flex-nowrap items-center gap-1.5">
             <InlineField
-              className="w-20 shrink-0"
+              className="w-16 shrink-0"
               value={numberText(sourcing?.carton_weight)}
               display={weight3(sourcing?.carton_weight ?? null, units.weight)}
               numeric
@@ -750,17 +762,26 @@ function PricelistRow({
         ) : null}
 
         <SectionHead>Production</SectionHead>
+        <Kv label="MOQ">
+          <InlineField
+            className="w-14"
+            value={product.moq == null ? "" : String(product.moq)}
+            numeric
+            validate={moqProblem}
+            save={(raw) => saveProduct({ moq: numOrNull(raw) })}
+          />
+        </Kv>
         <Kv label="Lead time" alert={missingKeys.has("production_min_days")}>
           <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
-              className="w-10 shrink-0"
+              className="w-9 shrink-0"
               value={product.production_min_days == null ? "" : String(product.production_min_days)}
               numeric
               save={(raw) => saveProduct({ production_min_days: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-[13px] text-muted-foreground">–</span>
+            <span className="shrink-0 text-[11px] text-muted-foreground">–</span>
             <InlineField
-              className="w-10 shrink-0"
+              className="w-9 shrink-0"
               value={product.production_max_days == null ? "" : String(product.production_max_days)}
               numeric
               save={(raw) => saveProduct({ production_max_days: numOrNull(raw) })}
@@ -773,15 +794,6 @@ function PricelistRow({
           </span>
         </Kv>
         <ProductionExtras product={product} save={saveProduct} />
-        <Kv label="MOQ">
-          <InlineField
-            className="w-16"
-            value={product.moq == null ? "" : String(product.moq)}
-            numeric
-            validate={moqProblem}
-            save={(raw) => saveProduct({ moq: numOrNull(raw) })}
-          />
-        </Kv>
       </div>
 
       {/* Pricing */}
@@ -870,11 +882,12 @@ function ImageSlot({
 }
 
 /**
- * PUBLISH state chip — customer visibility, through the SAME products.is_active
- * update path the kebab Hide/Show uses (so the two stay in sync). Independent of
- * the costing state chip beside it: Published + Incomplete is legal.
+ * STATUS control — the ONE customer-visibility field (products.status), through
+ * the SAME staff-gated products update path the kebab uses. Draft → Live is
+ * refused by the shared live gate until the row has a name and one image.
+ * Independent of the costing chip beside it: Live + Incomplete is legal.
  */
-function PublishChip({
+function StatusControl({
   product,
   saveProduct,
 }: {
@@ -882,37 +895,55 @@ function PublishChip({
   saveProduct: (patch: Record<string, unknown>) => Promise<void>;
 }) {
   const [confirming, setConfirming] = useState(false);
-  const write = (next: boolean) =>
-    void saveProduct({ is_active: next }).then(
-      () => toast.success(next ? "Published" : "Removed from the customer shop"),
+  const live = product.status === "live";
+  const write = (next: "draft" | "live") =>
+    void saveProduct({ status: next }).then(
+      () => toast.success(next === "live" ? "Live on the customer shop" : "Back to draft"),
       (error: unknown) =>
         toast.error(error instanceof Error ? error.message : "Could not save"),
     );
 
+  function goLive() {
+    const problem = liveGateProblem(product);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+    write("live");
+  }
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => (product.is_active ? setConfirming(true) : write(true))}
-        className={`inline-flex h-[18px] items-center rounded-full px-2 text-[11px] font-semibold leading-none transition-colors ${
-          product.is_active
-            ? "bg-navy-700 text-white hover:bg-navy-600"
-            : "border border-n-300 text-muted-foreground hover:bg-n-100"
-        }`}
-      >
-        {product.is_active ? "Published" : "Not published"}
-      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={`Status: ${live ? "Live" : "Draft"}`}
+          className={`inline-flex h-[18px] items-center gap-1 rounded-full px-2 text-[11px] font-semibold leading-none transition-colors ${
+            live
+              ? "bg-lime-500 text-n-700 hover:bg-lime-400"
+              : "border border-amber-400 text-amber-700 hover:bg-amber-50"
+          }`}
+        >
+          {live ? "Live" : "Draft"}
+          <ChevronDown className="size-3" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="z-[60]">
+          <DropdownMenuItem onSelect={() => (live ? undefined : goLive())}>Live</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => (live ? setConfirming(true) : undefined)}>
+            Draft
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove from the customer shop?</AlertDialogTitle>
+            <AlertDialogTitle>Move back to draft?</AlertDialogTitle>
             <AlertDialogDescription>
-              Customers will no longer see {product.name}. You can publish it again at any time.
+              Customers will no longer see {product.name}. You can make it live again at any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => write(false)}>Unpublish</AlertDialogAction>
+            <AlertDialogAction onClick={() => write("draft")}>Move to draft</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -975,14 +1006,22 @@ function RowKebab({
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => {
-            void saveProduct({ is_active: !product.is_active }).then(
-              () => toast.success(product.is_active ? "Hidden from catalogue" : "Published"),
+            const live = product.status === "live";
+            if (!live) {
+              const problem = liveGateProblem(product);
+              if (problem) {
+                toast.error(problem);
+                return;
+              }
+            }
+            void saveProduct({ status: live ? "draft" : "live" }).then(
+              () => toast.success(live ? "Back to draft" : "Live on the customer shop"),
               (error: unknown) =>
                 toast.error(error instanceof Error ? error.message : "Could not save"),
             );
           }}
         >
-          {product.is_active ? "Hide" : "Show"}
+          {product.status === "live" ? "Move to draft" : "Make live"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

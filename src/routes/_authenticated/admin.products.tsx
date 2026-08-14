@@ -106,8 +106,8 @@ const EDITABLE_CELLS = ["name", "supplier", "supitem", "moq", "production", "sta
 type EditableCell = (typeof EDITABLE_CELLS)[number];
 
 const STATUS_OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "hidden", label: "Hidden" },
+  { value: "live", label: "Live" },
+  { value: "draft", label: "Draft" },
 ];
 
 /**
@@ -219,8 +219,8 @@ function AdminProducts() {
     return rows.filter((product) => {
       if (search.nophoto && (product.images ?? []).length > 0) return false;
       if (search.cat !== "all" && product.category_id !== search.cat) return false;
-      if (search.status === "active" && !product.is_active) return false;
-      if (search.status === "hidden" && product.is_active) return false;
+      if (search.status === "live" && product.status !== "live") return false;
+      if (search.status === "draft" && product.status === "live") return false;
       if (search.supplier !== "all") {
         const supplierId = rowSourcing(product)?.supplier_id ?? null;
         if (search.supplier === "none" ? supplierId !== null : supplierId !== search.supplier)
@@ -390,7 +390,7 @@ function AdminProducts() {
   }
 
   const noPhotoCount = rows.filter((p) => (p.images ?? []).length === 0).length;
-  const activeCount = rows.filter((p) => p.is_active).length;
+  const liveCount = rows.filter((p) => p.status === "live").length;
 
   function toggleSort(key: SortKey) {
     setActiveCell(null);
@@ -729,17 +729,17 @@ function AdminProducts() {
                         <Td>
                           <InlineSelect
                             {...cellProps(product, "status")}
-                            value={product.is_active ? "active" : "hidden"}
+                            value={product.status === "live" ? "live" : "draft"}
                             options={STATUS_OPTIONS}
                             display={
                               <span className="flex items-center gap-1.5">
                                 <span
                                   aria-hidden
                                   className={`size-2 shrink-0 rounded-full ${
-                                    product.is_active ? "bg-lime-500" : "bg-n-400"
+                                    product.status === "live" ? "bg-lime-500" : "bg-amber-500"
                                   }`}
                                 />
-                                {product.is_active ? "Active" : "Hidden"}
+                                {product.status === "live" ? "Live" : "Draft"}
                                 {product.is_featured ? (
                                   <Star className="size-3 fill-lime-500 text-lime-500" />
                                 ) : null}
@@ -749,7 +749,7 @@ function AdminProducts() {
                               void saveCell(
                                 product,
                                 "status",
-                                { is_active: next === "active" },
+                                { status: next === "live" ? "live" : "draft" },
                                 advance,
                               )
                             }
@@ -811,7 +811,7 @@ function AdminProducts() {
         ) : null}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border bg-secondary/40 px-3 py-2 text-[11px] text-muted-foreground">
           <span>{rows.length} products</span>
-          <span>{activeCount} active</span>
+          <span>{liveCount} live</span>
           <span>{noPhotoCount} without photos</span>
           <span>{supplierCounts.unassigned} supplier unassigned</span>
           {!columns.isDefault ? (

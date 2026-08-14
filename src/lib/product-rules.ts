@@ -18,7 +18,8 @@ export type ProductionRuleInput = {
   rush_enabled: boolean;
   rush_production_min_days: string;
   rush_production_max_days: string;
-  shipping_methods: string;
+  /** NULL / "none" means no shipping method is offered at all. */
+  shipping_methods: string | null;
 };
 
 /** Production + rush rules. Returns a friendly problem message, or null. */
@@ -31,7 +32,11 @@ export function productionProblem(input: ProductionRuleInput): string | null {
       return "The maximum production time must be the same as or longer than the minimum.";
   }
   if (input.rush_enabled) {
-    if (input.shipping_methods === "sea_only") return "Rush requires air shipping.";
+    const air =
+      input.shipping_methods != null &&
+      input.shipping_methods !== "sea_only" &&
+      input.shipping_methods !== "none";
+    if (!air) return "Rush requires air shipping.";
     const rushMin = numberOrNull(input.rush_production_min_days);
     const rushMax = numberOrNull(input.rush_production_max_days);
     if (rushMin == null || rushMin < 1) return "Please enter the rush production time in days.";

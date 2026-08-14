@@ -85,14 +85,14 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
       await (async () => {
         // Freight availability is read from the catalogue, never trusted from the client.
         const ids = items.map((item) => item.product_id).filter((id): id is string => !!id);
-        const shippingById = new Map<string, string>();
+        const shippingById = new Map<string, string | null>();
         if (ids.length) {
           const { data: products } = await supabaseAdmin
             .from("products")
             .select("id, shipping_methods")
             .in("id", ids);
           for (const product of products ?? []) {
-            shippingById.set(product.id, product.shipping_methods ?? "air_sea");
+            shippingById.set(product.id, product.shipping_methods ?? null);
           }
         }
         return items.map((item) => ({

@@ -55,7 +55,8 @@ export type FormState = {
   details: string;
   price: string;
   show_price: boolean;
-  is_active: boolean;
+  /** 'draft' or 'live' — the ONE visibility field. */
+  status: string;
   is_featured: boolean;
   images: string[];
   /** Sourcing lives in its own table; these two are saved separately. */
@@ -87,7 +88,7 @@ export const EMPTY_FORM: FormState = {
   details: "",
   price: "",
   show_price: true,
-  is_active: true,
+  status: "draft",
   is_featured: false,
   images: [],
   supplier_id: "",
@@ -106,7 +107,7 @@ export function formFromProduct(
       product.production_min_days == null ? "" : String(product.production_min_days),
     production_max_days:
       product.production_max_days == null ? "" : String(product.production_max_days),
-    shipping_methods: product.shipping_methods ?? "air_sea",
+    shipping_methods: product.shipping_methods ?? "none",
     rush_enabled: product.rush_enabled ?? false,
     rush_production_min_days:
       product.rush_production_min_days == null ? "" : String(product.rush_production_min_days),
@@ -126,7 +127,7 @@ export function formFromProduct(
     details: product.details ?? "",
     price: product.price == null ? "" : String(product.price),
     show_price: product.show_price,
-    is_active: product.is_active,
+    status: product.status,
     is_featured: product.is_featured,
     images: product.images ?? [],
     supplier_id: sourcing?.supplier_id ?? "",
@@ -141,7 +142,8 @@ export function payloadFromForm(form: FormState) {
     moq: numberOrNull(form.moq),
     production_min_days: numberOrNull(form.production_min_days),
     production_max_days: numberOrNull(form.production_max_days),
-    shipping_methods: form.shipping_methods || "air_sea",
+    shipping_methods:
+      !form.shipping_methods || form.shipping_methods === "none" ? null : form.shipping_methods,
     rush_enabled: form.rush_enabled,
     rush_production_min_days: form.rush_enabled
       ? numberOrNull(form.rush_production_min_days)
@@ -164,7 +166,7 @@ export function payloadFromForm(form: FormState) {
     details: form.details || null,
     price: form.price ? Number(form.price) : null,
     show_price: form.show_price,
-    is_active: form.is_active,
+    status: form.status,
     is_featured: form.is_featured,
     images: form.images,
   };
@@ -175,6 +177,8 @@ export function validateForm(form: FormState): string | null {
   if (!form.name.trim()) return "Please give the product a name.";
   if (!form.sku.trim()) return "Please enter a SKU (product code).";
   if (!form.subcategory_id) return "Please choose a category and subcategory.";
+  if (form.status === "live" && form.images.length === 0)
+    return "Add at least one catalogue image before going live.";
   return productionProblem(form);
 }
 
@@ -402,7 +406,7 @@ export function ProductForm({
             value={form.shipping_methods}
             onValueChange={(value) =>
               setForm((prev) => {
-                if (value === "sea_only" && prev.rush_enabled) {
+                if ((value === "sea_only" || value === "none") && prev.rush_enabled) {
                   if (
                     !window.confirm(
                       "Rush requires air shipping. Switching to Sea only will turn rush off. Continue?",
@@ -434,13 +438,13 @@ export function ProductForm({
               Rush available
               <Switch
                 checked={form.rush_enabled}
-                disabled={form.shipping_methods === "sea_only"}
+                disabled={form.shipping_methods === "sea_only" || form.shipping_methods === "none"}
                 onCheckedChange={(checked) =>
                   setForm((prev) => ({ ...prev, rush_enabled: checked }))
                 }
               />
             </label>
-            {form.shipping_methods === "sea_only" ? (
+            {form.shipping_methods === "sea_only" || form.shipping_methods === "none" ? (
               <p className="mt-1.5 text-xs text-muted-foreground">Rush requires air shipping</p>
             ) : form.rush_enabled ? (
               <div className="mt-3 sm:max-w-sm">
@@ -632,10 +636,12 @@ export function ProductForm({
           </label>
           <label className="flex items-center gap-2 text-sm">
             <Switch
-              checked={form.is_active}
-              onCheckedChange={(value) => setForm((prev) => ({ ...prev, is_active: value }))}
+              checked={form.status === "live"}
+              onCheckedChange={(value) =>
+                setForm((prev) => ({ ...prev, status: value ? "live" : "draft" }))
+              }
             />
-            Active
+            Live
           </label>
           <label className="flex items-center gap-2 text-sm">
             <Switch
