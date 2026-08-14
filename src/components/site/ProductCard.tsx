@@ -12,6 +12,7 @@ import { RushChip } from "@/components/site/RushChip";
 import { ProductSourcingFetch } from "@/components/site/ProductTeamDetails";
 import { useViewMode } from "@/lib/view-mode";
 import type { PublicPricing } from "@/lib/pricing-types";
+import type { PublicDecorationPricing } from "@/lib/pricing-types";
 import { fallbackToOriginal } from "@/lib/image-variants";
 import { qtyFloor } from "@/lib/quantity";
 import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
@@ -48,6 +49,110 @@ function Kv({ label, children }: { label: string; children: React.ReactNode }) {
     <div className="grid grid-cols-[104px_1fr] items-baseline gap-x-2">
       <span className="sheet-kv-label">{label}</span>
       <span className="sheet-kv-value min-w-0">{children}</span>
+    </div>
+  );
+}
+
+/** Hero + clickable thumbnail strip. Expanded view only. */
+function bandFor(quantities: number[], qty: number) {
+  let hit: number | null = null;
+  for (const value of quantities) if (qty >= value) hit = value;
+  return hit;
+}
+
+/**
+ * One priced decoration method. Columns are quantity bands; rows are the
+ * transport options the product actually ships by.
+ */
+function PricingBubble({
+  bubble,
+  showAir,
+  showSea,
+  air,
+  sea,
+  rush,
+  moq,
+  qty,
+}: {
+  bubble: PublicDecorationPricing;
+  showAir: boolean;
+  showSea: boolean;
+  air: string | null;
+  sea: string | null;
+  rush: string | null;
+  moq: number | null;
+  qty: number;
+}) {
+  const airTable = bubble.tables.find((table) => table.mode === "air");
+  const seaTable = bubble.tables.find((table) => table.mode === "sea");
+  const quantities = Array.from(
+    new Set([...(airTable?.rows ?? []), ...(seaTable?.rows ?? [])].map((row) => row.qty)),
+  ).sort((a, b) => a - b);
+  const band = bandFor(quantities, qty);
+  const rows: { label: string; icon?: typeof Plane; chip?: boolean; lead: string | null; from?: "air" | "sea" }[] =
+    [];
+  if (showAir && airTable) rows.push({ label: "Air", icon: Plane, lead: air, from: "air" });
+  if (showSea && seaTable) rows.push({ label: "Sea", icon: Ship, lead: sea, from: "sea" });
+  if (rush && airTable) rows.push({ label: "Rush", chip: true, lead: rush, from: "air" });
+  if (!quantities.length || !rows.length) return null;
+
+  const cell = (from: "air" | "sea", value: number) => {
+    const table = from === "air" ? airTable : seaTable;
+    const row = table?.rows.find((entry) => entry.qty === value);
+    return row ? usd(row.unitUsd) : "—";
+  };
+
+  return (
+    <div className="rounded-xl border border-n-200 bg-white p-3">
+      <p className="card-value text-[13px]">{bubble.methodName}</p>
+      <table className="mt-2 w-full border-separate border-spacing-0 text-sm tabular-nums">
+        <thead>
+          <tr>
+            <th className="sheet-kv-label py-1 text-left font-semibold" />
+            {quantities.map((value) => (
+              <th
+                key={value}
+                className={`sheet-kv-label rounded-t-md px-2 py-1 text-right font-semibold ${
+                  band === value ? "bg-lime-50 !text-navy-700" : ""
+                }`}
+              >
+                {value}
+                {moq != null && value === moq ? (
+                  <span className="ml-1 text-[10px] normal-case tracking-normal">MOQ</span>
+                ) : null}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={row.label}>
+              <td className="border-t border-n-200 py-1 pr-2 align-middle">
+                <span className="flex items-center gap-1.5 whitespace-nowrap">
+                  {row.chip ? <RushChip /> : null}
+                  {row.icon ? (
+                    <row.icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+                  ) : null}
+                  <span className="text-[13px]">{row.label}</span>
+                  {row.lead ? (
+                    <span className="text-[11px] text-n-500">· {row.lead}</span>
+                  ) : null}
+                </span>
+              </td>
+              {quantities.map((value) => (
+                <td
+                  key={value}
+                  className={`border-t border-n-200 px-2 py-1 text-right ${
+                    band === value ? "bg-lime-50" : ""
+                  } ${band === value && index === rows.length - 1 ? "rounded-b-md" : ""}`}
+                >
+                  {cell(row.from ?? "air", value)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
