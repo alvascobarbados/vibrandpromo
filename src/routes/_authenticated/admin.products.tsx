@@ -312,12 +312,6 @@ function AdminProducts() {
     setEditingId(null);
   }
 
-  function startCellUnused(product: AdminProductRow, col: EditableCell) {
-    setCellError(null);
-    setFrozenOrder((prev) => prev ?? sorted.map((row) => row.id));
-    setActiveCell({ rowId: product.id, col });
-  }
-
   /** Inline saves reuse validateForm + persistProduct — the editors' own path. */
   async function saveCell(
     product: AdminProductRow,
