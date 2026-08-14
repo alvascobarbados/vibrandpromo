@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
 import { imageSrc } from "@/lib/catalog";
+import { fallbackToOriginal } from "@/lib/image-variants";
 
 export function ProductImageCarousel({
   images,
@@ -19,7 +20,10 @@ export function ProductImageCarousel({
   coverOnly?: boolean;
   fieldClassName?: string;
 }) {
-  const list = images.map(imageSrc);
+  // Cards and carousels render the ~480px derivative; a missing variant falls
+  // back to the original on error so a tile can never break.
+  const list = images.map((value) => imageSrc(value, "card"));
+  const originals = images.map((value) => imageSrc(value));
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState<number[]>([0]);
@@ -77,6 +81,7 @@ export function ProductImageCarousel({
           alt={alt}
           loading="lazy"
           decoding="async"
+          onError={(event) => fallbackToOriginal(event, originals[0] ?? "")}
           onClick={onImageTap ? () => onImageTap(0) : undefined}
           className={`image-field-media transition-transform duration-[180ms] ease-out motion-safe:[@media(hover:hover)]:group-hover:scale-[1.02] ${
             onImageTap ? "cursor-zoom-in" : ""
@@ -127,6 +132,7 @@ export function ProductImageCarousel({
                 alt={i === 0 ? alt : `${alt} — image ${i + 1}`}
                 loading={i === 0 ? "lazy" : "lazy"}
                 decoding="async"
+                onError={(event) => fallbackToOriginal(event, originals[i] ?? "")}
                 className="image-field-media transition-transform duration-[180ms] ease-out motion-safe:[@media(hover:hover)]:group-hover:scale-[1.02]"
               />
             ) : (
