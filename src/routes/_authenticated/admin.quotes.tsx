@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { QuoteDetailDrawer } from "@/components/admin/QuoteDetailDrawer";
 import { useIsDesktop } from "@/hooks/use-desktop";
 import { supabase } from "@/integrations/supabase/client";
+import { usePrefValue } from "@/lib/user-prefs";
 import {
   QUOTE_STATUSES,
   quoteProductsQuery,
