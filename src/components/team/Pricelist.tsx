@@ -259,6 +259,14 @@ function PricelistRow({
   const [imagesOpen, setImagesOpen] = useState(false);
   const supplier = suppliers.find((row) => row.id === sourcing?.supplier_id) ?? null;
   const units = effectiveUnits(sourcing, supplier?.unit_system);
+  /** CBM is always normalized from the effective dimension unit, never assumed metric. */
+  const cbm = cartonCbm(
+    sourcing?.carton_length ?? null,
+    sourcing?.carton_width ?? null,
+    sourcing?.carton_height ?? null,
+    units.dimension,
+    constants,
+  );
   const origin = origins.find((row) => row.id === supplier?.origin_id) ?? null;
   const images = product.images ?? [];
 
