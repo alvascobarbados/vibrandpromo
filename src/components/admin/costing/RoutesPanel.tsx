@@ -52,6 +52,7 @@ import {
   type RouteRow,
   type ShippingMethodRow,
 } from "@/lib/costing";
+import { snapUnit, unitsForMetric } from "@/lib/units";
 
 export function RoutesPanel() {
   const queryClient = useQueryClient();
@@ -84,7 +85,7 @@ export function RoutesPanel() {
         fuel_surcharge_pct: 0,
         buffer_pct: 0,
         chargeable_metric: "CHARGEABLE_WEIGHT",
-        chargeable_unit: "lbs",
+        chargeable_unit: "LBS",
       });
       if (error) throw new Error(error.message);
     },
@@ -314,7 +315,13 @@ export function RoutesPanel() {
                 <Select
                   value={method.chargeable_metric}
                   onValueChange={(value) =>
-                    updateMethod.mutate({ id: method.id, patch: { chargeable_metric: value } })
+                    updateMethod.mutate({
+                      id: method.id,
+                      patch: {
+                        chargeable_metric: value,
+                        chargeable_unit: snapUnit(value, method.chargeable_unit),
+                      },
+                    })
                   }
                 >
                   <SelectTrigger className="h-8 w-52 text-xs">
@@ -330,17 +337,26 @@ export function RoutesPanel() {
                 </Select>
               </Labelled>
               <Labelled label="Unit">
-                <InlineField
-                  ariaLabel={`Chargeable unit for ${method.code}`}
-                  value={method.chargeable_unit}
-                  className="w-24"
-                  onSave={(next) =>
-                    updateMethod.mutateAsync({
-                      id: method.id,
-                      patch: { chargeable_unit: next.trim() },
-                    })
+                <Select
+                  value={snapUnit(method.chargeable_metric, method.chargeable_unit)}
+                  onValueChange={(value) =>
+                    updateMethod.mutate({ id: method.id, patch: { chargeable_unit: value } })
                   }
-                />
+                >
+                  <SelectTrigger
+                    className="h-8 w-24 text-xs"
+                    aria-label={`Chargeable unit for ${method.code}`}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unitsForMetric(method.chargeable_metric).map((unit) => (
+                      <SelectItem key={unit} value={unit}>
+                        {unit}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Labelled>
               <div className="ml-auto">
                 <DropdownMenu>
@@ -680,10 +696,11 @@ export function RoutesPanel() {
   );
 }
 
-/** Singularises common weight units for tier rate suffixes ("lbs" → "lb"). */
+/** Singularises weight units for tier rate suffixes ("LBS" → "lb"). */
 function unitLabel(unit: string): string {
-  const trimmed = unit.trim();
-  if (/^(lbs|kgs)$/i.test(trimmed)) return trimmed.slice(0, -1);
+  const trimmed = unit.trim().toUpperCase();
+  if (trimmed === "LBS") return "lb";
+  if (trimmed === "KG") return "kg";
   return trimmed;
 }
 

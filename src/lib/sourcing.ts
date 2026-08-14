@@ -93,6 +93,8 @@ export type SourcingRow = ProductSourcing & {
   carton_width: number | null;
   carton_height: number | null;
   carton_weight: number | null;
+  dimension_unit: string | null;
+  weight_unit: string | null;
 };
 
 export type SourcingPatch = Partial<Omit<SourcingRow, "id" | "product_id">>;
@@ -103,7 +105,7 @@ export const sourcingRowsQuery = queryOptions({
     const { data, error } = await supabase
       .from("product_sourcing")
       .select(
-        "id, product_id, supplier_id, supplier_item_no, supplier_item_name, variant_label, carton_pack, carton_length, carton_width, carton_height, carton_weight",
+        "id, product_id, supplier_id, supplier_item_no, supplier_item_name, variant_label, carton_pack, carton_length, carton_width, carton_height, carton_weight, dimension_unit, weight_unit",
       )
       .returns<SourcingRow[]>();
     if (error) throw error;
