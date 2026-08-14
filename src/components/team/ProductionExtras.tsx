@@ -16,7 +16,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { InlineField } from "@/components/team/inline-field";
 import { RangeRow } from "@/components/team/range-row";
 import type { Product } from "@/lib/catalog";
 import { numOrNull } from "@/lib/pricelist";
@@ -99,7 +98,7 @@ export function ProductionExtras({
 
   return (
     <>
-      <div className="grid min-h-[26px] grid-cols-[88px_minmax(0,1fr)] items-center gap-x-3">
+      <div className="grid min-h-[22px] grid-cols-[88px_minmax(0,1fr)] items-center gap-x-3">
         <span className="truncate whitespace-nowrap text-[11px] uppercase leading-5 tracking-[0.04em] text-muted-foreground">
           Rush
         </span>
@@ -113,7 +112,7 @@ export function ProductionExtras({
         />
       </div>
 
-      <div className="grid min-h-[26px] grid-cols-[88px_minmax(0,1fr)] items-center gap-x-3">
+      <div className="grid min-h-[22px] grid-cols-[88px_minmax(0,1fr)] items-center gap-x-3">
         <span className="truncate whitespace-nowrap text-[11px] uppercase leading-5 tracking-[0.04em] text-muted-foreground">
           Ships by
         </span>
