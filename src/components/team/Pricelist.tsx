@@ -237,7 +237,10 @@ function PricelistRow({
   details,
   attributeLabels,
   attributes,
+  includes,
   constants,
+  focusVariant,
+  onDuplicated,
 }: {
   product: Product;
   categories: Category[];
@@ -250,7 +253,10 @@ function PricelistRow({
   details: MethodDetail[];
   attributeLabels: DetailLabel[];
   attributes: ProductDetailRow[];
+  includes: ProductInclude[];
   constants: Constants;
+  focusVariant: boolean;
+  onDuplicated: (productId: string) => void;
 }) {
   const queryClient = useQueryClient();
   const [imagesOpen, setImagesOpen] = useState(false);
@@ -271,6 +277,8 @@ function PricelistRow({
   const refreshSourcing = () => queryClient.invalidateQueries({ queryKey: ["product_sourcing"] });
   const refreshAttributes = () =>
     queryClient.invalidateQueries({ queryKey: ["product_details"] });
+  const refreshIncludes = () => queryClient.invalidateQueries({ queryKey: ["product_includes"] });
+  const missing = costingReadyMissing(product, sourcing);
   const labelName = (id: string) =>
     attributeLabels.find((row) => row.id === id)?.label ?? "Attribute";
   const usedLabelIds = new Set(attributes.map((row) => row.detail_label_id));
@@ -321,17 +329,20 @@ function PricelistRow({
             className="flex-1"
             value={product.name}
             display={
-              <span className="text-[13px] font-semibold text-navy-700">{product.name}</span>
+              <span className="text-[13px] font-semibold text-navy-700">
+                {memberDisplayName(product, sourcing)}
+              </span>
             }
             validate={nameProblem}
             save={(raw) => saveProduct({ name: raw.trim() })}
           />
-          <RowKebab product={product} saveProduct={saveProduct} />
+          <RowKebab product={product} saveProduct={saveProduct} onDuplicated={onDuplicated} />
         </div>
 
         <InlineField
           value={sourcing?.variant_label ?? ""}
           placeholder="Variant"
+          autoEdit={focusVariant}
           display={
             <span className="w-fit rounded-full bg-navy-100 px-2 py-0.5 text-[11px] font-medium text-navy-700">
               {sourcing?.variant_label || "Add variant"}
@@ -345,6 +356,8 @@ function PricelistRow({
             Hidden
           </span>
         ) : null}
+
+        <CostingBadge missing={missing} />
 
         <div className="mt-0.5 flex flex-col gap-1">
           <Kv label="Supplier">
@@ -465,6 +478,7 @@ function PricelistRow({
           nextSortOrder={nextAttributeSort}
           onAdded={refreshAttributes}
         />
+        <IncludedItems productId={product.id} rows={includes} onChanged={refreshIncludes} />
       </div>
 
       {/* Packing & production */}
