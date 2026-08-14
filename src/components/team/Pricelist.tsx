@@ -55,7 +55,8 @@ import {
   type Supplier,
 } from "@/lib/sourcing";
 
-const COLS = "grid grid-cols-[110px_minmax(200px,1fr)_minmax(170px,220px)_minmax(180px,230px)_minmax(260px,1.4fr)] gap-3";
+const COLS =
+  "grid grid-cols-[110px_minmax(200px,1fr)_minmax(170px,210px)_minmax(180px,220px)_minmax(340px,1.6fr)] gap-3";
 
 export function Pricelist({
   products,
@@ -101,7 +102,7 @@ export function Pricelist({
 
   return (
     <div className="mt-4 overflow-x-auto">
-      <div className="min-w-[1180px]">
+      <div className="min-w-[1280px]">
         <div
           className={`${COLS} sticky top-16 z-10 border-b border-navy-200 bg-card/95 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur`}
         >
