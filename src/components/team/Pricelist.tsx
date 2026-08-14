@@ -45,7 +45,6 @@ import {
   type ProductDecoration,
 } from "@/lib/decorations";
 import {
-  cartonDims,
   duplicateProduct,
   duplicateProductAsVariant,
   numOrNull,
@@ -75,6 +74,7 @@ import {
 } from "@/lib/sourcing";
 import {
   cartonCbm,
+  chargeableWeightKg,
   constantsFrom,
   convertLength,
   convertWeight,
@@ -90,7 +90,7 @@ import {
  * takes ALL remaining width so wide monitors show more price tables before the
  * strip's own sideways scroll starts.
  */
-const COLS = "grid grid-cols-[232px_252px_216px_324px_minmax(0,1fr)] gap-6 px-4";
+const COLS = "grid grid-cols-[196px_248px_284px_344px_minmax(0,1fr)] gap-5 px-4";
 
 const DASH = <span className="text-muted-foreground">—</span>;
 
@@ -305,6 +305,7 @@ function PricelistRow({
 }) {
   const queryClient = useQueryClient();
   const [imagesOpen, setImagesOpen] = useState(false);
+  const [addingInclude, setAddingInclude] = useState(false);
   const supplier = suppliers.find((row) => row.id === sourcing?.supplier_id) ?? null;
   const units = effectiveUnits(sourcing, supplier?.unit_system);
   /** CBM is always normalized from the effective dimension unit, never assumed metric. */
@@ -316,6 +317,13 @@ function PricelistRow({
     constants,
   );
   const origin = origins.find((row) => row.id === supplier?.origin_id) ?? null;
+  /** Display-only chargeable weight: max(actual, volume × volumetric factor). */
+  const chargeable = chargeableWeightKg(
+    sourcing?.carton_weight ?? null,
+    units.weight,
+    cbm,
+    constants,
+  );
   const images = product.images ?? [];
 
   const refreshProducts = () => queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -344,28 +352,30 @@ function PricelistRow({
   return (
     <div className={`${COLS} items-start py-3.5 ${product.is_active ? "" : "bg-n-50/70"}`}>
       {/* Image */}
-      <div className="flex flex-col gap-2">
-        <div className="grid grid-cols-2 gap-2">
-          <ImageSlot
-            label="Product Image"
-            path={images[0]}
-            dim={!product.is_active}
-            onOpen={() => setImagesOpen(true)}
-          />
+      <div className="flex flex-col gap-1.5">
+        <ImageSlot
+          label="Product image"
+          path={images[0]}
+          dim={!product.is_active}
+          onOpen={() => setImagesOpen(true)}
+        />
+        <div className="flex items-center gap-2">
           <ImageSlot
             label="Reference"
             path={images[1]}
             dim={!product.is_active}
+            className="size-11 shrink-0"
+            extra={images.length > 2 ? images.length - 2 : 0}
             onOpen={() => setImagesOpen(true)}
           />
+          <button
+            type="button"
+            onClick={() => setImagesOpen(true)}
+            className="inline-flex w-fit items-center gap-1.5 rounded-full border border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-navy-700 hover:bg-navy-50"
+          >
+            <Upload className="size-3" /> Upload
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setImagesOpen(true)}
-          className="inline-flex w-fit items-center gap-1.5 rounded-full border border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-navy-700 hover:bg-navy-50"
-        >
-          <Upload className="size-3" /> Upload
-        </button>
         <p className="text-[11px] text-muted-foreground">
           Updated {relativeTime(product.updated_at)}
         </p>
@@ -458,6 +468,7 @@ function PricelistRow({
           <Kv label="Category">
             <InlineChoice
               value={product.category_id ?? ""}
+              wrap
               options={[
                 { value: "", label: "—" },
                 ...categories.map((row) => ({ value: row.id, label: row.name })),
@@ -471,6 +482,7 @@ function PricelistRow({
             ) : (
               <InlineChoice
                 value={product.subcategory_id ?? ""}
+                wrap
                 options={subOptions}
                 save={(next) => saveProduct({ subcategory_id: next })}
               />
@@ -531,14 +543,35 @@ function PricelistRow({
             </button>
           </div>
         ))}
-        <AddAttributePopover
+        <IncludedItems
           productId={product.id}
-          labels={attributeLabels}
-          usedLabelIds={usedLabelIds}
-          nextSortOrder={nextAttributeSort}
-          onAdded={refreshAttributes}
+          rows={includes}
+          onChanged={refreshIncludes}
+          adding={addingInclude}
+          onAddingChange={setAddingInclude}
+          hideTrigger
         />
-        <IncludedItems productId={product.id} rows={includes} onChanged={refreshIncludes} />
+
+        {/* One quiet link row owns both "add" affordances for this column. */}
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+          <AddAttributePopover
+            productId={product.id}
+            labels={attributeLabels}
+            usedLabelIds={usedLabelIds}
+            nextSortOrder={nextAttributeSort}
+            onAdded={refreshAttributes}
+            triggerLabel="+ Attribute"
+            triggerClassName="text-navy-500 underline decoration-dotted underline-offset-2 hover:text-navy-700"
+          />
+          <span className="text-muted-foreground">·</span>
+          <button
+            type="button"
+            onClick={() => setAddingInclude(true)}
+            className="text-navy-500 underline decoration-dotted underline-offset-2 hover:text-navy-700"
+          >
+            + Included item
+          </button>
+        </div>
       </div>
 
       {/* Packing & production */}
@@ -552,69 +585,50 @@ function PricelistRow({
             save={(raw) => savePacking({ carton_pack: numOrNull(raw) })}
           />
         </Kv>
-        <Kv label="L × W × H">
-          <span className="flex flex-nowrap items-center gap-1">
+        <Kv label="Ctn dims">
+          <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
-              className="w-12 shrink-0"
+              className="w-10 shrink-0"
               value={numberText(sourcing?.carton_length)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_length: numOrNull(raw) })}
             />
+            <span className="shrink-0 px-0.5 text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-12 shrink-0"
+              className="w-10 shrink-0"
               value={numberText(sourcing?.carton_width)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_width: numOrNull(raw) })}
             />
+            <span className="shrink-0 px-0.5 text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-12 shrink-0"
+              className="w-10 shrink-0"
               value={numberText(sourcing?.carton_height)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_height: numOrNull(raw) })}
             />
+            <span className="shrink-0 pl-1" />
+            <UnitSwitch
+              options={["cm", "in"] as const}
+              value={units.dimension}
+              auto={units.dimensionAuto}
+              ariaLabel={`Dimension unit for ${product.name}`}
+              unitColumn="dimension_unit"
+              fields={[
+                { key: "carton_length", label: "Length", value: sourcing?.carton_length ?? null },
+                { key: "carton_width", label: "Width", value: sourcing?.carton_width ?? null },
+                { key: "carton_height", label: "Height", value: sourcing?.carton_height ?? null },
+              ]}
+              convert={(value, from, to) =>
+                convertLength(value, from as DimensionUnit, to as DimensionUnit, constants)
+              }
+              onApply={(patch) => savePacking(patch as never)}
+            />
           </span>
         </Kv>
-        {/* Unit + computed carton: one muted line, aligned to the value edge. */}
-        <div className="flex min-w-0 items-center gap-1.5 pl-[108px]">
-          <UnitSwitch
-            options={["cm", "in"] as const}
-            value={units.dimension}
-            auto={units.dimensionAuto}
-            ariaLabel={`Dimension unit for ${product.name}`}
-            unitColumn="dimension_unit"
-            fields={[
-              { key: "carton_length", label: "Length", value: sourcing?.carton_length ?? null },
-              { key: "carton_width", label: "Width", value: sourcing?.carton_width ?? null },
-              { key: "carton_height", label: "Height", value: sourcing?.carton_height ?? null },
-            ]}
-            convert={(value, from, to) =>
-              convertLength(value, from as DimensionUnit, to as DimensionUnit, constants)
-            }
-            onApply={(patch) => savePacking(patch as never)}
-          />
-          {cbm != null ? (
-            <span
-              title={`${cartonDims(
-                sourcing?.carton_length ?? null,
-                sourcing?.carton_width ?? null,
-                sourcing?.carton_height ?? null,
-                units.dimension,
-              )} · ${cbm} CBM`}
-              className="truncate text-[11px] leading-5 text-muted-foreground"
-            >
-              {cartonDims(
-                sourcing?.carton_length ?? null,
-                sourcing?.carton_width ?? null,
-                sourcing?.carton_height ?? null,
-                units.dimension,
-              )}
-              {` · ${cbm} CBM`}
-            </span>
-          ) : null}
-        </div>
         <Kv label="Weight">
           <span className="flex flex-nowrap items-center gap-1.5">
             <InlineField
@@ -642,21 +656,21 @@ function PricelistRow({
           </span>
         </Kv>
         <Kv label="Lead time">
-          <span className="flex flex-nowrap items-center gap-1">
+          <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
               className="w-10 shrink-0"
               value={product.production_min_days == null ? "" : String(product.production_min_days)}
               numeric
               save={(raw) => saveProduct({ production_min_days: numOrNull(raw) })}
             />
-            <span className="text-muted-foreground">–</span>
+            <span className="shrink-0 text-[13px] text-muted-foreground">–</span>
             <InlineField
               className="w-10 shrink-0"
               value={product.production_max_days == null ? "" : String(product.production_max_days)}
               numeric
               save={(raw) => saveProduct({ production_max_days: numOrNull(raw) })}
             />
-            <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+            <span className="ml-1 whitespace-nowrap text-[11px] text-muted-foreground">
               {product.production_min_days == null && product.production_max_days == null
                 ? productionLabel(product.production_min_days, product.production_max_days)
                 : "days"}
@@ -672,6 +686,13 @@ function PricelistRow({
             save={(raw) => saveProduct({ moq: numOrNull(raw) })}
           />
         </Kv>
+
+        {/* Display-only calc note — omitted entirely when inputs are missing. */}
+        {cbm != null && chargeable != null ? (
+          <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">
+            Volume {cbm} CBM · Chargeable {chargeable} kg
+          </p>
+        ) : null}
       </div>
 
       {/* Pricing */}
@@ -710,11 +731,16 @@ function ImageSlot({
   label,
   path,
   dim,
+  className,
+  extra,
   onOpen,
 }: {
   label: string;
   path: string | undefined;
   dim?: boolean;
+  className?: string;
+  /** "+N" overlay count for the remaining images beyond the two shown. */
+  extra?: number;
   onOpen: () => void;
 }) {
   return (
@@ -722,7 +748,9 @@ function ImageSlot({
       type="button"
       onClick={onOpen}
       aria-label={`${label} — manage images`}
-      className="group relative flex aspect-square w-full flex-col items-center justify-center overflow-hidden rounded-lg border border-navy-100 bg-navy-50"
+      className={`group relative flex flex-col items-center justify-center overflow-hidden rounded-lg border border-navy-100 bg-navy-50 ${
+        className ?? "aspect-square w-full"
+      }`}
     >
       {path ? (
         <img
@@ -733,10 +761,17 @@ function ImageSlot({
         />
       ) : (
         <span className="flex flex-col items-center gap-1 text-muted-foreground">
-          <ImageIcon className="size-5" />
-          <span className="text-[10px] font-medium uppercase tracking-wide">No image</span>
+          <ImageIcon className="size-4" />
+          {className ? null : (
+            <span className="text-[10px] font-medium uppercase tracking-wide">No image</span>
+          )}
         </span>
       )}
+      {extra ? (
+        <span className="absolute inset-0 flex items-center justify-center bg-n-900/55 text-[11px] font-semibold text-white">
+          +{extra}
+        </span>
+      ) : null}
       <span className="absolute inset-x-0 bottom-0 bg-n-900/70 py-0.5 text-center text-[10px] font-semibold uppercase text-white opacity-0 transition group-hover:opacity-100">
         {label}
       </span>

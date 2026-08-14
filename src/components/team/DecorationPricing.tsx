@@ -85,10 +85,15 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
           const cols = ground
             ? "grid-cols-[52px_66px_66px_66px_18px]"
             : "grid-cols-[52px_66px_66px_18px]";
+          const methodName = method?.name ?? "Decoration";
+          const detailText = detail?.detail ?? "Detail";
+          /** Type-A rows repeat the method name as their detail — show it once. */
           const title =
             method?.code === "NODECO"
               ? "No decoration"
-              : `${method?.name ?? "Decoration"} — ${detail?.detail ?? "Detail"}`;
+              : detailText.trim().toLowerCase() === methodName.trim().toLowerCase()
+                ? methodName
+                : `${methodName} — ${detailText}`;
 
           return (
             <div
@@ -125,7 +130,7 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
               </div>
 
               {bands.map((band) => (
-                <div key={band.id} className={`grid ${cols} items-center gap-1.5`}>
+                <div key={band.id} className={`group grid ${cols} items-center gap-1.5`}>
                   <InlineField
                     value={String(band.qty)}
                     numeric
@@ -148,7 +153,13 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
                   />
                   <InlineField
                     value={numberText(band.setup_cost)}
-                    display={moneyLabel(band.setup_cost)}
+                    display={
+                      band.setup_cost ? (
+                        moneyLabel(band.setup_cost)
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )
+                    }
                     numeric
                     save={async (raw) => {
                       await updateDecorationBand(band.id, { setup_cost: numOrNull(raw) ?? 0 });
@@ -171,7 +182,7 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
                   <button
                     type="button"
                     aria-label="Remove quantity tier"
-                    className="text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
                     onClick={() => void guard(() => deleteDecorationBand(band.id))}
                   >
                     <Trash2 className="size-3" />
@@ -236,6 +247,7 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
           methods={methods}
           details={details}
           used={used}
+          compact={decorations.length > 0}
           onPick={(detailId) =>
             void guard(() =>
               addProductDecoration({

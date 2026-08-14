@@ -150,6 +150,7 @@ export function InlineChoice({
   label,
   className,
   display,
+  wrap,
 }: Base & {
   value: string;
   options: Array<{ value: string; label: string }>;
@@ -191,7 +192,9 @@ export function InlineChoice({
           </select>
         ) : (
           <span
-            className="min-w-0 flex-1 cursor-pointer truncate text-[13px] hover:bg-navy-50"
+            className={`min-w-0 flex-1 cursor-pointer text-[13px] hover:bg-navy-50 ${
+              wrap ? "line-clamp-2 whitespace-normal break-words" : "truncate"
+            }`}
             onClick={(event) => {
               event.stopPropagation();
               setEditing(true);
