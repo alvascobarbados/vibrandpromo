@@ -44,7 +44,7 @@ export async function duplicateProductAsVariant(sourceProductId: string): Promis
   delete row['updated_at'];
 
   // New SKU — our grammar, next free -V suffix on the same item digits.
-  const base = skuBase(source['sku' as never] as string | null);
+  const base = skuBase((row['sku'] as string | null) ?? null);
   let sku: string | null = null;
   if (base) {
     const { data: skus } = await supabase.from("products").select("sku").like("sku", `${base}%`);
