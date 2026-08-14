@@ -126,10 +126,15 @@ export function useStaffSession() {
  * Catalog read for public pages. Anonymous visitors keep the exact public
  * query (active products only); the staff-scoped query that also returns
  * hidden products runs only while a verified staff session has edit mode on.
+ *
+ * `includeDrafts` is the /team supplier workspace opting into the staff-scoped
+ * read: /team is the staff work surface and ALWAYS lists draft + live. Customer
+ * routes never pass it, so they stay live-only.
  */
-export function useCatalogProducts() {
-  const { editMode } = useStaffSession();
-  const staffView = useQuery({ ...allProductsQuery, enabled: editMode });
-  const publicView = useQuery({ ...publicProductsQuery, enabled: !editMode });
-  return editMode ? staffView : publicView;
+export function useCatalogProducts(options?: { includeDrafts?: boolean }) {
+  const { editMode, isStaff } = useStaffSession();
+  const staffScope = editMode || Boolean(options?.includeDrafts && isStaff);
+  const staffView = useQuery({ ...allProductsQuery, enabled: staffScope });
+  const publicView = useQuery({ ...publicProductsQuery, enabled: !staffScope });
+  return staffScope ? staffView : publicView;
 }
