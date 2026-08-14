@@ -1,10 +1,36 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
-import { Fragment, useState } from "react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  Info,
+  MoreVertical,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { InlineField, nonNegative, numberOrNull } from "@/components/admin/costing/fields";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -35,9 +61,81 @@ export function RoutesPanel() {
   const origins = useQuery(originsListQuery);
   const destinations = useQuery(destinationsQuery);
   const [open, setOpen] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const [confirm, setConfirm] = useState<
+    { kind: "method" | "route"; id: string; label: string } | null
+  >(null);
 
   const invalidate = (table: string) =>
     queryClient.invalidateQueries({ queryKey: ["costing", table] });
+
+  const addMethod = useMutation({
+    mutationFn: async () => {
+      const existing = new Set((methods.data ?? []).map((method) => method.code));
+      let code = "NEW";
+      let counter = 1;
+      while (existing.has(code)) {
+        counter += 1;
+        code = `NEW${counter}`;
+      }
+      const { error } = await supabase.from("shipping_methods").insert({
+        code,
+        name: "New Method",
+        fuel_surcharge_pct: 0,
+        buffer_pct: 0,
+        chargeable_metric: "CHARGEABLE_WEIGHT",
+        chargeable_unit: "lbs",
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => invalidate("shipping_methods"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const removeMethod = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("shipping_methods").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      invalidate("shipping_methods");
+      invalidate("shipping_method_routes");
+      invalidate("shipping_method_tiers");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const addRoute = useMutation({
+    mutationFn: async (methodId: string) => {
+      const origin = (origins.data ?? [])[0];
+      const destination = (destinations.data ?? [])[0];
+      if (!origin || !destination) throw new Error("Add an origin and destination first");
+      const { error } = await supabase.from("shipping_method_routes").insert({
+        shipping_method_id: methodId,
+        origin_id: origin.id,
+        destination_id: destination.id,
+        fixed_cost: 0,
+        lac_fixed_bbd: 0,
+        lac_per_cbm_bbd: 0,
+        include_inland_freight: false,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => invalidate("shipping_method_routes"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const removeRoute = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("shipping_method_routes").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      invalidate("shipping_method_routes");
+      invalidate("shipping_method_tiers");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
 
   const updateMethod = useMutation({
     mutationFn: async (input: { id: string; patch: TablesUpdate<"shipping_methods"> }) => {
@@ -103,23 +201,80 @@ export function RoutesPanel() {
     setOpen((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
+  const originById = useMemo(
+    () => new Map((origins.data ?? []).map((origin) => [origin.id, origin])),
+    [origins.data],
+  );
+  const destinationById = useMemo(
+    () => new Map((destinations.data ?? []).map((destination) => [destination.id, destination])),
+    [destinations.data],
+  );
+
+  const term = search.trim().toLowerCase();
+  function routeMatches(route: RouteRow) {
+    if (!term) return true;
+    const origin = originById.get(route.origin_id);
+    const destination = destinationById.get(route.destination_id);
+    return [origin?.code, origin?.name, destination?.code, destination?.name]
+      .filter(Boolean)
+      .some((value) => value!.toLowerCase().includes(term));
+  }
+
   return (
     <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative w-full max-w-xs">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-n-500" />
+          <Input
+            aria-label="Search methods and routes"
+            placeholder="Search method, origin or destination"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="h-9 pl-8 text-xs"
+          />
+        </div>
+        <Button size="sm" className="gap-2" onClick={() => addMethod.mutate()}>
+          <Plus className="size-4" /> Add Method
+        </Button>
+      </div>
+
+      <div className="flex items-start gap-2 rounded-lg border border-n-200 bg-navy-50/60 px-3 py-2 text-[12px] text-n-600">
+        <Info className="mt-0.5 size-4 shrink-0 text-n-500" />
+        <p>
+          Tier ranges are inclusive at the lower bound and exclusive at the upper bound. A value
+          equal to a tier&apos;s upper limit moves to the next tier.
+        </p>
+      </div>
+
       {(methods.data ?? []).map((method: ShippingMethodRow) => {
         const methodRoutes = (routes.data ?? []).filter(
           (route) => route.shipping_method_id === method.id,
         );
+        const methodMatches =
+          !term ||
+          method.name.toLowerCase().includes(term) ||
+          method.code.toLowerCase().includes(term);
+        const visibleRoutes = methodMatches ? methodRoutes : methodRoutes.filter(routeMatches);
+        if (term && !methodMatches && visibleRoutes.length === 0) return null;
         return (
           <section key={method.id} className="rounded-xl border border-n-200 bg-white">
             <header className="flex flex-wrap items-end gap-4 border-b border-n-200 px-4 py-3">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-n-500">
-                  {method.code}
-                </p>
+                <InlineField
+                  ariaLabel={`Code for ${method.code}`}
+                  value={method.code}
+                  className="w-28"
+                  onSave={(next) =>
+                    updateMethod.mutateAsync({
+                      id: method.id,
+                      patch: { code: next.trim().toUpperCase() },
+                    })
+                  }
+                />
                 <InlineField
                   ariaLabel={`Name for ${method.code}`}
                   value={method.name}
-                  className="w-56"
+                  className="mt-1 w-56"
                   onSave={(next) =>
                     updateMethod.mutateAsync({ id: method.id, patch: { name: next.trim() } })
                   }
@@ -187,6 +342,25 @@ export function RoutesPanel() {
                   }
                 />
               </Labelled>
+              <div className="ml-auto">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="icon" variant="ghost" aria-label={`Actions for ${method.code}`}>
+                      <MoreVertical className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="z-[60]">
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onSelect={() =>
+                        setConfirm({ kind: "method", id: method.id, label: method.name })
+                      }
+                    >
+                      <Trash2 className="mr-2 size-4" /> Delete method
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </header>
 
             <table className="w-full text-sm">
@@ -199,10 +373,11 @@ export function RoutesPanel() {
                   <th className="px-3 py-2 text-left">LAC fixed (BBD)</th>
                   <th className="px-3 py-2 text-left">LAC / CBM (BBD)</th>
                   <th className="px-3 py-2 text-left">Inland freight</th>
+                  <th className="w-10" />
                 </tr>
               </thead>
               <tbody>
-                {methodRoutes.map((route: RouteRow) => {
+                {visibleRoutes.map((route: RouteRow) => {
                   const ladder = [...(tiers.data ?? [])]
                     .filter((tier) => tier.route_id === route.id)
                     .sort((a, b) => a.band_from - b.band_from);
@@ -320,11 +495,36 @@ export function RoutesPanel() {
                             }
                           />
                         </td>
+                      <td className="px-2 py-1.5">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="icon" variant="ghost" aria-label="Route actions">
+                                <MoreVertical className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="z-[60]">
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onSelect={() =>
+                                  setConfirm({
+                                    kind: "route",
+                                    id: route.id,
+                                    label: `${originById.get(route.origin_id)?.code ?? "?"} → ${
+                                      destinationById.get(route.destination_id)?.code ?? "?"
+                                    }`,
+                                  })
+                                }
+                              >
+                                <Trash2 className="mr-2 size-4" /> Delete route
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
                       </tr>
                       {isOpen ? (
                         <tr className="border-b border-n-100 bg-navy-50/60">
                           <td />
-                          <td colSpan={6} className="px-3 py-3">
+                          <td colSpan={7} className="px-3 py-3">
                             {warnings.length > 0 ? (
                               <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
                                 <AlertTriangle className="size-3.5" />
@@ -379,6 +579,7 @@ export function RoutesPanel() {
                                       <InlineField
                                         ariaLabel="Rate"
                                         type="number"
+                                        suffix={`/ ${unitLabel(method.chargeable_unit)}`}
                                         value={String(tier.rate)}
                                         onSave={(next) =>
                                           updateTier.mutateAsync({
@@ -423,20 +624,67 @@ export function RoutesPanel() {
                     </Fragment>
                   );
                 })}
-                {methodRoutes.length === 0 ? (
+                {visibleRoutes.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-3 py-3 text-sm text-muted-foreground">
-                      No routes for this method.
+                    <td colSpan={8} className="px-3 py-3 text-sm text-muted-foreground">
+                      {term ? "No routes match your search." : "No routes for this method."}
                     </td>
                   </tr>
                 ) : null}
               </tbody>
             </table>
+            <div className="border-t border-n-200 p-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="gap-2"
+                onClick={() => addRoute.mutate(method.id)}
+              >
+                <Plus className="size-4" /> Add Route
+              </Button>
+            </div>
           </section>
         );
       })}
+
+      <AlertDialog open={confirm !== null} onOpenChange={(next) => !next && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm?.kind === "method"
+                ? `Delete method “${confirm?.label}”?`
+                : `Delete route ${confirm?.label}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.kind === "method"
+                ? "All routes and tiers under this method will also be deleted. This cannot be undone."
+                : "All tiers under this route will also be deleted. This cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!confirm) return;
+                if (confirm.kind === "method") removeMethod.mutate(confirm.id);
+                else removeRoute.mutate(confirm.id);
+                setConfirm(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
+}
+
+/** Singularises common weight units for tier rate suffixes ("lbs" → "lb"). */
+function unitLabel(unit: string): string {
+  const trimmed = unit.trim();
+  if (/^(lbs|kgs)$/i.test(trimmed)) return trimmed.slice(0, -1);
+  return trimmed;
 }
 
 function Labelled({ label, children }: { label: string; children: React.ReactNode }) {
