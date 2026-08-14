@@ -16,6 +16,7 @@ import { ImageManager } from "@/components/admin/ImageManager";
 import { AddAttributePopover } from "@/components/team/AddAttributePopover";
 import { DecorationPricing } from "@/components/team/DecorationPricing";
 import { InlineChoice, InlineField } from "@/components/team/inline-field";
+import { UnitSwitch } from "@/components/team/PackingUnits";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,7 @@ import {
   type Product,
   type Subcategory,
 } from "@/lib/catalog";
+import { appSettingsQuery } from "@/lib/costing";
 import {
   decorationMethodsQuery,
   methodDetailsQuery,
@@ -67,6 +69,16 @@ import {
   type SourcingRow,
   type Supplier,
 } from "@/lib/sourcing";
+import {
+  cartonCbm,
+  constantsFrom,
+  convertLength,
+  convertWeight,
+  effectiveUnits,
+  type Constants,
+  type DimensionUnit,
+  type WeightUnit,
+} from "@/lib/units";
 
 /** Single source of truth for the sheet's column layout (header + every row). */
 const COLS =
@@ -91,6 +103,8 @@ export function Pricelist({
   const decorations = useQuery(productDecorationsQuery);
   const attributeLabels = useQuery(detailLabelsQuery);
   const attributes = useQuery(productDetailsQuery);
+  const settings = useQuery(appSettingsQuery);
+  const constants = constantsFrom(settings.data);
 
   const sourcingByProduct = new Map(
     (sourcing.data ?? []).map((row) => [row.product_id, row] as const),
@@ -136,6 +150,7 @@ export function Pricelist({
       details={details.data ?? []}
       attributeLabels={attributeLabels.data ?? []}
       attributes={attributesByProduct.get(product.id) ?? []}
+      constants={constants}
     />
   );
 
@@ -225,6 +240,7 @@ function PricelistRow({
   details,
   attributeLabels,
   attributes,
+  constants,
 }: {
   product: Product;
   categories: Category[];
@@ -237,11 +253,12 @@ function PricelistRow({
   details: MethodDetail[];
   attributeLabels: DetailLabel[];
   attributes: ProductDetailRow[];
+  constants: Constants;
 }) {
   const queryClient = useQueryClient();
   const [imagesOpen, setImagesOpen] = useState(false);
   const supplier = suppliers.find((row) => row.id === sourcing?.supplier_id) ?? null;
-  const metric = (supplier?.unit_system ?? "metric") === "metric";
+  const units = effectiveUnits(sourcing, supplier?.unit_system);
   const origin = origins.find((row) => row.id === supplier?.origin_id) ?? null;
   const images = product.images ?? [];
 
