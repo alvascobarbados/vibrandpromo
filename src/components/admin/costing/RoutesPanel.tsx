@@ -43,6 +43,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import {
   CHARGEABLE_METRICS,
+  TRANSPORT_MODES,
+  defaultTransportMode,
   originsListQuery,
   destinationsQuery,
   shippingMethodsQuery,
@@ -86,6 +88,7 @@ export function RoutesPanel() {
         buffer_pct: 0,
         chargeable_metric: "CHARGEABLE_WEIGHT",
         chargeable_unit: "LBS",
+        transport_mode: defaultTransportMode("CHARGEABLE_WEIGHT"),
       });
       if (error) throw new Error(error.message);
     },
@@ -331,6 +334,28 @@ export function RoutesPanel() {
                     {CHARGEABLE_METRICS.map((metric) => (
                       <SelectItem key={metric} value={metric}>
                         {metric}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Labelled>
+              <Labelled label="Mode">
+                <Select
+                  value={method.transport_mode}
+                  onValueChange={(value) =>
+                    updateMethod.mutate({ id: method.id, patch: { transport_mode: value } })
+                  }
+                >
+                  <SelectTrigger
+                    className="h-8 w-24 text-xs"
+                    aria-label={`Transport mode for ${method.code}`}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TRANSPORT_MODES.map((mode) => (
+                      <SelectItem key={mode} value={mode}>
+                        {mode === "air" ? "✈ Air" : "🚢 Sea"}
                       </SelectItem>
                     ))}
                   </SelectContent>

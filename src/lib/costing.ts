@@ -22,7 +22,23 @@ export type ShippingMethodRow = {
   buffer_pct: number;
   chargeable_metric: string;
   chargeable_unit: string;
+  /**
+   * How the goods physically travel. This is the bridge to the product's
+   * ships-by capability field: ENGINE CONTRACT — route eligibility =
+   * route.method.transport_mode is enabled in the product's capability
+   * (products.shipping_methods); rush lead = rush production + the fastest
+   * route whose method transport_mode is 'air'.
+   */
+  transport_mode: TransportMode;
 };
+
+export type TransportMode = "air" | "sea";
+export const TRANSPORT_MODES = ["air", "sea"] as const;
+
+/** Default mode for a new method, by the same rule the backfill used. */
+export function defaultTransportMode(metric: string): TransportMode {
+  return metric === "VOLUME" ? "sea" : "air";
+}
 
 export type RouteRow = {
   id: string;
@@ -90,11 +106,25 @@ export const shippingMethodsQuery = queryOptions({
     const { data, error } = await supabase
       .from("shipping_methods")
       .select(
-        "id, code, name, notes, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit",
+        "id, code, name, notes, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit, transport_mode",
       )
       .order("code", { ascending: true });
     if (error) throw new Error(error.message);
     return (data ?? []) as ShippingMethodRow[];
+  },
+});
+
+/**
+ * Distinct transport modes that actually exist in the costing data — the /team
+ * SHIPS BY chips are generated from this instead of hardwired labels.
+ */
+export const transportModesQuery = queryOptions({
+  queryKey: ["costing", "transport_modes"],
+  queryFn: async (): Promise<TransportMode[]> => {
+    const { data, error } = await supabase.from("shipping_methods").select("transport_mode");
+    if (error) throw new Error(error.message);
+    const present = new Set((data ?? []).map((row) => row.transport_mode as TransportMode));
+    return TRANSPORT_MODES.filter((mode) => present.has(mode));
   },
 });
 

@@ -13,6 +13,16 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ImageManager } from "@/components/admin/ImageManager";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AddAttributePopover } from "@/components/team/AddAttributePopover";
 import { DecorationPricing } from "@/components/team/DecorationPricing";
 import { InlineChoice, InlineField } from "@/components/team/inline-field";
@@ -93,7 +103,12 @@ import {
  * strip's own sideways scroll starts.
  */
 const COLS =
-  "grid grid-cols-[180px_226px_200px_240px_336px_minmax(0,1fr)] gap-5 px-4";
+  "grid grid-cols-[120px_190px_170px_264px_280px_minmax(0,1fr)] gap-3 px-4";
+
+/** ONE vertical rhythm token — every KV row and section header uses it. */
+const ROW = "min-h-[26px]";
+/** Shared label gutter so all four data columns align on one vertical line. */
+const GUTTER = "grid grid-cols-[88px_minmax(0,1fr)] gap-x-3";
 
 const DASH = <span className="text-muted-foreground">—</span>;
 
@@ -231,7 +246,7 @@ function Kv({
   alert?: boolean;
 }) {
   return (
-    <div className="grid min-h-6 grid-cols-[96px_minmax(0,1fr)] items-baseline gap-x-3">
+    <div className={`${GUTTER} ${ROW} items-baseline`}>
       <span className="flex min-w-0 items-baseline gap-1 text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
         <span className="truncate whitespace-nowrap">{label}</span>
         {alert ? <MissingDot /> : null}
@@ -255,7 +270,9 @@ function MissingDot() {
 /** Small muted section header inside the packing / production column. */
 function SectionHead({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+    <p
+      className={`${ROW} flex items-center text-[11px] font-semibold uppercase leading-6 tracking-[0.06em] text-muted-foreground`}
+    >
       {children}
     </p>
   );
@@ -430,7 +447,7 @@ function PricelistRow({
                 value={product.name}
                 wrap
                 display={
-                  <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-navy-700">
+                  <span className="line-clamp-3 text-[15px] font-semibold leading-snug text-navy-700">
                     {memberDisplayName(product, sourcing)}
                   </span>
                 }
@@ -449,8 +466,8 @@ function PricelistRow({
 
         {/* STATUS chips — one consistent row, directly under the product name. */}
         <div className="flex flex-wrap items-center gap-1.5">
+          <PublishChip product={product} saveProduct={saveProduct} />
           <CostingBadge missing={missing} />
-          {!product.is_active ? <StatusChip tone="hidden">Hidden</StatusChip> : null}
         </div>
 
         {/* Variant is an ACTION, not a status — quiet link affordance. */}
@@ -510,6 +527,7 @@ function PricelistRow({
 
       {/* Sourcing entry — the three fields staff actually type here. */}
       <div className="flex min-w-0 flex-col gap-1">
+        <SectionHead>Sourcing</SectionHead>
         <Kv label="Supplier" alert={missingKeys.has("supplier")}>
             <InlineChoice
               value={sourcing?.supplier_id ?? ""}
@@ -529,7 +547,7 @@ function PricelistRow({
               save={(next) => savePacking({ supplier_id: next || null })}
             />
           </Kv>
-          <Kv label="Supplier item #">
+          <Kv label="Item #">
             <span className="flex min-w-0 items-center gap-1.5">
               <span className="shrink-0 rounded bg-navy-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-navy-700">
                 {supplier?.code ?? "—"}
@@ -552,6 +570,7 @@ function PricelistRow({
 
       {/* Product details */}
       <div className="flex min-w-0 flex-col gap-1">
+        <SectionHead>Product details</SectionHead>
         <Kv label="Material">
           <InlineField
             value={product.material ?? ""}
@@ -652,29 +671,29 @@ function PricelistRow({
         >
           <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
-              className="w-10 shrink-0"
+              className="w-9 shrink-0"
               value={numberText(sourcing?.carton_length)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_length: numOrNull(raw) })}
             />
-            <span className="shrink-0 px-0.5 text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-10 shrink-0"
+              className="w-9 shrink-0"
               value={numberText(sourcing?.carton_width)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_width: numOrNull(raw) })}
             />
-            <span className="shrink-0 px-0.5 text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-10 shrink-0"
+              className="w-9 shrink-0"
               value={numberText(sourcing?.carton_height)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_height: numOrNull(raw) })}
             />
-            <span className="shrink-0 pl-1" />
+            <span className="shrink-0 pl-0.5" />
             <UnitSwitch
               options={["cm", "in"] as const}
               value={units.dimension}
@@ -719,11 +738,15 @@ function PricelistRow({
             />
           </span>
         </Kv>
-        {/* Display-only calc note — omitted entirely when inputs are missing. */}
+        {/* Derived footnote of the packing block — anchored under WEIGHT, aligned
+            to the VALUE column. Omitted entirely when inputs are missing. */}
         {cbm != null && chargeable != null ? (
-          <p className="text-[11px] leading-5 text-muted-foreground">
-            Volume {cbm} CBM · Chargeable {decimals3(chargeable)} kg
-          </p>
+          <div className={GUTTER}>
+            <span />
+            <p className="text-[11px] leading-5 text-muted-foreground">
+              = {cbm} CBM · chargeable {decimals3(chargeable)} kg
+            </p>
+          </div>
         ) : null}
 
         <SectionHead>Production</SectionHead>
@@ -843,6 +866,57 @@ function ImageSlot({
         {label}
       </span>
     </button>
+  );
+}
+
+/**
+ * PUBLISH state chip — customer visibility, through the SAME products.is_active
+ * update path the kebab Hide/Show uses (so the two stay in sync). Independent of
+ * the costing state chip beside it: Published + Incomplete is legal.
+ */
+function PublishChip({
+  product,
+  saveProduct,
+}: {
+  product: Product;
+  saveProduct: (patch: Record<string, unknown>) => Promise<void>;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const write = (next: boolean) =>
+    void saveProduct({ is_active: next }).then(
+      () => toast.success(next ? "Published" : "Removed from the customer shop"),
+      (error: unknown) =>
+        toast.error(error instanceof Error ? error.message : "Could not save"),
+    );
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => (product.is_active ? setConfirming(true) : write(true))}
+        className={`inline-flex h-[18px] items-center rounded-full px-2 text-[11px] font-semibold leading-none transition-colors ${
+          product.is_active
+            ? "bg-navy-700 text-white hover:bg-navy-600"
+            : "border border-n-300 text-muted-foreground hover:bg-n-100"
+        }`}
+      >
+        {product.is_active ? "Published" : "Not published"}
+      </button>
+      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from the customer shop?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Customers will no longer see {product.name}. You can publish it again at any time.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => write(false)}>Unpublish</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

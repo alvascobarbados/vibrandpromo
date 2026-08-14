@@ -8,12 +8,14 @@
  * messages. Rush is only STORED once the shared validator accepts it, so a
  * half-entered rush never reaches the customer card.
  */
+import { useQuery } from "@tanstack/react-query";
 import { Plane, Ship } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { InlineField } from "@/components/team/inline-field";
 import type { Product } from "@/lib/catalog";
+import { transportModesQuery, type TransportMode } from "@/lib/costing";
 import { numOrNull } from "@/lib/pricelist";
 import { productionProblem } from "@/lib/product-rules";
 
@@ -21,6 +23,12 @@ import { productionProblem } from "@/lib/product-rules";
 const NEEDS_RUSH_DAYS = "Please enter the rush production time in days.";
 
 const text = (value: number | null | undefined) => (value == null ? "" : String(value));
+
+/** Icon + label per transport mode; the chips are generated from the data. */
+const MODE_UI: Record<TransportMode, { Icon: typeof Plane; label: string }> = {
+  air: { Icon: Plane, label: "Air shipping" },
+  sea: { Icon: Ship, label: "Sea shipping" },
+};
 
 export function ProductionExtras({
   product,
@@ -32,6 +40,15 @@ export function ProductionExtras({
   /** Rush shown but not yet stored (waiting for valid rush days). */
   const [rushDraft, setRushDraft] = useState(false);
   const [shake, setShake] = useState(false);
+  /**
+   * SHIPS BY chips come from the transport modes present in the costing
+   * shipping_methods table. ENGINE CONTRACT — a costing route is eligible only
+   * when route.method.transport_mode is enabled in this capability field, and
+   * rush lead time = rush production + fastest 'air' mode route.
+   */
+  const modes = useQuery(transportModesQuery);
+  const availableModes: TransportMode[] =
+    modes.data && modes.data.length ? modes.data : ["air", "sea"];
   const rushOn = product.rush_enabled || rushDraft;
   const methods = product.shipping_methods ?? "air_sea";
   const air = methods !== "sea_only";
@@ -179,26 +196,24 @@ export function ProductionExtras({
           Ships by
         </span>
         <span className="flex min-w-0 items-center gap-1.5">
-          <button
-            type="button"
-            aria-label="Air shipping"
-            aria-pressed={air}
-            {...(air && !sea ? { title: "At least one shipping method" } : {})}
-            onClick={() => void toggleMethod("air")}
-            className={`${chip(air)} ${air && !sea ? soleShake : ""}`}
-          >
-            <Plane className="size-3.5" />
-          </button>
-          <button
-            type="button"
-            aria-label="Sea shipping"
-            aria-pressed={sea}
-            {...(sea && !air ? { title: "At least one shipping method" } : {})}
-            onClick={() => void toggleMethod("sea")}
-            className={`${chip(sea)} ${sea && !air ? soleShake : ""}`}
-          >
-            <Ship className="size-3.5" />
-          </button>
+          {availableModes.map((mode) => {
+            const { Icon, label } = MODE_UI[mode];
+            const on = mode === "air" ? air : sea;
+            const sole = on && (mode === "air" ? !sea : !air);
+            return (
+              <button
+                key={mode}
+                type="button"
+                aria-label={label}
+                aria-pressed={on}
+                {...(sole ? { title: "At least one shipping method" } : {})}
+                onClick={() => void toggleMethod(mode)}
+                className={`${chip(on)} ${sole ? soleShake : ""}`}
+              >
+                <Icon className="size-3.5" />
+              </button>
+            );
+          })}
         </span>
       </div>
     </>
