@@ -36,6 +36,8 @@ export type ProductDecoration = {
   method_detail_id: string;
   sort_order: number;
   updated_at: string;
+  notes: string | null;
+  ref_image_url: string | null;
   product_decoration_bands: DecorationBand[];
 };
 
@@ -73,7 +75,7 @@ export const productDecorationsQuery = queryOptions({
     const { data, error } = await supabase
       .from("product_decorations")
       .select(
-        "id, product_id, method_detail_id, sort_order, updated_at, product_decoration_bands(id, product_decoration_id, qty, unit_cost, setup_cost, inland_freight_usd)",
+        "id, product_id, method_detail_id, sort_order, updated_at, notes, ref_image_url, product_decoration_bands(id, product_decoration_id, qty, unit_cost, setup_cost, inland_freight_usd)",
       )
       .order("sort_order", { ascending: true })
       .returns<ProductDecoration[]>();
