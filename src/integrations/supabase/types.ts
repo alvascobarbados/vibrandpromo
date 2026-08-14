@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_label: string | null
+          display_order: number
+          id: string
+          key: string
+          section: string
+          updated_at: string
+          value: string | null
+          value_type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_label?: string | null
+          display_order?: number
+          id?: string
+          key: string
+          section: string
+          updated_at?: string
+          value?: string | null
+          value_type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_label?: string | null
+          display_order?: number
+          id?: string
+          key?: string
+          section?: string
+          updated_at?: string
+          value?: string | null
+          value_type?: string
+        }
+        Relationships: []
+      }
       artwork_token_log: {
         Row: {
           created_at: string
@@ -35,6 +74,7 @@ export type Database = {
       categories: {
         Row: {
           created_at: string
+          duty_rate_pct: number | null
           id: string
           image_url: string | null
           name: string
@@ -43,6 +83,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          duty_rate_pct?: number | null
           id?: string
           image_url?: string | null
           name: string
@@ -51,6 +92,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          duty_rate_pct?: number | null
           id?: string
           image_url?: string | null
           name?: string
@@ -130,6 +172,57 @@ export type Database = {
           name?: string
           notes?: string | null
           sub_rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      destinations: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      detail_labels: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          sort_order?: number
           updated_at?: string
         }
         Relationships: []
@@ -407,6 +500,51 @@ export type Database = {
           },
           {
             foreignKeyName: "product_decorations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_details: {
+        Row: {
+          created_at: string
+          detail_label_id: string
+          id: string
+          product_id: string
+          sort_order: number
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          detail_label_id: string
+          id?: string
+          product_id: string
+          sort_order?: number
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          detail_label_id?: string
+          id?: string
+          product_id?: string
+          sort_order?: number
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_details_detail_label_id_fkey"
+            columns: ["detail_label_id"]
+            isOneToOne: false
+            referencedRelation: "detail_labels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_details_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -732,6 +870,183 @@ export type Database = {
         }
         Relationships: []
       }
+      rounding_rules: {
+        Row: {
+          band_max: number | null
+          band_min: number
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          round_up_to: number
+          updated_at: string
+        }
+        Insert: {
+          band_max?: number | null
+          band_min: number
+          created_at?: string
+          description?: string | null
+          display_order: number
+          id?: string
+          round_up_to: number
+          updated_at?: string
+        }
+        Update: {
+          band_max?: number | null
+          band_min?: number
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          round_up_to?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shipping_method_routes: {
+        Row: {
+          created_at: string
+          destination_id: string
+          fixed_cost: number
+          id: string
+          include_inland_freight: boolean
+          lac_fixed_bbd: number
+          lac_per_cbm_bbd: number
+          notes: string | null
+          origin_id: string
+          shipping_method_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          destination_id: string
+          fixed_cost?: number
+          id?: string
+          include_inland_freight?: boolean
+          lac_fixed_bbd?: number
+          lac_per_cbm_bbd?: number
+          notes?: string | null
+          origin_id: string
+          shipping_method_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          destination_id?: string
+          fixed_cost?: number
+          id?: string
+          include_inland_freight?: boolean
+          lac_fixed_bbd?: number
+          lac_per_cbm_bbd?: number
+          notes?: string | null
+          origin_id?: string
+          shipping_method_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_method_routes_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_method_routes_origin_id_fkey"
+            columns: ["origin_id"]
+            isOneToOne: false
+            referencedRelation: "origins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_method_routes_shipping_method_id_fkey"
+            columns: ["shipping_method_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipping_method_tiers: {
+        Row: {
+          band_from: number
+          band_to: number | null
+          created_at: string
+          id: string
+          notes: string | null
+          rate: number
+          route_id: string
+          updated_at: string
+        }
+        Insert: {
+          band_from?: number
+          band_to?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          rate?: number
+          route_id: string
+          updated_at?: string
+        }
+        Update: {
+          band_from?: number
+          band_to?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          rate?: number
+          route_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_method_tiers_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_method_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipping_methods: {
+        Row: {
+          buffer_pct: number
+          chargeable_metric: string
+          chargeable_unit: string
+          code: string
+          created_at: string
+          fuel_surcharge_pct: number
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          buffer_pct?: number
+          chargeable_metric?: string
+          chargeable_unit?: string
+          code: string
+          created_at?: string
+          fuel_surcharge_pct?: number
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          buffer_pct?: number
+          chargeable_metric?: string
+          chargeable_unit?: string
+          code?: string
+          created_at?: string
+          fuel_surcharge_pct?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shipping_settings: {
         Row: {
           air_max_days: number
@@ -766,6 +1081,7 @@ export type Database = {
         Row: {
           category_id: string
           created_at: string
+          duty_rate_pct: number | null
           id: string
           name: string
           slug: string
@@ -775,6 +1091,7 @@ export type Database = {
         Insert: {
           category_id: string
           created_at?: string
+          duty_rate_pct?: number | null
           id?: string
           name: string
           slug: string
@@ -784,6 +1101,7 @@ export type Database = {
         Update: {
           category_id?: string
           created_at?: string
+          duty_rate_pct?: number | null
           id?: string
           name?: string
           slug?: string
