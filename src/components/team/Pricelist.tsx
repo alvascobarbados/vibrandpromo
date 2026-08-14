@@ -26,7 +26,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { IncludedItems } from "@/components/team/IncludedItems";
-import { costingReadyMissing } from "@/lib/costing-gate";
+import { costingReadyMissing, type MissingField } from "@/lib/costing-gate";
 import { buildPricelistItems, memberDisplayName } from "@/lib/pricelist-groups";
 import {
   productIncludesQuery,
@@ -230,7 +230,7 @@ function Kv({ label, children }: { label: React.ReactNode; children: React.React
  * (src/lib/costing-gate.ts) the /team filter — and later the pricing engine —
  * also use. It says nothing about customer visibility.
  */
-function CostingBadge({ missing }: { missing: string[] }) {
+function CostingBadge({ missing }: { missing: MissingField[] }) {
   if (!missing.length) {
     return (
       <span className="w-fit rounded-full bg-lime-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-700">
@@ -248,8 +248,8 @@ function CostingBadge({ missing }: { missing: string[] }) {
       <TooltipContent className="max-w-[220px] text-left">
         <p className="font-semibold">Missing for costing</p>
         <ul className="mt-1 list-inside list-disc">
-          {missing.map((label) => (
-            <li key={label}>{label}</li>
+          {missing.map((field) => (
+            <li key={field.key}>{field.label}</li>
           ))}
         </ul>
       </TooltipContent>
