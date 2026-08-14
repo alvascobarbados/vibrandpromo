@@ -707,25 +707,47 @@ function AdminProducts() {
                           />
                         </Td>
                         <Td>
-                          <span className="flex items-center gap-1.5">
-                            <span
-                              aria-hidden
-                              className={`size-2 shrink-0 rounded-full ${
-                                product.is_active ? "bg-lime-500" : "bg-n-400"
-                              }`}
-                            />
-                            {product.is_active ? "Active" : "Hidden"}
-                            {product.is_featured ? (
-                              <Star className="size-3 fill-lime-500 text-lime-500" />
-                            ) : null}
-                          </span>
+                          <InlineSelect
+                            {...cellProps(product, "status")}
+                            value={product.is_active ? "active" : "hidden"}
+                            options={STATUS_OPTIONS}
+                            display={
+                              <span className="flex items-center gap-1.5">
+                                <span
+                                  aria-hidden
+                                  className={`size-2 shrink-0 rounded-full ${
+                                    product.is_active ? "bg-lime-500" : "bg-n-400"
+                                  }`}
+                                />
+                                {product.is_active ? "Active" : "Hidden"}
+                                {product.is_featured ? (
+                                  <Star className="size-3 fill-lime-500 text-lime-500" />
+                                ) : null}
+                              </span>
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(
+                                product,
+                                "status",
+                                { is_active: next === "active" },
+                                advance,
+                              )
+                            }
+                          />
                         </Td>
                         <Td align="right">
-                          <ChevronDown
-                            className={`size-4 text-muted-foreground transition-transform ${
-                              isOpen ? "rotate-180" : ""
-                            }`}
-                          />
+                          <button
+                            type="button"
+                            aria-label={isOpen ? "Collapse product" : "Expand product"}
+                            onClick={() => toggleOpen(product.id)}
+                            className="cursor-pointer p-1"
+                          >
+                            <ChevronDown
+                              className={`size-4 text-muted-foreground transition-transform ${
+                                isOpen ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
                         </Td>
                       </tr>
                       {isOpen ? (
