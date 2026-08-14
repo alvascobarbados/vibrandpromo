@@ -20,7 +20,14 @@ import {
 import type { ProductDecoration } from "@/lib/decorations";
 import type { SourcingRow, Supplier } from "@/lib/sourcing";
 import type { TransportMode } from "@/lib/costing";
-import type { PublicPriceRow, PublicPricing, PublicPricingTable } from "@/lib/pricing-types";
+import type {
+  PublicDecorationPricing,
+  PublicPacking,
+  PublicPriceRow,
+  PublicPricing,
+  PublicPricingTable,
+} from "@/lib/pricing-types";
+import { cartonCbm, chargeableWeightKg, constantsFrom, effectiveUnits } from "@/lib/units";
 
 /** Cheapest CIF unit price per quantity row, per transport mode. */
 function tablesFrom(
@@ -82,8 +89,22 @@ async function loadStaticCostingTables() {
       supabaseAdmin.from("destinations").select("id, code"),
       supabaseAdmin.from("categories").select("id, duty_rate_pct"),
       supabaseAdmin.from("subcategories").select("id, duty_rate_pct"),
+      supabaseAdmin.from("method_details").select("id, decoration_method_id, detail"),
+      supabaseAdmin.from("decoration_methods").select("id, name"),
     ]);
-  return { suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs };
+  return {
+    suppliers,
+    origins,
+    settingsRows,
+    methods,
+    routeRows,
+    tiers,
+    dests,
+    cats,
+    subs,
+    methodDetails,
+    decorationMethods,
+  };
 }
 
 type StaticCostingTables = Awaited<ReturnType<typeof loadStaticCostingTables>>;
