@@ -91,7 +91,8 @@ export function CatalogHome({ page, viewMode = "customer" }: { page: number; vie
     node?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  if (isDesktop) {
+  // /team uses the single-column landscape list at every width.
+  if (isDesktop || viewMode === "supplier") {
     return (
       <SiteLayout viewMode={viewMode}>
         <div className="site-container xl:max-w-[1344px] py-8 pb-16">
