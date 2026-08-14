@@ -260,9 +260,10 @@ export function weightLabel(value: number | null, unit: string) {
  * DISPLAY ONLY — carton weights always read with 3 decimals (15 → 15.000) so a
  * column of weights aligns. The STORED value is never rewritten by this.
  */
-export function weight3(value: number | null | undefined, unit: string) {
+/** Number only — the unit belongs to the dropdown beside the field, never here. */
+export function weight3(value: number | null | undefined) {
   if (value == null) return "—";
-  return `${Number(value).toFixed(3)} ${unit}`;
+  return Number(value).toFixed(3);
 }
 
 /** Chargeable weight note shares the same 3-decimal display rule. */
