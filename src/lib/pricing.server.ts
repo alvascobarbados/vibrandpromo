@@ -50,6 +50,54 @@ function tablesFrom(
   return tables;
 }
 
+/**
+ * The costing reference tables are request-independent and change rarely, so
+ * they are cached in server memory for a short window instead of being re-read
+ * on every pricing call. Nothing here is product- or request-specific and
+ * nothing new crosses to the client.
+ */
+const STATIC_TTL_MS = 60_000;
+let staticCache: { at: number; value: Promise<StaticCostingTables> } | null = null;
+
+async function loadStaticCostingTables() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const [suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs] =
+    await Promise.all([
+      supabaseAdmin.from("suppliers").select("id, unit_system, origin_id"),
+      supabaseAdmin.from("origins").select("id, code"),
+      supabaseAdmin
+        .from("app_settings")
+        .select("id, section, key, value, value_type, display_label, display_order, description"),
+      supabaseAdmin
+        .from("shipping_methods")
+        .select("id, code, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit, transport_mode"),
+      supabaseAdmin
+        .from("shipping_method_routes")
+        .select(
+          "id, shipping_method_id, origin_id, destination_id, fixed_cost, lac_fixed_bbd, lac_per_cbm_bbd, include_inland_freight",
+        ),
+      supabaseAdmin.from("shipping_method_tiers").select("route_id, band_from, band_to, rate"),
+      supabaseAdmin.from("destinations").select("id, code"),
+      supabaseAdmin.from("categories").select("id, duty_rate_pct"),
+      supabaseAdmin.from("subcategories").select("id, duty_rate_pct"),
+    ]);
+  return { suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs };
+}
+
+type StaticCostingTables = Awaited<ReturnType<typeof loadStaticCostingTables>>;
+
+function getStaticCostingTables(): Promise<StaticCostingTables> {
+  const now = Date.now();
+  if (!staticCache || now - staticCache.at > STATIC_TTL_MS) {
+    const value = loadStaticCostingTables().catch((error) => {
+      staticCache = null;
+      throw error;
+    });
+    staticCache = { at: now, value };
+  }
+  return staticCache.value;
+}
+
 export async function getPublicPricingFor(productIds: string[]): Promise<PublicPricing[]> {
   if (!productIds.length) return [];
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
