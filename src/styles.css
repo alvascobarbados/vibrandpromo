@@ -426,6 +426,43 @@
   }
 }
 
+/* ---- Sheet grammar: ONE source shared by the /team Pricelist and the
+   customer expanded card. Never copy these values into a component. ---- */
+@utility sheet-section-head {
+  font-size: 11px;
+  line-height: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+
+@utility sheet-kv-label {
+  font-size: 11px;
+  line-height: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
+@utility sheet-kv-value {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--navy-700);
+}
+
+/* ---- Filter rail: ONE source shared by the shop sidebar and /team ---- */
+@utility filter-rail {
+  border-right: 1px solid var(--n-200);
+}
+
+@utility filter-rail-surface {
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+  background-color: color-mix(in oklab, var(--n-50) 70%, transparent);
+  padding: 0.75rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
