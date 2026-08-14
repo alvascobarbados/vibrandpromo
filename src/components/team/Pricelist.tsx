@@ -93,7 +93,7 @@ import {
  * strip's own sideways scroll starts.
  */
 const COLS =
-  "grid grid-cols-[180px_236px_212px_248px_300px_minmax(0,1fr)] gap-5 px-4";
+  "grid grid-cols-[180px_226px_200px_240px_336px_minmax(0,1fr)] gap-5 px-4";
 
 const DASH = <span className="text-muted-foreground">—</span>;
 
