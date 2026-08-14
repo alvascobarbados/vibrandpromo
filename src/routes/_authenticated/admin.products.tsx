@@ -539,14 +539,14 @@ function AdminProducts() {
               <Th colId="subcat" columns={columns} dragged={dragged}>
                 Subcategory
               </Th>
-              <Th sortKey="supplier" search={search} onSort={toggleSort} colId="supplier" columns={columns} dragged={dragged}>
-                Supplier
+              <Th sortKey="sku" search={search} onSort={toggleSort} colId="sku" columns={columns} dragged={dragged}>
+                SKU
               </Th>
               <Th sortKey="name" search={search} onSort={toggleSort} colId="name" columns={columns} dragged={dragged}>
                 Item name
               </Th>
-              <Th sortKey="sku" search={search} onSort={toggleSort} colId="sku" columns={columns} dragged={dragged}>
-                SKU
+              <Th sortKey="supplier" search={search} onSort={toggleSort} colId="supplier" columns={columns} dragged={dragged}>
+                Supplier
               </Th>
               <Th colId="supitem" columns={columns} dragged={dragged}>
                 Supplier item #
