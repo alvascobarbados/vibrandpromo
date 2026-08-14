@@ -75,6 +75,7 @@ import {
 } from "@/lib/sourcing";
 import {
   cartonCbm,
+  chargeableWeightKg,
   constantsFrom,
   convertLength,
   convertWeight,
@@ -90,7 +91,7 @@ import {
  * takes ALL remaining width so wide monitors show more price tables before the
  * strip's own sideways scroll starts.
  */
-const COLS = "grid grid-cols-[232px_252px_216px_324px_minmax(0,1fr)] gap-6 px-4";
+const COLS = "grid grid-cols-[196px_252px_296px_300px_minmax(0,1fr)] gap-6 px-4";
 
 const DASH = <span className="text-muted-foreground">—</span>;
 
