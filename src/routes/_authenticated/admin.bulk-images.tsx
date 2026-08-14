@@ -116,10 +116,10 @@ function BulkImages() {
   async function handleFiles(files: File[]) {
     if (!files.length) return;
     const bySku = new Map(
-        (products.data ?? [])
-          .filter((product) => product.sku)
-          .map((product) => [product.sku!.toLowerCase(), product] as const),
-      );
+      (products.data ?? [])
+        .filter((product) => product.sku)
+        .map((product) => [product.sku!.toLowerCase(), product] as const),
+    );
 
     const groups = new Map<string, { order: number; file: File }[]>();
     const unmatched: string[] = [];
@@ -215,9 +215,9 @@ function BulkImages() {
       <div className="mt-4 rounded-xl border border-border bg-card px-4 py-3 text-sm">
         <p className="font-medium">Thumbnail variants</p>
         <p className="mt-1 text-muted-foreground">
-          Builds a 480px card image and a 96px thumbnail for every photo already in storage so
-          the catalogue no longer downloads full-size originals. New uploads get both
-          automatically. Safe to run again — photos that already have variants are skipped.
+          Builds a 480px card image and a 96px thumbnail for every photo already in storage so the
+          catalogue no longer downloads full-size originals. New uploads get both automatically.
+          Safe to run again — photos that already have variants are skipped.
         </p>
         <div className="mt-3 flex items-center gap-3">
           <Button variant="outline" disabled={variantBusy} onClick={() => void runVariantBatch()}>

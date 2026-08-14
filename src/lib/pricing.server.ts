@@ -70,7 +70,9 @@ async function loadStaticCostingTables() {
         .select("id, section, key, value, value_type, display_label, display_order, description"),
       supabaseAdmin
         .from("shipping_methods")
-        .select("id, code, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit, transport_mode"),
+        .select(
+          "id, code, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit, transport_mode",
+        ),
       supabaseAdmin
         .from("shipping_method_routes")
         .select(
@@ -122,7 +124,8 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
       .in("product_id", productIds),
     getStaticCostingTables(),
   ]);
-  const { suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs } = statics;
+  const { suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs } =
+    statics;
 
   if (!products.data?.length) return [];
 
@@ -162,8 +165,8 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
   const out: PublicPricing[] = [];
   for (const product of products.data) {
     const row = sourcingByProduct.get(product.id) ?? null;
-    const supplier = row?.supplier_id ? supplierById.get(row.supplier_id) ?? null : null;
-    const originCode = supplier?.origin_id ? originById.get(supplier.origin_id) ?? null : null;
+    const supplier = row?.supplier_id ? (supplierById.get(row.supplier_id) ?? null) : null;
+    const originCode = supplier?.origin_id ? (originById.get(supplier.origin_id) ?? null) : null;
     const input = calcProductInput({
       productId: product.id,
       sourcing: row,
@@ -171,8 +174,8 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
       originCode,
       decorations: decorationsByProduct.get(product.id) ?? [],
       dutyRate: dutyDecimal(
-        product.subcategory_id ? dutySubcategory.get(product.subcategory_id) ?? null : null,
-        product.category_id ? dutyCategory.get(product.category_id) ?? null : null,
+        product.subcategory_id ? (dutySubcategory.get(product.subcategory_id) ?? null) : null,
+        product.category_id ? (dutyCategory.get(product.category_id) ?? null) : null,
       ),
     });
     if (!input) continue;
