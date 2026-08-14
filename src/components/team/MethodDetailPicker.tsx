@@ -22,22 +22,29 @@ export function MethodDetailPicker({
   details,
   used,
   onPick,
+  compact,
 }: {
   methods: DecorationMethod[];
   details: MethodDetail[];
   used: Set<string>;
   onPick: (detailId: string) => void;
+  /** Rows that already have a price table get a small tile, not a billboard. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        className="flex h-full min-h-[120px] w-[150px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-navy-200 text-[11px] font-semibold uppercase tracking-wide text-navy-500 hover:border-lime-500 hover:bg-navy-50"
+        className={
+          compact
+            ? "flex h-fit shrink-0 items-center gap-1 self-start rounded-lg border border-dashed border-navy-200 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-navy-500 hover:border-lime-500 hover:bg-navy-50"
+            : "flex h-full min-h-[120px] w-[150px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-navy-200 text-[11px] font-semibold uppercase tracking-wide text-navy-500 hover:border-lime-500 hover:bg-navy-50"
+        }
         aria-label="Add decoration"
       >
-        <Plus className="size-4" />
-        Add decoration
+        <Plus className={compact ? "size-3" : "size-4"} />
+        {compact ? "Add" : "Add decoration"}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[280px] p-0">
         <Command>

@@ -43,6 +43,8 @@ export type Constants = {
   inToCm: number;
   cbmDivisor: number;
   cbmToCuft: number;
+  /** kg charged per CBM — the volumetric factor used for chargeable weight. */
+  volumetricDivisor: number;
 };
 
 const FALLBACK: Constants = {
@@ -50,6 +52,7 @@ const FALLBACK: Constants = {
   inToCm: 2.54,
   cbmDivisor: 1_000_000,
   cbmToCuft: 35.3147,
+  volumetricDivisor: 200,
 };
 
 export function constantsFrom(rows: AppSetting[] | undefined): Constants {
@@ -63,6 +66,7 @@ export function constantsFrom(rows: AppSetting[] | undefined): Constants {
     inToCm: pick("conversions_in_to_cm", FALLBACK.inToCm),
     cbmDivisor: pick("conversions_cbm_divisor", FALLBACK.cbmDivisor),
     cbmToCuft: pick("conversions_cbm_to_cuft", FALLBACK.cbmToCuft),
+    volumetricDivisor: pick("conversions_volumetric_divisor", FALLBACK.volumetricDivisor),
   };
 }
 
@@ -118,4 +122,20 @@ export function cartonCbm(
   const cm = [l, w, h].map((value) => convertLength(value, unit, "cm", constants));
   const cbm = (cm[0]! * cm[1]! * cm[2]!) / constants.cbmDivisor;
   return Math.round(cbm * 10000) / 10000;
+}
+
+/**
+ * DISPLAY ONLY — chargeable weight in kg: max(actual, volume × volumetric factor).
+ * Returns null when either input is missing, so the caller omits partial math.
+ */
+export function chargeableWeightKg(
+  actual: number | null,
+  actualUnit: WeightUnit,
+  cbm: number | null,
+  constants: Constants,
+) {
+  if (actual == null || cbm == null) return null;
+  const kg = convertWeight(actual, actualUnit, "kg", constants);
+  const volumetric = cbm * constants.volumetricDivisor;
+  return Math.round(Math.max(kg, volumetric) * 10) / 10;
 }
