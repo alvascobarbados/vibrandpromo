@@ -665,7 +665,7 @@ function PricelistRow({
         <SectionHead>Packing details</SectionHead>
         <Kv label="Pcs / ctn" alert={missingKeys.has("carton_pack")}>
           <InlineField
-            className="w-16"
+            className="w-14"
             value={numberText(sourcing?.carton_pack)}
             numeric
             validate={positiveProblem}
@@ -682,23 +682,23 @@ function PricelistRow({
         >
           <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
-              className="w-9 shrink-0"
+              className="w-8 shrink-0"
               value={numberText(sourcing?.carton_length)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_length: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-center text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-9 shrink-0"
+              className="w-8 shrink-0"
               value={numberText(sourcing?.carton_width)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_width: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-center text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-9 shrink-0"
+              className="w-8 shrink-0"
               value={numberText(sourcing?.carton_height)}
               numeric
               validate={positiveProblem}
@@ -726,7 +726,7 @@ function PricelistRow({
         <Kv label="Weight" alert={missingKeys.has("carton_weight")}>
           <span className="flex flex-nowrap items-center gap-1.5">
             <InlineField
-              className="w-20 shrink-0"
+              className="w-16 shrink-0"
               value={numberText(sourcing?.carton_weight)}
               display={weight3(sourcing?.carton_weight ?? null, units.weight)}
               numeric
@@ -761,17 +761,26 @@ function PricelistRow({
         ) : null}
 
         <SectionHead>Production</SectionHead>
+        <Kv label="MOQ">
+          <InlineField
+            className="w-14"
+            value={product.moq == null ? "" : String(product.moq)}
+            numeric
+            validate={moqProblem}
+            save={(raw) => saveProduct({ moq: numOrNull(raw) })}
+          />
+        </Kv>
         <Kv label="Lead time" alert={missingKeys.has("production_min_days")}>
           <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
-              className="w-10 shrink-0"
+              className="w-9 shrink-0"
               value={product.production_min_days == null ? "" : String(product.production_min_days)}
               numeric
               save={(raw) => saveProduct({ production_min_days: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-[13px] text-muted-foreground">–</span>
+            <span className="shrink-0 text-[11px] text-muted-foreground">–</span>
             <InlineField
-              className="w-10 shrink-0"
+              className="w-9 shrink-0"
               value={product.production_max_days == null ? "" : String(product.production_max_days)}
               numeric
               save={(raw) => saveProduct({ production_max_days: numOrNull(raw) })}
@@ -784,15 +793,6 @@ function PricelistRow({
           </span>
         </Kv>
         <ProductionExtras product={product} save={saveProduct} />
-        <Kv label="MOQ">
-          <InlineField
-            className="w-16"
-            value={product.moq == null ? "" : String(product.moq)}
-            numeric
-            validate={moqProblem}
-            save={(raw) => saveProduct({ moq: numOrNull(raw) })}
-          />
-        </Kv>
       </div>
 
       {/* Pricing */}
