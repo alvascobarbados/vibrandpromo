@@ -4,6 +4,167 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * VIBRAND SKU GRAMMAR (ours — nothing is imported from any other ERP):
+ *   [category char][2-digit subcategory][3-digit item][optional X][optional -VARIANT]
+ * A variant keeps the item digits and takes the next free "-V{n}" suffix.
+ */
+export function skuBase(sku: string | null | undefined) {
+  const raw = (sku ?? "").trim().toUpperCase();
+  if (!raw) return "";
+  return raw.split("-")[0]!.replace(/X+$/, "");
+}
+
+function nextFreeSuffix(base: string, taken: Set<string>) {
+  let n = 2;
+  while (taken.has(`${base}-V${n}`.toUpperCase())) n += 1;
+  return `${base}-V${n}`;
+}
+
+/**
+ * DUPLICATE AS VARIANT (ported behaviour from V3-1's duplicateProductAsVariant,
+ * adapted to our grammar). The copy keeps the source's name, supplier and
+ * category/subcategory so pure name-based grouping picks it up, and copies
+ * packing (including explicit units), production fields, every decoration with
+ * its bands, and product_details verbatim — as INDEPENDENT rows. The new SKU
+ * comes from our own numbering (same item digits, next free -V suffix), the
+ * supplier item number gets the next free -V{n}, the variant label starts blank
+ * and a fresh variant is always hidden from customers until reviewed.
+ */
+export async function duplicateProductAsVariant(sourceProductId: string): Promise<string> {
+  const { data: source, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", sourceProductId)
+    .single();
+  if (error) throw error;
+  const row = { ...(source as Record<string, unknown>) };
+  delete row['id'];
+  delete row['created_at'];
+  delete row['updated_at'];
+
+  // New SKU — our grammar, next free -V suffix on the same item digits.
+  const base = skuBase(source['sku' as never] as string | null);
+  let sku: string | null = null;
+  if (base) {
+    const { data: skus } = await supabase.from("products").select("sku").like("sku", `${base}%`);
+    const taken = new Set(
+      (skus ?? []).map((item) => String((item as { sku: string | null }).sku ?? "").toUpperCase()),
+    );
+    sku = nextFreeSuffix(base, taken);
+  }
+
+  const stamp = Date.now().toString(36).slice(-4);
+  const insert = {
+    ...row,
+    sku,
+    slug: `${String(row['slug'])}-v-${stamp}`,
+    is_active: false,
+    is_featured: false,
+  };
+  const { data: created, error: insertError } = await supabase
+    .from("products")
+    .insert(insert as never)
+    .select("id")
+    .single();
+  if (insertError) throw insertError;
+  const newId = (created as { id: string }).id;
+
+  // Sourcing: same supplier + packing (with explicit units), blank variant label.
+  const { data: sourcing } = await supabase
+    .from("product_sourcing")
+    .select("*")
+    .eq("product_id", sourceProductId)
+    .maybeSingle();
+  if (sourcing) {
+    const src = sourcing as Record<string, unknown>;
+    const itemBase = String(src['supplier_item_no'] ?? "").replace(/-V\d+$/i, "");
+    let itemNo: string | null = null;
+    if (itemBase) {
+      const { data: items } = await supabase
+        .from("product_sourcing")
+        .select("supplier_item_no")
+        .like("supplier_item_no", `${itemBase}%`);
+      const taken = new Set(
+        (items ?? []).map((item) =>
+          String((item as { supplier_item_no: string | null }).supplier_item_no ?? "").toUpperCase(),
+        ),
+      );
+      itemNo = nextFreeSuffix(itemBase, taken);
+    }
+    const { error: sourcingError } = await supabase.from("product_sourcing").insert({
+      product_id: newId,
+      supplier_id: src['supplier_id'] ?? null,
+      supplier_item_no: itemNo,
+      supplier_item_name: src['supplier_item_name'] ?? null,
+      variant_label: null,
+      carton_pack: src['carton_pack'] ?? null,
+      carton_length: src['carton_length'] ?? null,
+      carton_width: src['carton_width'] ?? null,
+      carton_height: src['carton_height'] ?? null,
+      carton_weight: src['carton_weight'] ?? null,
+      dimension_unit: src['dimension_unit'] ?? null,
+      weight_unit: src['weight_unit'] ?? null,
+    } as never);
+    if (sourcingError) throw sourcingError;
+  }
+
+  // Decorations + their bands — independent copies.
+  const { data: decorations } = await supabase
+    .from("product_decorations")
+    .select("id, method_detail_id, sort_order, notes, ref_image_url")
+    .eq("product_id", sourceProductId);
+  for (const decoration of decorations ?? []) {
+    const { data: copy, error: decorationError } = await supabase
+      .from("product_decorations")
+      .insert({
+        product_id: newId,
+        method_detail_id: decoration.method_detail_id,
+        sort_order: decoration.sort_order,
+        notes: decoration.notes,
+        ref_image_url: decoration.ref_image_url,
+      } as never)
+      .select("id")
+      .single();
+    if (decorationError) throw decorationError;
+    const { data: bands } = await supabase
+      .from("product_decoration_bands")
+      .select("qty, unit_cost, setup_cost, inland_freight_usd")
+      .eq("product_decoration_id", decoration.id);
+    if (bands?.length) {
+      const { error: bandError } = await supabase.from("product_decoration_bands").insert(
+        bands.map((band) => ({
+          product_decoration_id: (copy as { id: string }).id,
+          qty: band.qty,
+          unit_cost: band.unit_cost,
+          setup_cost: band.setup_cost,
+          inland_freight_usd: band.inland_freight_usd,
+        })) as never,
+      );
+      if (bandError) throw bandError;
+    }
+  }
+
+  // Attributes verbatim.
+  const { data: details } = await supabase
+    .from("product_details")
+    .select("detail_label_id, value, sort_order")
+    .eq("product_id", sourceProductId);
+  if (details?.length) {
+    const { error: detailError } = await supabase.from("product_details").insert(
+      details.map((detail) => ({
+        product_id: newId,
+        detail_label_id: detail.detail_label_id,
+        value: detail.value,
+        sort_order: detail.sort_order,
+      })) as never,
+    );
+    if (detailError) throw detailError;
+  }
+
+  return newId;
+}
+
 /** Field-level product write, same staff-gated products path the editors use. */
 export async function updateProductFields(id: string, patch: Record<string, unknown>) {
   const { error } = await supabase
