@@ -15,6 +15,8 @@ type Base = {
   readOnly?: boolean;
   /** Long values wrap to two lines (with a native tooltip) instead of truncating. */
   wrap?: boolean;
+  /** How many lines a wrapped value may use before clamping. */
+  wrapLines?: 2 | 3;
 };
 
 const box =
