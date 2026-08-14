@@ -306,6 +306,7 @@ function PricelistRow({
 }) {
   const queryClient = useQueryClient();
   const [imagesOpen, setImagesOpen] = useState(false);
+  const [addingInclude, setAddingInclude] = useState(false);
   const supplier = suppliers.find((row) => row.id === sourcing?.supplier_id) ?? null;
   const units = effectiveUnits(sourcing, supplier?.unit_system);
   /** CBM is always normalized from the effective dimension unit, never assumed metric. */
@@ -345,28 +346,30 @@ function PricelistRow({
   return (
     <div className={`${COLS} items-start py-3.5 ${product.is_active ? "" : "bg-n-50/70"}`}>
       {/* Image */}
-      <div className="flex flex-col gap-2">
-        <div className="grid grid-cols-2 gap-2">
-          <ImageSlot
-            label="Product Image"
-            path={images[0]}
-            dim={!product.is_active}
-            onOpen={() => setImagesOpen(true)}
-          />
+      <div className="flex flex-col gap-1.5">
+        <ImageSlot
+          label="Product image"
+          path={images[0]}
+          dim={!product.is_active}
+          onOpen={() => setImagesOpen(true)}
+        />
+        <div className="flex items-center gap-2">
           <ImageSlot
             label="Reference"
             path={images[1]}
             dim={!product.is_active}
+            className="size-11 shrink-0"
+            extra={images.length > 2 ? images.length - 2 : 0}
             onOpen={() => setImagesOpen(true)}
           />
+          <button
+            type="button"
+            onClick={() => setImagesOpen(true)}
+            className="inline-flex w-fit items-center gap-1.5 rounded-full border border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-navy-700 hover:bg-navy-50"
+          >
+            <Upload className="size-3" /> Upload
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setImagesOpen(true)}
-          className="inline-flex w-fit items-center gap-1.5 rounded-full border border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-navy-700 hover:bg-navy-50"
-        >
-          <Upload className="size-3" /> Upload
-        </button>
         <p className="text-[11px] text-muted-foreground">
           Updated {relativeTime(product.updated_at)}
         </p>
@@ -711,11 +714,16 @@ function ImageSlot({
   label,
   path,
   dim,
+  className,
+  extra,
   onOpen,
 }: {
   label: string;
   path: string | undefined;
   dim?: boolean;
+  className?: string;
+  /** "+N" overlay count for the remaining images beyond the two shown. */
+  extra?: number;
   onOpen: () => void;
 }) {
   return (
@@ -723,7 +731,9 @@ function ImageSlot({
       type="button"
       onClick={onOpen}
       aria-label={`${label} — manage images`}
-      className="group relative flex aspect-square w-full flex-col items-center justify-center overflow-hidden rounded-lg border border-navy-100 bg-navy-50"
+      className={`group relative flex flex-col items-center justify-center overflow-hidden rounded-lg border border-navy-100 bg-navy-50 ${
+        className ?? "aspect-square w-full"
+      }`}
     >
       {path ? (
         <img
@@ -734,10 +744,17 @@ function ImageSlot({
         />
       ) : (
         <span className="flex flex-col items-center gap-1 text-muted-foreground">
-          <ImageIcon className="size-5" />
-          <span className="text-[10px] font-medium uppercase tracking-wide">No image</span>
+          <ImageIcon className="size-4" />
+          {className ? null : (
+            <span className="text-[10px] font-medium uppercase tracking-wide">No image</span>
+          )}
         </span>
       )}
+      {extra ? (
+        <span className="absolute inset-0 flex items-center justify-center bg-n-900/55 text-[11px] font-semibold text-white">
+          +{extra}
+        </span>
+      ) : null}
       <span className="absolute inset-x-0 bottom-0 bg-n-900/70 py-0.5 text-center text-[10px] font-semibold uppercase text-white opacity-0 transition group-hover:opacity-100">
         {label}
       </span>
