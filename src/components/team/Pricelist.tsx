@@ -124,7 +124,7 @@ export function Pricelist({
     <div className="mt-4 overflow-x-auto">
       <div className="min-w-[1440px]">
         <div
-          className={`${COLS} sticky top-16 z-10 items-end border-b border-navy-200 bg-card/95 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground backdrop-blur`}
+          className={`${COLS} sticky top-0 z-10 items-end border-b border-navy-200 bg-card/95 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground backdrop-blur`}
         >
           <span>Image</span>
           <span>Product</span>
@@ -544,7 +544,7 @@ function RowKebab({
       >
         <MoreVertical className="size-4" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="z-[60]">
         <DropdownMenuItem asChild>
           <Link to="/admin/products" search={{ q: product.sku ?? product.name }}>
             <ExternalLink className="mr-2 size-3.5" /> Open in editor
