@@ -462,6 +462,7 @@ function PricelistRow({
           <Kv label="Category">
             <InlineChoice
               value={product.category_id ?? ""}
+              wrap
               options={[
                 { value: "", label: "—" },
                 ...categories.map((row) => ({ value: row.id, label: row.name })),
@@ -475,6 +476,7 @@ function PricelistRow({
             ) : (
               <InlineChoice
                 value={product.subcategory_id ?? ""}
+                wrap
                 options={subOptions}
                 save={(next) => saveProduct({ subcategory_id: next })}
               />
@@ -535,14 +537,35 @@ function PricelistRow({
             </button>
           </div>
         ))}
-        <AddAttributePopover
+        <IncludedItems
           productId={product.id}
-          labels={attributeLabels}
-          usedLabelIds={usedLabelIds}
-          nextSortOrder={nextAttributeSort}
-          onAdded={refreshAttributes}
+          rows={includes}
+          onChanged={refreshIncludes}
+          adding={addingInclude}
+          onAddingChange={setAddingInclude}
+          hideTrigger
         />
-        <IncludedItems productId={product.id} rows={includes} onChanged={refreshIncludes} />
+
+        {/* One quiet link row owns both "add" affordances for this column. */}
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+          <AddAttributePopover
+            productId={product.id}
+            labels={attributeLabels}
+            usedLabelIds={usedLabelIds}
+            nextSortOrder={nextAttributeSort}
+            onAdded={refreshAttributes}
+            triggerLabel="+ Attribute"
+            triggerClassName="text-navy-500 underline decoration-dotted underline-offset-2 hover:text-navy-700"
+          />
+          <span className="text-muted-foreground">·</span>
+          <button
+            type="button"
+            onClick={() => setAddingInclude(true)}
+            className="text-navy-500 underline decoration-dotted underline-offset-2 hover:text-navy-700"
+          >
+            + Included item
+          </button>
+        </div>
       </div>
 
       {/* Packing & production */}
