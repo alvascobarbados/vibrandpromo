@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Contact,
   Coins,
+  Calculator,
   Factory,
   FileSpreadsheet,
   ImageUp,
@@ -61,6 +62,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/admin/suppliers", label: "Suppliers", icon: Factory, page: "products" },
       { to: "/admin/costing", label: "Costing Data", icon: Coins, page: "products" },
+      { to: "/admin/calculations", label: "Calculations", icon: Calculator, page: "products" },
     ],
   },
   {
