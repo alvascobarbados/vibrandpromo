@@ -173,8 +173,11 @@ function AdminProducts() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
 
-  const setSearch = (patch: Partial<ProductSearch>) =>
+  const setSearch = (patch: Partial<ProductSearch>) => {
+    setActiveCell(null);
+    setFrozenOrder(null);
     void navigate({ search: (prev: ProductSearch) => ({ ...prev, page: 1, ...patch }) });
+  };
 
   const categoryName = useMemo(
     () => new Map((categories.data ?? []).map((c) => [c.id, c.name] as const)),
