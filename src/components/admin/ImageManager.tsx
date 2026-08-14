@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { imageSrc } from "@/lib/catalog";
+import { fallbackToOriginal, uploadWithVariants } from "@/lib/image-upload";
 
 export function ImageManager({
   images,
@@ -28,9 +29,7 @@ export function ImageManager({
   async function handleUpload(file: File) {
     setUploading(true);
     try {
-      const path = `${crypto.randomUUID()}-${file.name.replace(/[^\w.-]+/g, "_")}`;
-      const { error } = await supabase.storage.from("product-images").upload(path, file);
-      if (error) throw error;
+      const path = await uploadWithVariants(file);
       onChange([...images, path]);
       toast.success("Image uploaded");
     } catch (error) {
@@ -90,9 +89,10 @@ export function ImageManager({
                 }`}
               >
                 <img
-                  src={imageSrc(image)}
+                  src={imageSrc(image, "thumb")}
                   alt=""
                   loading="lazy"
+                  onError={(event) => fallbackToOriginal(event, imageSrc(image))}
                   className="size-20 rounded-lg border border-border object-cover"
                 />
                 {index === 0 ? (
