@@ -49,6 +49,7 @@ import { costingReadyMissing, type MissingField } from "@/lib/costing-gate";
 import { liveGateProblem } from "@/lib/live-gate";
 import { buildPricelistItems, memberDisplayName } from "@/lib/pricelist-groups";
 import { productIncludesQuery, type ProductInclude } from "@/lib/product-includes";
+import { fallbackToOriginal } from "@/lib/image-variants";
 import {
   imageSrc,
   productionLabel,
@@ -821,9 +822,10 @@ function ImageSlot({
     >
       {path ? (
         <img
-          src={imageSrc(path)}
+          src={imageSrc(path, "card")}
           alt=""
           loading="lazy"
+          onError={(event) => fallbackToOriginal(event, imageSrc(path))}
           className={`size-full object-cover ${dim ? "opacity-50 saturate-[0.35]" : ""}`}
         />
       ) : (

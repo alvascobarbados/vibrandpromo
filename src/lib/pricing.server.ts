@@ -50,29 +50,29 @@ function tablesFrom(
   return tables;
 }
 
-export async function getPublicPricingFor(productIds: string[]): Promise<PublicPricing[]> {
-  if (!productIds.length) return [];
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+/**
+ * The costing reference tables are request-independent and change rarely, so
+ * they are cached in server memory for a short window instead of being re-read
+ * on every pricing call. Nothing here is product- or request-specific and
+ * nothing new crosses to the client.
+ */
+const STATIC_TTL_MS = 60_000;
+let staticCache: { at: number; value: Promise<StaticCostingTables> } | null = null;
 
-  const [products, sourcing, suppliers, origins, settingsRows, methods, routeRows, tiers, dests, decorations, cats, subs] =
+async function loadStaticCostingTables() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const [suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs] =
     await Promise.all([
-      supabaseAdmin
-        .from("products")
-        .select("id, category_id, subcategory_id, status")
-        .in("id", productIds)
-        .eq("status", "live"),
-      supabaseAdmin
-        .from("product_sourcing")
-        .select(
-          "id, product_id, supplier_id, supplier_item_no, supplier_item_name, variant_label, carton_pack, carton_length, carton_width, carton_height, carton_weight, dimension_unit, weight_unit",
-        )
-        .in("product_id", productIds),
       supabaseAdmin.from("suppliers").select("id, unit_system, origin_id"),
       supabaseAdmin.from("origins").select("id, code"),
-      supabaseAdmin.from("app_settings").select("id, section, key, value, value_type, display_label, display_order, description"),
+      supabaseAdmin
+        .from("app_settings")
+        .select("id, section, key, value, value_type, display_label, display_order, description"),
       supabaseAdmin
         .from("shipping_methods")
-        .select("id, code, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit, transport_mode"),
+        .select(
+          "id, code, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit, transport_mode",
+        ),
       supabaseAdmin
         .from("shipping_method_routes")
         .select(
@@ -80,15 +80,52 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
         ),
       supabaseAdmin.from("shipping_method_tiers").select("route_id, band_from, band_to, rate"),
       supabaseAdmin.from("destinations").select("id, code"),
-      supabaseAdmin
-        .from("product_decorations")
-        .select(
-          "id, product_id, method_detail_id, sort_order, updated_at, notes, ref_image_url, product_decoration_bands(id, product_decoration_id, qty, unit_cost, setup_cost, inland_freight_usd)",
-        )
-        .in("product_id", productIds),
       supabaseAdmin.from("categories").select("id, duty_rate_pct"),
       supabaseAdmin.from("subcategories").select("id, duty_rate_pct"),
     ]);
+  return { suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs };
+}
+
+type StaticCostingTables = Awaited<ReturnType<typeof loadStaticCostingTables>>;
+
+function getStaticCostingTables(): Promise<StaticCostingTables> {
+  const now = Date.now();
+  if (!staticCache || now - staticCache.at > STATIC_TTL_MS) {
+    const value = loadStaticCostingTables().catch((error) => {
+      staticCache = null;
+      throw error;
+    });
+    staticCache = { at: now, value };
+  }
+  return staticCache.value;
+}
+
+export async function getPublicPricingFor(productIds: string[]): Promise<PublicPricing[]> {
+  if (!productIds.length) return [];
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const [products, sourcing, decorations, statics] = await Promise.all([
+    supabaseAdmin
+      .from("products")
+      .select("id, category_id, subcategory_id, status")
+      .in("id", productIds)
+      .eq("status", "live"),
+    supabaseAdmin
+      .from("product_sourcing")
+      .select(
+        "id, product_id, supplier_id, supplier_item_no, supplier_item_name, variant_label, carton_pack, carton_length, carton_width, carton_height, carton_weight, dimension_unit, weight_unit",
+      )
+      .in("product_id", productIds),
+    supabaseAdmin
+      .from("product_decorations")
+      .select(
+        "id, product_id, method_detail_id, sort_order, updated_at, notes, ref_image_url, product_decoration_bands(id, product_decoration_id, qty, unit_cost, setup_cost, inland_freight_usd)",
+      )
+      .in("product_id", productIds),
+    getStaticCostingTables(),
+  ]);
+  const { suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs } =
+    statics;
 
   if (!products.data?.length) return [];
 
@@ -128,8 +165,8 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
   const out: PublicPricing[] = [];
   for (const product of products.data) {
     const row = sourcingByProduct.get(product.id) ?? null;
-    const supplier = row?.supplier_id ? supplierById.get(row.supplier_id) ?? null : null;
-    const originCode = supplier?.origin_id ? originById.get(supplier.origin_id) ?? null : null;
+    const supplier = row?.supplier_id ? (supplierById.get(row.supplier_id) ?? null) : null;
+    const originCode = supplier?.origin_id ? (originById.get(supplier.origin_id) ?? null) : null;
     const input = calcProductInput({
       productId: product.id,
       sourcing: row,
@@ -137,8 +174,8 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
       originCode,
       decorations: decorationsByProduct.get(product.id) ?? [],
       dutyRate: dutyDecimal(
-        product.subcategory_id ? dutySubcategory.get(product.subcategory_id) ?? null : null,
-        product.category_id ? dutyCategory.get(product.category_id) ?? null : null,
+        product.subcategory_id ? (dutySubcategory.get(product.subcategory_id) ?? null) : null,
+        product.category_id ? (dutyCategory.get(product.category_id) ?? null) : null,
       ),
     });
     if (!input) continue;

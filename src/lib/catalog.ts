@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isVariantPath, variantPath, type ImageVariant } from "@/lib/image-variants";
 
 export type Category = {
   id: string;
@@ -156,13 +157,15 @@ export function matchesBuckets(
  * so stored values are object paths served through a stable app URL. Legacy
  * absolute URLs are passed through untouched.
  */
-export function imageSrc(value: string): string {
+export function imageSrc(value: string, variant: ImageVariant = "original"): string {
   if (/^(https?:)?\/\//.test(value) || value.startsWith("data:")) return value;
-  return `/api/public/product-image/${value.split("/").map(encodeURIComponent).join("/")}`;
+  const path =
+    variant === "original" || isVariantPath(value) ? value : variantPath(value, variant);
+  return `/api/public/product-image/${path.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 export function imageSrcList(images: string[] | null | undefined): string[] {
-  return (images ?? []).map(imageSrc);
+  return (images ?? []).map((value) => imageSrc(value));
 }
 
 export function productImage(product: Pick<Product, "images">): string | null {

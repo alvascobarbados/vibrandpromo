@@ -63,6 +63,7 @@ import {
   InlineText,
 } from "@/components/admin/inline-cells";
 import { moqProblem } from "@/lib/product-rules";
+import { fallbackToOriginal } from "@/lib/image-variants";
 import { supabase } from "@/integrations/supabase/client";
 import {
   categoriesQuery,
@@ -1091,9 +1092,10 @@ function ProductSummary({
           {product.images.map((image) => (
             <img
               key={image}
-              src={imageSrc(image)}
+              src={imageSrc(image, "thumb")}
               alt=""
               loading="lazy"
+              onError={(event) => fallbackToOriginal(event, imageSrc(image))}
               className="size-16 rounded-lg border border-border object-cover"
             />
           ))}
