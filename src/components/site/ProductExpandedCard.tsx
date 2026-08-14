@@ -5,7 +5,7 @@ import { AddToQuoteRow } from "@/components/site/AddToQuoteRow";
 import { RushChip } from "@/components/site/RushChip";
 import { airAvailable, seaAvailable, type Product } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
-import type { PublicPricing } from "@/lib/pricing.server";
+import type { PublicPricing } from "@/lib/pricing-types";
 
 const SPECS: { label: string; key: keyof Product }[] = [
   { label: "Material", key: "material" },

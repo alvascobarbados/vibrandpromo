@@ -20,10 +20,7 @@ import {
 import type { ProductDecoration } from "@/lib/decorations";
 import type { SourcingRow, Supplier } from "@/lib/sourcing";
 import type { TransportMode } from "@/lib/costing";
-
-export type PublicPriceRow = { qty: number; unitUsd: number };
-export type PublicPricingTable = { mode: TransportMode; rows: PublicPriceRow[] };
-export type PublicPricing = { productId: string; tables: PublicPricingTable[] };
+import type { PublicPriceRow, PublicPricing, PublicPricingTable } from "@/lib/pricing-types";
 
 /** Cheapest CIF unit price per quantity row, per transport mode. */
 function tablesFrom(
