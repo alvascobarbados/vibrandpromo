@@ -37,7 +37,7 @@ export function useCatalogFilters() {
   }, [raw, navigate]);
 
   const go = (
-    patch: Partial<CatalogSearch & { page: number }>,
+    patch: Partial<CatalogSearch & { page: number; view: string }>,
     opts?: { replace?: boolean },
   ) => {
     void navigate({

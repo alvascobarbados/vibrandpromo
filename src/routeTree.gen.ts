@@ -21,6 +21,7 @@ import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAccountRouteImport } from './routes/_authenticated/admin.account'
 import { Route as AuthenticatedAdminBulkImagesRouteImport } from './routes/_authenticated/admin.bulk-images'
+import { Route as AuthenticatedAdminCalculationsRouteImport } from './routes/_authenticated/admin.calculations'
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
 import { Route as AuthenticatedAdminContactsRouteImport } from './routes/_authenticated/admin.contacts'
 import { Route as AuthenticatedAdminCostingRouteImport } from './routes/_authenticated/admin.costing'
@@ -103,6 +104,12 @@ const AuthenticatedAdminBulkImagesRoute =
   AuthenticatedAdminBulkImagesRouteImport.update({
     id: '/admin/bulk-images',
     path: '/admin/bulk-images',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminCalculationsRoute =
+  AuthenticatedAdminCalculationsRouteImport.update({
+    id: '/admin/calculations',
+    path: '/admin/calculations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminCategoriesRoute =
@@ -247,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/c/$slug': typeof CSlugRoute
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
+  '/admin/calculations': typeof AuthenticatedAdminCalculationsRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/contacts': typeof AuthenticatedAdminContactsRoute
   '/admin/costing': typeof AuthenticatedAdminCostingRouteWithChildren
@@ -282,6 +290,7 @@ export interface FileRoutesByTo {
   '/c/$slug': typeof CSlugRoute
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
+  '/admin/calculations': typeof AuthenticatedAdminCalculationsRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/contacts': typeof AuthenticatedAdminContactsRoute
   '/admin/email': typeof AuthenticatedAdminEmailRoute
@@ -317,6 +326,7 @@ export interface FileRoutesById {
   '/c/$slug': typeof CSlugRoute
   '/_authenticated/admin/account': typeof AuthenticatedAdminAccountRoute
   '/_authenticated/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
+  '/_authenticated/admin/calculations': typeof AuthenticatedAdminCalculationsRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/_authenticated/admin/contacts': typeof AuthenticatedAdminContactsRoute
   '/_authenticated/admin/costing': typeof AuthenticatedAdminCostingRouteWithChildren
@@ -354,6 +364,7 @@ export interface FileRouteTypes {
     | '/c/$slug'
     | '/admin/account'
     | '/admin/bulk-images'
+    | '/admin/calculations'
     | '/admin/categories'
     | '/admin/contacts'
     | '/admin/costing'
@@ -389,6 +400,7 @@ export interface FileRouteTypes {
     | '/c/$slug'
     | '/admin/account'
     | '/admin/bulk-images'
+    | '/admin/calculations'
     | '/admin/categories'
     | '/admin/contacts'
     | '/admin/email'
@@ -423,6 +435,7 @@ export interface FileRouteTypes {
     | '/c/$slug'
     | '/_authenticated/admin/account'
     | '/_authenticated/admin/bulk-images'
+    | '/_authenticated/admin/calculations'
     | '/_authenticated/admin/categories'
     | '/_authenticated/admin/contacts'
     | '/_authenticated/admin/costing'
@@ -545,6 +558,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/bulk-images'
       fullPath: '/admin/bulk-images'
       preLoaderRoute: typeof AuthenticatedAdminBulkImagesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/calculations': {
+      id: '/_authenticated/admin/calculations'
+      path: '/admin/calculations'
+      fullPath: '/admin/calculations'
+      preLoaderRoute: typeof AuthenticatedAdminCalculationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/categories': {
@@ -754,6 +774,7 @@ const AuthenticatedAdminSettingsRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminAccountRoute: typeof AuthenticatedAdminAccountRoute
   AuthenticatedAdminBulkImagesRoute: typeof AuthenticatedAdminBulkImagesRoute
+  AuthenticatedAdminCalculationsRoute: typeof AuthenticatedAdminCalculationsRoute
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
   AuthenticatedAdminContactsRoute: typeof AuthenticatedAdminContactsRoute
   AuthenticatedAdminCostingRoute: typeof AuthenticatedAdminCostingRouteWithChildren
@@ -771,6 +792,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminAccountRoute: AuthenticatedAdminAccountRoute,
   AuthenticatedAdminBulkImagesRoute: AuthenticatedAdminBulkImagesRoute,
+  AuthenticatedAdminCalculationsRoute: AuthenticatedAdminCalculationsRoute,
   AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
   AuthenticatedAdminContactsRoute: AuthenticatedAdminContactsRoute,
   AuthenticatedAdminCostingRoute: AuthenticatedAdminCostingRouteWithChildren,
