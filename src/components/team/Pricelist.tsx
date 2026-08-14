@@ -8,7 +8,15 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Copy, ExternalLink, Image as ImageIcon, Link2, MoreVertical, Upload } from "lucide-react";
+import {
+  ChevronDown,
+  Copy,
+  ExternalLink,
+  Image as ImageIcon,
+  Link2,
+  MoreVertical,
+  Upload,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -37,6 +45,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { IncludedItems } from "@/components/team/IncludedItems";
 import { costingReadyMissing, type MissingField } from "@/lib/costing-gate";
+import { liveGateProblem } from "@/lib/live-gate";
 import { buildPricelistItems, memberDisplayName } from "@/lib/pricelist-groups";
 import { productIncludesQuery, type ProductInclude } from "@/lib/product-includes";
 import {
@@ -872,11 +881,12 @@ function ImageSlot({
 }
 
 /**
- * PUBLISH state chip — customer visibility, through the SAME products.is_active
- * update path the kebab Hide/Show uses (so the two stay in sync). Independent of
- * the costing state chip beside it: Published + Incomplete is legal.
+ * STATUS control — the ONE customer-visibility field (products.status), through
+ * the SAME staff-gated products update path the kebab uses. Draft → Live is
+ * refused by the shared live gate until the row has a name and one image.
+ * Independent of the costing chip beside it: Live + Incomplete is legal.
  */
-function PublishChip({
+function StatusControl({
   product,
   saveProduct,
 }: {
@@ -884,37 +894,55 @@ function PublishChip({
   saveProduct: (patch: Record<string, unknown>) => Promise<void>;
 }) {
   const [confirming, setConfirming] = useState(false);
-  const write = (next: boolean) =>
-    void saveProduct({ is_active: next }).then(
-      () => toast.success(next ? "Published" : "Removed from the customer shop"),
+  const live = product.status === "live";
+  const write = (next: "draft" | "live") =>
+    void saveProduct({ status: next }).then(
+      () => toast.success(next === "live" ? "Live on the customer shop" : "Back to draft"),
       (error: unknown) =>
         toast.error(error instanceof Error ? error.message : "Could not save"),
     );
 
+  function goLive() {
+    const problem = liveGateProblem(product);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
+    write("live");
+  }
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => (product.is_active ? setConfirming(true) : write(true))}
-        className={`inline-flex h-[18px] items-center rounded-full px-2 text-[11px] font-semibold leading-none transition-colors ${
-          product.is_active
-            ? "bg-navy-700 text-white hover:bg-navy-600"
-            : "border border-n-300 text-muted-foreground hover:bg-n-100"
-        }`}
-      >
-        {product.is_active ? "Published" : "Not published"}
-      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={`Status: ${live ? "Live" : "Draft"}`}
+          className={`inline-flex h-[18px] items-center gap-1 rounded-full px-2 text-[11px] font-semibold leading-none transition-colors ${
+            live
+              ? "bg-lime-500 text-n-700 hover:bg-lime-400"
+              : "border border-amber-400 text-amber-700 hover:bg-amber-50"
+          }`}
+        >
+          {live ? "Live" : "Draft"}
+          <ChevronDown className="size-3" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="z-[60]">
+          <DropdownMenuItem onSelect={() => (live ? undefined : goLive())}>Live</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => (live ? setConfirming(true) : undefined)}>
+            Draft
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove from the customer shop?</AlertDialogTitle>
+            <AlertDialogTitle>Move back to draft?</AlertDialogTitle>
             <AlertDialogDescription>
-              Customers will no longer see {product.name}. You can publish it again at any time.
+              Customers will no longer see {product.name}. You can make it live again at any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => write(false)}>Unpublish</AlertDialogAction>
+            <AlertDialogAction onClick={() => write("draft")}>Move to draft</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -977,14 +1005,22 @@ function RowKebab({
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => {
-            void saveProduct({ is_active: !product.is_active }).then(
-              () => toast.success(product.is_active ? "Hidden from catalogue" : "Published"),
+            const live = product.status === "live";
+            if (!live) {
+              const problem = liveGateProblem(product);
+              if (problem) {
+                toast.error(problem);
+                return;
+              }
+            }
+            void saveProduct({ status: live ? "draft" : "live" }).then(
+              () => toast.success(live ? "Back to draft" : "Live on the customer shop"),
               (error: unknown) =>
                 toast.error(error instanceof Error ? error.message : "Could not save"),
             );
           }}
         >
-          {product.is_active ? "Hide" : "Show"}
+          {product.status === "live" ? "Move to draft" : "Make live"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
