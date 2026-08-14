@@ -247,6 +247,13 @@ function PricelistRow({
 
   const refreshProducts = () => queryClient.invalidateQueries({ queryKey: ["products"] });
   const refreshSourcing = () => queryClient.invalidateQueries({ queryKey: ["product_sourcing"] });
+  const refreshAttributes = () =>
+    queryClient.invalidateQueries({ queryKey: ["product_details"] });
+  const labelName = (id: string) =>
+    attributeLabels.find((row) => row.id === id)?.label ?? "Attribute";
+  const usedLabelIds = new Set(attributes.map((row) => row.detail_label_id));
+  const nextAttributeSort =
+    attributes.reduce((max, row) => Math.max(max, row.sort_order), 0) + 10;
 
   const saveProduct = async (patch: Record<string, unknown>) => {
     await updateProductFields(product.id, patch);
@@ -397,13 +404,45 @@ function PricelistRow({
             save={(raw) => saveProduct({ size: raw.trim() || null })}
           />
         </Kv>
-        <button
-          type="button"
-          disabled
-          className="mt-1 w-fit cursor-not-allowed rounded-full border border-dashed border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground/70"
-        >
-          + Add attribute
-        </button>
+        {attributes.map((row) => (
+          <div key={row.id} className="group flex items-start gap-1">
+            <div className="min-w-0 flex-1">
+              <Kv label={labelName(row.detail_label_id)}>
+                <InlineField
+                  value={row.value}
+                  save={async (raw) => {
+                    await updateProductDetailValue(row.id, raw);
+                    await refreshAttributes();
+                  }}
+                />
+              </Kv>
+            </div>
+            <button
+              type="button"
+              title={`Remove ${labelName(row.detail_label_id)}`}
+              onClick={async () => {
+                try {
+                  await deleteProductDetail(row.id);
+                  await refreshAttributes();
+                } catch (problem) {
+                  toast.error(
+                    problem instanceof Error ? problem.message : "Could not remove attribute",
+                  );
+                }
+              }}
+              className="mt-1 text-[11px] font-semibold text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <AddAttributePopover
+          productId={product.id}
+          labels={attributeLabels}
+          usedLabelIds={usedLabelIds}
+          nextSortOrder={nextAttributeSort}
+          onAdded={refreshAttributes}
+        />
       </div>
 
       {/* Packing & production */}
