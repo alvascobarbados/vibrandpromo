@@ -96,7 +96,7 @@ const BlockHeader = ({
 }: {
   title: string;
   currency: "USD" | "BBD";
-  scopeBB?: boolean;
+  scopeBB?: boolean | undefined;
   tag: "built" | "new" | "output";
 }) => (
   <div
