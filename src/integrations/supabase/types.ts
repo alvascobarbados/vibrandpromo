@@ -469,6 +469,7 @@ export type Database = {
           method_detail_id: string
           notes: string | null
           product_id: string
+          ref_image_url: string | null
           sort_order: number
           updated_at: string
         }
@@ -478,6 +479,7 @@ export type Database = {
           method_detail_id: string
           notes?: string | null
           product_id: string
+          ref_image_url?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -487,6 +489,7 @@ export type Database = {
           method_detail_id?: string
           notes?: string | null
           product_id?: string
+          ref_image_url?: string | null
           sort_order?: number
           updated_at?: string
         }
