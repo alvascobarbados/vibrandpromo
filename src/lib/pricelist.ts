@@ -59,7 +59,7 @@ export async function duplicateProductAsVariant(sourceProductId: string): Promis
     ...row,
     sku,
     slug: `${String(row['slug'])}-v-${stamp}`,
-    is_active: false,
+    status: "draft",
     is_featured: false,
   };
   const { data: created, error: insertError } = await supabase
@@ -193,7 +193,7 @@ export async function duplicateProduct(id: string) {
     name: `${String(row['name'])} (copy)`,
     slug: `${String(row['slug'])}-copy-${suffix}`,
     sku: row['sku'] ? `${String(row['sku'])}X` : null,
-    is_active: false,
+    status: "draft",
     is_featured: false,
   };
   const { data: created, error: insertError } = await supabase

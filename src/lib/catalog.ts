@@ -215,7 +215,7 @@ export const publicProductsQuery = queryOptions({
     const { data, error } = await supabase
       .from("products")
       .select("*")
-      .eq("is_active", true)
+      .eq("status", "live")
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as Product[];
@@ -254,7 +254,7 @@ export function productBySlugQuery(slug: string) {
         .from("products")
         .select("*")
         .eq("slug", slug)
-        .eq("is_active", true)
+        .eq("status", "live")
         .maybeSingle();
       if (error) throw error;
       return (data as Product) ?? null;
