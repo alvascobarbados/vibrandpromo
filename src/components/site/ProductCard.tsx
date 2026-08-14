@@ -1,7 +1,7 @@
-import { Pencil, Plane, Ship } from "lucide-react";
+import { Info, Pencil, Plane, Ship } from "lucide-react";
 import { useState } from "react";
 
-import { airAvailable, seaAvailable, specValue, type Product } from "@/lib/catalog";
+import { airAvailable, imageSrc, seaAvailable, specValue, type Product } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
@@ -12,6 +12,10 @@ import { RushChip } from "@/components/site/RushChip";
 import { ProductSourcingFetch } from "@/components/site/ProductTeamDetails";
 import { useViewMode } from "@/lib/view-mode";
 import type { PublicPricing } from "@/lib/pricing-types";
+import type { PublicDecorationPricing } from "@/lib/pricing-types";
+import { fallbackToOriginal } from "@/lib/image-variants";
+import { qtyFloor } from "@/lib/quantity";
+import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
 
 /** Layout variants of the ONE product card. */
 export type ProductCardViewMode = "grid" | "expanded";
@@ -25,8 +29,199 @@ const EXPANDED_SPECS: { label: string; key: keyof Product }[] = [
   { label: "Features", key: "features" },
 ];
 
-function money(value: number) {
-  return `$${value.toFixed(2)}`;
+/** Customer-side money: always explicit about the currency. */
+function usd(value: number) {
+  return `US$${value.toFixed(2)}`;
+}
+
+/** Sections with no data are omitted entirely on the customer side. */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-3">
+      <p className="sheet-section-head">{title}</p>
+      <div className="mt-0.5 space-y-1">{children}</div>
+    </section>
+  );
+}
+
+function Kv({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[104px_1fr] items-baseline gap-x-2">
+      <span className="sheet-kv-label">{label}</span>
+      <span className="sheet-kv-value min-w-0">{children}</span>
+    </div>
+  );
+}
+
+/** Hero + clickable thumbnail strip. Expanded view only. */
+function bandFor(quantities: number[], qty: number) {
+  let hit: number | null = null;
+  for (const value of quantities) if (qty >= value) hit = value;
+  return hit;
+}
+
+/**
+ * One priced decoration method. Columns are quantity bands; rows are the
+ * transport options the product actually ships by.
+ */
+function PricingBubble({
+  bubble,
+  showAir,
+  showSea,
+  air,
+  sea,
+  rush,
+  moq,
+  qty,
+}: {
+  bubble: PublicDecorationPricing;
+  showAir: boolean;
+  showSea: boolean;
+  air: string | null;
+  sea: string | null;
+  rush: string | null;
+  moq: number | null;
+  qty: number;
+}) {
+  const airTable = bubble.tables.find((table) => table.mode === "air");
+  const seaTable = bubble.tables.find((table) => table.mode === "sea");
+  const quantities = Array.from(
+    new Set([...(airTable?.rows ?? []), ...(seaTable?.rows ?? [])].map((row) => row.qty)),
+  ).sort((a, b) => a - b);
+  const band = bandFor(quantities, qty);
+  const rows: {
+    label: string;
+    icon?: typeof Plane;
+    chip?: boolean;
+    lead: string | null;
+    from?: "air" | "sea";
+  }[] = [];
+  if (showAir && airTable) rows.push({ label: "Air", icon: Plane, lead: air, from: "air" });
+  if (showSea && seaTable) rows.push({ label: "Sea", icon: Ship, lead: sea, from: "sea" });
+  if (rush && airTable) rows.push({ label: "Rush", chip: true, lead: rush, from: "air" });
+  if (!quantities.length || !rows.length) return null;
+
+  const cell = (from: "air" | "sea", value: number) => {
+    const table = from === "air" ? airTable : seaTable;
+    const row = table?.rows.find((entry) => entry.qty === value);
+    return row ? usd(row.unitUsd) : "—";
+  };
+
+  return (
+    <div className="rounded-xl border border-n-200 bg-white p-3">
+      <p className="card-value text-[13px]">{bubble.methodName}</p>
+      <div className="-mx-1 mt-2 overflow-x-auto px-1">
+        <table className="w-full min-w-max border-separate border-spacing-0 text-sm tabular-nums">
+          <thead>
+            <tr>
+              <th className="sheet-kv-label py-1 text-left font-semibold" />
+              {quantities.map((value) => (
+                <th
+                  key={value}
+                  className={`sheet-kv-label rounded-t-md px-2 py-1 text-right font-semibold ${
+                    band === value ? "bg-lime-50 !text-navy-700" : ""
+                  }`}
+                >
+                  {value}
+                  {moq != null && value === moq ? (
+                    <span className="ml-1 text-[10px] normal-case tracking-normal">MOQ</span>
+                  ) : null}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={row.label}>
+                <td className="border-t border-n-200 py-1 pr-2 align-middle">
+                  <span className="flex items-center gap-1.5 whitespace-nowrap">
+                    {row.chip ? <RushChip /> : null}
+                    {row.icon ? (
+                      <row.icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+                    ) : null}
+                    <span className="text-[13px]">{row.label}</span>
+                    {row.lead ? <span className="text-[11px] text-n-500">· {row.lead}</span> : null}
+                  </span>
+                </td>
+                {quantities.map((value) => (
+                  <td
+                    key={value}
+                    className={`border-t border-n-200 px-2 py-1 text-right ${
+                      band === value ? "bg-lime-50" : ""
+                    } ${band === value && index === rows.length - 1 ? "rounded-b-md" : ""}`}
+                  >
+                    {cell(row.from ?? "air", value)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/** Hero + clickable thumbnail strip. Expanded view only. */
+function ExpandedImages({
+  images,
+  alt,
+  onOpen,
+}: {
+  images: string[];
+  alt: string;
+  onOpen: (index: number) => void;
+}) {
+  const [active, setActive] = useState(0);
+  if (!images.length) {
+    return (
+      <div className="image-field">
+        <ProductPlaceholder className="size-full" />
+      </div>
+    );
+  }
+  const current = images[Math.min(active, images.length - 1)] ?? images[0]!;
+  return (
+    <div>
+      <div className="image-field overflow-hidden rounded-xl">
+        <img
+          src={imageSrc(current, "card")}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          onError={(event) => fallbackToOriginal(event, imageSrc(current))}
+          onClick={() => onOpen(active)}
+          className="image-field-media cursor-zoom-in"
+        />
+      </div>
+      {images.length > 1 ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {images.map((value, index) => (
+            <button
+              key={`${value}-${index}`}
+              type="button"
+              aria-label={`Show image ${index + 1}`}
+              onClick={() => setActive(index)}
+              className={`size-11 overflow-hidden rounded-md border bg-white ${
+                index === active
+                  ? "border-lime-500 ring-2 ring-lime-500"
+                  : "border-n-200 hover:border-n-300"
+              }`}
+            >
+              <img
+                src={imageSrc(value, "thumb")}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                onError={(event) => fallbackToOriginal(event, imageSrc(value))}
+                className="size-full object-contain"
+              />
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function FlagBadge({ source }: { source: string }) {
@@ -153,6 +348,8 @@ export function ProductCard({
   const workspace = useViewMode();
   const shipping = useShippingSettings();
   const [quickEditOpen, setQuickEditOpen] = useState(false);
+  // Drives the lime tier highlight in the expanded pricing bubbles.
+  const [stepperQty, setStepperQty] = useState(() => qtyFloor(product.moq));
   const hidden = editMode && product.status !== "live";
   const air = airLeadLabel(product, shipping);
   const sea = seaLeadLabel(product, shipping);
@@ -224,109 +421,122 @@ export function ProductCard({
     ) : null;
 
   if (viewMode === "expanded" && !team) {
-    const airTable = pricing?.tables.find((table) => table.mode === "air");
-    const seaTable = pricing?.tables.find((table) => table.mode === "sea");
-    const quantities = Array.from(
-      new Set(
-        [...(airTable?.rows ?? []), ...(seaTable?.rows ?? [])].map((row) => row.qty),
-      ),
-    ).sort((a, b) => a - b);
     const specs = EXPANDED_SPECS.filter(
       (spec) => product[spec.key] != null && product[spec.key] !== "",
     );
+    const packing = pricing?.packing;
+    const bubbles = pricing?.decorations ?? [];
+    const fallbackBubble: PublicDecorationPricing[] =
+      !bubbles.length && pricing?.tables.length
+        ? [{ methodName: "Blank / undecorated", tables: pricing.tables }]
+        : [];
+    const priceBubbles = bubbles.length ? bubbles : fallbackBubble;
+    const showProduction = showAir || showSea || rush != null || product.moq != null;
 
     return (
-      <article className="@container grid gap-4 overflow-hidden rounded-2xl border border-n-200 bg-white p-3 lg:grid-cols-[220px_1fr_minmax(280px,360px)] lg:gap-6 lg:p-4">
-        <div className="overflow-hidden rounded-xl bg-white">
-          <ProductImageCarousel images={images} alt={product.name} />
+      <article className="@container group relative grid gap-4 overflow-hidden rounded-2xl border border-n-200 bg-white p-3 lg:grid-cols-[240px_minmax(280px,340px)_1fr] lg:gap-6 lg:p-4">
+        {editAffordance}
+        <div className="min-w-0">
+          <ExpandedImages images={images} alt={product.name} onOpen={setLightboxIndex} />
         </div>
 
         <div className="min-w-0">
           <p className="card-label">{product.sku ?? "—"}</p>
           <h3 className="card-title mt-1 text-base">{product.name}</h3>
           {product.description ? (
-            <p className="mt-2 line-clamp-3 text-sm text-n-600">{product.description}</p>
+            <p className="mt-2 text-sm leading-5 text-n-600">{product.description}</p>
           ) : null}
 
-          <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-            <dt className="card-label self-center">MOQ</dt>
-            <dd className="card-value">{product.moq ?? "—"}</dd>
-            {specs.map((spec) => (
-              <div key={spec.label} className="col-span-2 grid grid-cols-subgrid">
-                <dt className="card-label self-center">{spec.label}</dt>
-                <dd className="card-value">{String(product[spec.key])}</dd>
-              </div>
-            ))}
-          </dl>
+          {specs.length ? (
+            <Section title="Product details">
+              {specs.map((spec) => (
+                <Kv key={spec.label} label={spec.label}>
+                  {String(product[spec.key])}
+                </Kv>
+              ))}
+            </Section>
+          ) : null}
 
-          <div className="mt-3 space-y-1 text-sm">
-            {rush ? (
-              <p className="flex items-center gap-1.5">
-                <RushChip />
-                <span>{rush}</span>
-              </p>
-            ) : null}
-            {showAir ? (
-              <p className="flex items-center gap-1.5">
-                <Plane className="size-[13px] text-n-500" strokeWidth={1.75} />
-                <span>{air ?? "—"}</span>
-              </p>
-            ) : null}
-            {showSea ? (
-              <p className="flex items-center gap-1.5">
-                <Ship className="size-[13px] text-n-500" strokeWidth={1.75} />
-                <span>{sea ?? "—"}</span>
-              </p>
-            ) : null}
+          {showProduction ? (
+            <Section title="Production">
+              {product.moq != null ? <Kv label="MOQ">{specValue(product.moq)}</Kv> : null}
+              {showAir ? (
+                <Kv label="Air">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Plane className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+                    {air ?? "—"}
+                  </span>
+                </Kv>
+              ) : null}
+              {showSea ? (
+                <Kv label="Sea">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Ship className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+                    {sea ?? "—"}
+                  </span>
+                </Kv>
+              ) : null}
+              {rush ? (
+                <Kv label="Rush">
+                  <span className="inline-flex items-center gap-1.5">
+                    <RushChip />
+                    {rush}
+                  </span>
+                </Kv>
+              ) : null}
+            </Section>
+          ) : null}
+
+          {packing ? (
+            <Section title="Packaging">
+              <Kv label="Pcs / ctn">{packing.pcsPerCtn}</Kv>
+              <Kv label="Ctn dims">{packing.ctnDims}</Kv>
+              <Kv label="Ctn weight">{packing.ctnWeight}</Kv>
+              <Kv label="Volume / ctn">{packing.volPerCtn}</Kv>
+              <Kv label="Chargeable / ctn">{packing.chargeablePerCtn}</Kv>
+            </Section>
+          ) : null}
+
+          <div className="mt-4 max-w-[336px] border-t border-n-200 pt-3">
+            <AddToQuoteRow product={product} layout="stacked" onQuantityChange={setStepperQty} />
           </div>
         </div>
 
         <div className="min-w-0">
-          <p className="card-label">Pricing details</p>
-          {quantities.length ? (
-            <table className="mt-2 w-full text-sm tabular-nums">
-              <thead>
-                <tr className="card-label">
-                  <th className="py-1 text-left font-semibold">Qty</th>
-                  {showAir ? <th className="py-1 text-right font-semibold">Air</th> : null}
-                  {showSea ? <th className="py-1 text-right font-semibold">Sea</th> : null}
-                  {rush ? <th className="py-1 text-right font-semibold">Rush</th> : null}
-                </tr>
-              </thead>
-              <tbody>
-                {quantities.map((qty) => {
-                  const airRow = airTable?.rows.find((row) => row.qty === qty);
-                  const seaRow = seaTable?.rows.find((row) => row.qty === qty);
-                  return (
-                    <tr key={qty} className="border-t border-n-200">
-                      <td className="py-1">{qty}</td>
-                      {showAir ? (
-                        <td className="py-1 text-right">{airRow ? money(airRow.unitUsd) : "—"}</td>
-                      ) : null}
-                      {showSea ? (
-                        <td className="py-1 text-right">{seaRow ? money(seaRow.unitUsd) : "—"}</td>
-                      ) : null}
-                      {rush ? (
-                        <td className="py-1 text-right">{airRow ? money(airRow.unitUsd) : "—"}</td>
-                      ) : null}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <p className="sheet-section-head">Pricing details</p>
+          {priceBubbles.length ? (
+            <>
+              <div className="mt-2 grid gap-3 [@container(min-width:1180px)]:grid-cols-2">
+                {priceBubbles.map((bubble) => (
+                  <PricingBubble
+                    key={bubble.methodName}
+                    bubble={bubble}
+                    showAir={showAir}
+                    showSea={showSea}
+                    air={air}
+                    sea={sea}
+                    rush={rush}
+                    moq={product.moq}
+                    qty={stepperQty}
+                  />
+                ))}
+              </div>
+              <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-4 text-n-500">
+                <Info className="mt-px size-3 shrink-0" strokeWidth={2} />
+                <span>
+                  Price is in US$ and includes Cost, Insurance &amp; Freight to any Caribbean
+                  island.
+                </span>
+              </p>
+            </>
           ) : (
             <p className="mt-2 text-sm text-n-500">
               Pricing on request — add this item to your quote list.
             </p>
           )}
-          <p className="mt-2 text-[11px] text-n-500">
-            Unit prices in USD, delivered duty unpaid (CIF). Decoration, duties and local charges
-            are confirmed on your quote.
-          </p>
-          <div className="mt-3">
-            <AddToQuoteRow product={product} />
-          </div>
         </div>
+        {lightbox}
+        {quickEdit}
       </article>
     );
   }

@@ -11,13 +11,22 @@ import { useQuoteList } from "@/lib/quote-list";
 export function AddToQuoteRow({
   product,
   tone = "light",
+  layout = "row",
+  onQuantityChange,
 }: {
   product: Product;
   tone?: "light" | "dark";
+  /** "stacked" = stepper row above a full-width primary button (expanded card). */
+  layout?: "row" | "stacked";
+  onQuantityChange?: (quantity: number) => void;
 }) {
   const { addItem, items } = useQuoteList();
   const existing = items.find((item) => item.productId === product.id);
   const [quantity, setQuantity] = useState(() => qtyFloor(product.moq));
+  const setQty = (value: number) => {
+    setQuantity(value);
+    onQuantityChange?.(value);
+  };
 
   if (existing) {
     return (
@@ -43,9 +52,24 @@ export function AddToQuoteRow({
     toast.success(`${product.name} added — quantity ${quantity}`);
   };
 
+  if (layout === "stacked") {
+    return (
+      <div className="flex flex-col items-stretch gap-2">
+        <QuantityStepper quantity={quantity} moq={product.moq} onChange={setQty} tone={tone} />
+        <button
+          type="button"
+          onClick={add}
+          className="card-value inline-flex h-10 min-h-10 w-full items-center justify-center gap-1.5 rounded-full bg-navy-700 px-3 !text-white shadow-card transition-colors duration-[150ms] ease-out hover:bg-navy-500"
+        >
+          <Plus className="size-3.5 shrink-0" /> Add to quote
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-stretch gap-2 [@container(min-width:340px)]:flex-row">
-      <QuantityStepper quantity={quantity} moq={product.moq} onChange={setQuantity} tone={tone} />
+      <QuantityStepper quantity={quantity} moq={product.moq} onChange={setQty} tone={tone} />
       <button
         type="button"
         onClick={add}
