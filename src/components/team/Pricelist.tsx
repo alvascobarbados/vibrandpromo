@@ -749,6 +749,7 @@ function PricelistRow({
             </span>
           </span>
         </Kv>
+        <ProductionExtras product={product} save={saveProduct} />
         <Kv label="MOQ">
           <InlineField
             className="w-16"
@@ -758,13 +759,6 @@ function PricelistRow({
             save={(raw) => saveProduct({ moq: numOrNull(raw) })}
           />
         </Kv>
-
-        {/* Display-only calc note — omitted entirely when inputs are missing. */}
-        {cbm != null && chargeable != null ? (
-          <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">
-            Volume {cbm} CBM · Chargeable {chargeable} kg
-          </p>
-        ) : null}
       </div>
 
       {/* Pricing */}
