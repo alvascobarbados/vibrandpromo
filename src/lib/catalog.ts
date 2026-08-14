@@ -28,7 +28,8 @@ export type Product = {
   details: string | null;
   price: number | null;
   show_price: boolean;
-  is_active: boolean;
+  /** Customer visibility: 'live' is public, 'draft' is staff-only. */
+  status: ProductStatus;
   is_featured: boolean;
   images: string[];
   moq: number | null;
@@ -42,7 +43,8 @@ export type Product = {
   capacity: string | null;
   weight: string | null;
   features: string | null;
-  shipping_methods: string;
+  /** NULL means neither air nor sea is offered yet. */
+  shipping_methods: string | null;
   rush_enabled: boolean;
   rush_production_min_days: number | null;
   rush_production_max_days: number | null;
@@ -50,27 +52,38 @@ export type Product = {
   updated_at: string;
 };
 
+/** The ONE visibility field. 'draft' never reaches the customer catalogue. */
+export const PRODUCT_STATUSES = ["draft", "live"] as const;
+export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+
+/** Anything that isn't exactly 'live' is treated as a draft. */
+export function isLive(status: string | null | undefined) {
+  return status === "live";
+}
+
 export const SHIPPING_METHODS = ["air_sea", "air_only", "sea_only"] as const;
 export type ShippingMethods = (typeof SHIPPING_METHODS)[number];
 
-export const SHIPPING_METHOD_OPTIONS: ReadonlyArray<{ value: ShippingMethods; label: string }> = [
+export const SHIPPING_METHOD_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
   { value: "air_sea", label: "Air & Sea (standard)" },
   { value: "air_only", label: "Air only" },
   { value: "sea_only", label: "Sea only" },
+  { value: "none", label: "Neither (not shippable yet)" },
 ];
 
 export function shippingMethodLabel(value: string | null | undefined) {
+  if (value == null) return "Neither (not shippable yet)";
   return SHIPPING_METHOD_OPTIONS.find((o) => o.value === value)?.label ?? "Air & Sea (standard)";
 }
 
-/** Air freight is offered unless the product is sea-only. */
+/** Air freight is offered unless the product is sea-only or has no method set. */
 export function airAvailable(value: string | null | undefined) {
-  return value !== "sea_only";
+  return value != null && value !== "sea_only";
 }
 
-/** Sea freight is offered unless the product is air-only. */
+/** Sea freight is offered unless the product is air-only or has no method set. */
 export function seaAvailable(value: string | null | undefined) {
-  return value !== "air_only";
+  return value != null && value !== "air_only";
 }
 
 /** Rush production is only possible when the item can travel by air. */
