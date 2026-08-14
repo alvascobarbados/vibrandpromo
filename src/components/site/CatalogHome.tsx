@@ -24,7 +24,13 @@ import { useShippingSettings } from "@/lib/shipping";
  * supplier-specific UI (cost fields, margin tools) will attach later — today it
  * only drives branding. Data always comes from the same query hooks.
  */
-export function CatalogHome({ page, viewMode = "customer" }: { page: number; viewMode?: ViewMode }) {
+export function CatalogHome({
+  page,
+  viewMode = "customer",
+}: {
+  page: number;
+  viewMode?: ViewMode;
+}) {
   const products = useCatalogProducts();
   const isDesktop = useIsDesktop();
   const categories = useQuery(categoriesQuery);
@@ -73,7 +79,7 @@ export function CatalogHome({ page, viewMode = "customer" }: { page: number; vie
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
         if (visible?.target instanceof HTMLElement) {
-          setActiveChip(visible.target.dataset['cat'] ?? "all");
+          setActiveChip(visible.target.dataset["cat"] ?? "all");
         }
       },
       { rootMargin: "-140px 0px -60% 0px", threshold: 0 },
@@ -95,7 +101,13 @@ export function CatalogHome({ page, viewMode = "customer" }: { page: number; vie
   if (isDesktop || viewMode === "supplier") {
     return (
       <SiteLayout viewMode={viewMode}>
-        <div className="site-container xl:max-w-[1344px] py-8 pb-16">
+        <div
+          className={
+            viewMode === "supplier"
+              ? "mx-auto w-full max-w-[1920px] px-4 py-8 pb-16 lg:px-8"
+              : "site-container py-8 pb-16 xl:max-w-[1344px]"
+          }
+        >
           <h1 className="sr-only">Vibrand promotional products catalogue</h1>
           <DesktopCatalog page={page} />
         </div>
@@ -217,19 +229,19 @@ export function CatalogHome({ page, viewMode = "customer" }: { page: number; vie
 
       <FilterSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
         <FilterPanel
-            variant="drawer"
-            products={allProducts}
-            categories={allCategories}
-            subcategories={allSubcategories}
-            search={search}
-            resultCount={filteredCount}
-            onToggle={toggle}
-            onClear={clear}
-            activeCount={activeCount}
-            onClose={() => {
-              setFiltersOpen(false);
-              void navigate({ to: "/products", search: { ...search, page: 1 } });
-            }}
+          variant="drawer"
+          products={allProducts}
+          categories={allCategories}
+          subcategories={allSubcategories}
+          search={search}
+          resultCount={filteredCount}
+          onToggle={toggle}
+          onClear={clear}
+          activeCount={activeCount}
+          onClose={() => {
+            setFiltersOpen(false);
+            void navigate({ to: "/products", search: { ...search, page: 1 } });
+          }}
         />
       </FilterSheet>
     </SiteLayout>

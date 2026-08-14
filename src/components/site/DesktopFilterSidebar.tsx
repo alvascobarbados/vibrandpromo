@@ -75,7 +75,7 @@ function Row({
 
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div className="py-4 first:pt-0 last:pb-0">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-n-400">{label}</p>
       <div className="mt-2">{children}</div>
     </div>
@@ -134,7 +134,7 @@ export function DesktopFilterSidebar({
         ) : null}
       </div>
 
-      <div className="space-y-6">
+      <div className="divide-y divide-n-200/80">
         <Group label={GROUP_LABELS.cat}>
           <Row
             radio
@@ -171,7 +171,8 @@ export function DesktopFilterSidebar({
 
         {[...BASE_GROUPS, ...(selectedCategory ? CONDITIONAL_GROUPS : [])].map((group) => {
           const rows = options[group].filter(
-            (option) => (counts[group][option.value] ?? 0) > 0 || search[group].includes(option.value),
+            (option) =>
+              (counts[group][option.value] ?? 0) > 0 || search[group].includes(option.value),
           );
           if (!rows.length) return null;
           return (

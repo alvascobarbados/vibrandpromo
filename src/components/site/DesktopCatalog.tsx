@@ -87,11 +87,7 @@ export function DesktopCatalog({
     /** The costing gate is a /team filter only — the shop list is untouched. */
     const gated = team
       ? base.filter((product) =>
-          matchesReadyFilter(
-            search.ready,
-            product,
-            sourcingByProduct.get(product.id) ?? null,
-          ),
+          matchesReadyFilter(search.ready, product, sourcingByProduct.get(product.id) ?? null),
         )
       : base;
     return sortProducts(gated, search.sort);
@@ -148,8 +144,14 @@ export function DesktopCatalog({
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-6 xl:gap-8">
-      <aside className={`w-[240px] shrink-0 ${team ? "hidden lg:block" : ""}`}>
-        <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2">
+      <aside
+        className={`w-[240px] shrink-0 ${team ? "hidden border-r border-n-200 lg:block" : ""}`}
+      >
+        <div
+          className={`sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto ${
+            team ? "rounded-l-xl bg-n-50/70 px-3 py-3" : "pr-2"
+          }`}
+        >
           <DesktopFilterSidebar
             products={allProducts}
             categories={allCategories}
@@ -168,7 +170,9 @@ export function DesktopCatalog({
       <div className="@container min-w-0 flex-1">
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            {total ? `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} products` : "No products"}
+            {total
+              ? `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} products`
+              : "No products"}
           </p>
           <Select value={search.sort} onValueChange={(value) => update({ sort: value })}>
             <SelectTrigger className="h-10 w-44 rounded-full">
@@ -227,7 +231,9 @@ export function DesktopCatalog({
             {Array.from({ length: 8 }).map((_, index) => (
               <Skeleton
                 key={index}
-                className={team ? "h-[180px] w-full rounded-2xl" : "aspect-[3/4] w-full rounded-2xl"}
+                className={
+                  team ? "h-[180px] w-full rounded-2xl" : "aspect-[3/4] w-full rounded-2xl"
+                }
               />
             ))}
           </div>
@@ -258,7 +264,11 @@ export function DesktopCatalog({
 
         {totalPages > 1 ? (
           <div className="mt-10 flex items-center justify-center gap-3">
-            <Button variant="outline" disabled={page <= 1} onClick={() => update({ page: page - 1 })}>
+            <Button
+              variant="outline"
+              disabled={page <= 1}
+              onClick={() => update({ page: page - 1 })}
+            >
               Previous
             </Button>
             <span className="text-sm text-muted-foreground">

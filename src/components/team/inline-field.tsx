@@ -13,6 +13,8 @@ type Base = {
   className?: string;
   align?: "left" | "right";
   readOnly?: boolean;
+  /** Long values wrap to two lines (with a native tooltip) instead of truncating. */
+  wrap?: boolean;
 };
 
 const box =
@@ -47,6 +49,7 @@ export function InlineField({
   align = "left",
   readOnly,
   autoEdit,
+  wrap,
 }: Base & {
   value: string;
   display?: React.ReactNode;
@@ -116,7 +119,10 @@ export function InlineField({
           />
         ) : (
           <span
-            className={`min-w-0 flex-1 truncate text-[13px] ${
+            title={wrap && value ? value : undefined}
+            className={`min-w-0 flex-1 text-[13px] ${
+              wrap ? "line-clamp-2 whitespace-normal break-words" : "truncate"
+            } ${
               align === "right" ? "text-right" : ""
             } ${readOnly ? "" : "cursor-text hover:bg-navy-50"}`}
             onClick={(event) => {
@@ -128,7 +134,9 @@ export function InlineField({
             {shown}
           </span>
         )}
-        {pending ? <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" /> : null}
+        {pending ? (
+          <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
+        ) : null}
       </span>
       {error ? <span className="text-[10px] font-medium text-destructive">{error}</span> : null}
     </span>
@@ -189,13 +197,14 @@ export function InlineChoice({
               setEditing(true);
             }}
           >
-            {display ??
-              options.find((option) => option.value === value)?.label ?? (
-                <span className="text-muted-foreground">—</span>
-              )}
+            {display ?? options.find((option) => option.value === value)?.label ?? (
+              <span className="text-muted-foreground">—</span>
+            )}
           </span>
         )}
-        {pending ? <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" /> : null}
+        {pending ? (
+          <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
+        ) : null}
       </span>
       {error ? <span className="text-[10px] font-medium text-destructive">{error}</span> : null}
     </span>
