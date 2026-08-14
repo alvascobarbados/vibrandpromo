@@ -63,6 +63,7 @@ import {
   InlineText,
 } from "@/components/admin/inline-cells";
 import { moqProblem } from "@/lib/product-rules";
+import { fallbackToOriginal } from "@/lib/image-variants";
 import { supabase } from "@/integrations/supabase/client";
 import {
   categoriesQuery,

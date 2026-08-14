@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { imageSrc } from "@/lib/catalog";
-import { fallbackToOriginal, uploadWithVariants } from "@/lib/image-upload";
+import { fallbackToOriginal } from "@/lib/image-variants";
+import { uploadWithVariants } from "@/lib/image-upload";
 
 export function ImageManager({
   images,
