@@ -1,7 +1,7 @@
-import { Pencil, Plane, Ship } from "lucide-react";
+import { Info, Pencil, Plane, Ship } from "lucide-react";
 import { useState } from "react";
 
-import { airAvailable, seaAvailable, specValue, type Product } from "@/lib/catalog";
+import { airAvailable, imageSrc, seaAvailable, specValue, type Product } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
 import { ProductImageCarousel } from "@/components/site/ProductImageCarousel";
 import { ImageLightbox } from "@/components/site/ImageLightbox";
@@ -12,6 +12,9 @@ import { RushChip } from "@/components/site/RushChip";
 import { ProductSourcingFetch } from "@/components/site/ProductTeamDetails";
 import { useViewMode } from "@/lib/view-mode";
 import type { PublicPricing } from "@/lib/pricing-types";
+import { fallbackToOriginal } from "@/lib/image-variants";
+import { qtyFloor } from "@/lib/quantity";
+import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
 
 /** Layout variants of the ONE product card. */
 export type ProductCardViewMode = "grid" | "expanded";
@@ -27,6 +30,92 @@ const EXPANDED_SPECS: { label: string; key: keyof Product }[] = [
 
 function money(value: number) {
   return `$${value.toFixed(2)}`;
+}
+
+/** Customer-side money: always explicit about the currency. */
+function usd(value: number) {
+  return `US$${value.toFixed(2)}`;
+}
+
+/** Sections with no data are omitted entirely on the customer side. */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-3">
+      <p className="sheet-section-head">{title}</p>
+      <div className="mt-0.5 space-y-1">{children}</div>
+    </section>
+  );
+}
+
+function Kv({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[104px_1fr] items-baseline gap-x-2">
+      <span className="sheet-kv-label">{label}</span>
+      <span className="sheet-kv-value min-w-0">{children}</span>
+    </div>
+  );
+}
+
+/** Hero + clickable thumbnail strip. Expanded view only. */
+function ExpandedImages({
+  images,
+  alt,
+  onOpen,
+}: {
+  images: string[];
+  alt: string;
+  onOpen: (index: number) => void;
+}) {
+  const [active, setActive] = useState(0);
+  if (!images.length) {
+    return (
+      <div className="image-field">
+        <ProductPlaceholder className="size-full" />
+      </div>
+    );
+  }
+  const current = images[Math.min(active, images.length - 1)] ?? images[0]!;
+  return (
+    <div>
+      <div className="image-field overflow-hidden rounded-xl">
+        <img
+          src={imageSrc(current, "card")}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          onError={(event) => fallbackToOriginal(event, imageSrc(current))}
+          onClick={() => onOpen(active)}
+          className="image-field-media cursor-zoom-in"
+        />
+      </div>
+      {images.length > 1 ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {images.map((value, index) => (
+            <button
+              key={`${value}-${index}`}
+              type="button"
+              aria-label={`Show image ${index + 1}`}
+              onClick={() => setActive(index)}
+              className={`size-11 overflow-hidden rounded-md border bg-white ${
+                index === active
+                  ? "border-lime-500 ring-2 ring-lime-500"
+                  : "border-n-200 hover:border-n-300"
+              }`}
+            >
+              <img
+                src={imageSrc(value, "thumb")}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                onError={(event) => fallbackToOriginal(event, imageSrc(value))}
+                className="size-full object-contain"
+              />
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function FlagBadge({ source }: { source: string }) {
