@@ -704,9 +704,11 @@ function ImageSlot({
 function RowKebab({
   product,
   saveProduct,
+  onDuplicated,
 }: {
   product: Product;
   saveProduct: (patch: Record<string, unknown>) => Promise<void>;
+  onDuplicated: (productId: string) => void;
 }) {
   const queryClient = useQueryClient();
   return (
@@ -736,6 +738,21 @@ function RowKebab({
           }}
         >
           <Copy className="mr-2 size-3.5" /> Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => {
+            void duplicateProductAsVariant(product.id).then(
+              async (newId) => {
+                await queryClient.invalidateQueries();
+                onDuplicated(newId);
+                toast.success("Variant created — hidden until reviewed");
+              },
+              (error: unknown) =>
+                toast.error(error instanceof Error ? error.message : "Could not duplicate"),
+            );
+          }}
+        >
+          <Copy className="mr-2 size-3.5" /> Duplicate as variant
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => {
