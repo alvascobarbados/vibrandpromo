@@ -165,7 +165,7 @@ export function imageSrc(value: string, variant: ImageVariant = "original"): str
 }
 
 export function imageSrcList(images: string[] | null | undefined): string[] {
-  return (images ?? []).map(imageSrc);
+  return (images ?? []).map((value) => imageSrc(value));
 }
 
 export function productImage(product: Pick<Product, "images">): string | null {
