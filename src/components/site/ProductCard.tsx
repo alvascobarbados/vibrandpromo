@@ -89,8 +89,13 @@ function PricingBubble({
     new Set([...(airTable?.rows ?? []), ...(seaTable?.rows ?? [])].map((row) => row.qty)),
   ).sort((a, b) => a - b);
   const band = bandFor(quantities, qty);
-  const rows: { label: string; icon?: typeof Plane; chip?: boolean; lead: string | null; from?: "air" | "sea" }[] =
-    [];
+  const rows: {
+    label: string;
+    icon?: typeof Plane;
+    chip?: boolean;
+    lead: string | null;
+    from?: "air" | "sea";
+  }[] = [];
   if (showAir && airTable) rows.push({ label: "Air", icon: Plane, lead: air, from: "air" });
   if (showSea && seaTable) rows.push({ label: "Sea", icon: Ship, lead: sea, from: "sea" });
   if (rush && airTable) rows.push({ label: "Rush", chip: true, lead: rush, from: "air" });
@@ -106,54 +111,52 @@ function PricingBubble({
     <div className="rounded-xl border border-n-200 bg-white p-3">
       <p className="card-value text-[13px]">{bubble.methodName}</p>
       <div className="-mx-1 mt-2 overflow-x-auto px-1">
-      <table className="w-full min-w-max border-separate border-spacing-0 text-sm tabular-nums">
-        <thead>
-          <tr>
-            <th className="sheet-kv-label py-1 text-left font-semibold" />
-            {quantities.map((value) => (
-              <th
-                key={value}
-                className={`sheet-kv-label rounded-t-md px-2 py-1 text-right font-semibold ${
-                  band === value ? "bg-lime-50 !text-navy-700" : ""
-                }`}
-              >
-                {value}
-                {moq != null && value === moq ? (
-                  <span className="ml-1 text-[10px] normal-case tracking-normal">MOQ</span>
-                ) : null}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={row.label}>
-              <td className="border-t border-n-200 py-1 pr-2 align-middle">
-                <span className="flex items-center gap-1.5 whitespace-nowrap">
-                  {row.chip ? <RushChip /> : null}
-                  {row.icon ? (
-                    <row.icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
-                  ) : null}
-                  <span className="text-[13px]">{row.label}</span>
-                  {row.lead ? (
-                    <span className="text-[11px] text-n-500">· {row.lead}</span>
-                  ) : null}
-                </span>
-              </td>
+        <table className="w-full min-w-max border-separate border-spacing-0 text-sm tabular-nums">
+          <thead>
+            <tr>
+              <th className="sheet-kv-label py-1 text-left font-semibold" />
               {quantities.map((value) => (
-                <td
+                <th
                   key={value}
-                  className={`border-t border-n-200 px-2 py-1 text-right ${
-                    band === value ? "bg-lime-50" : ""
-                  } ${band === value && index === rows.length - 1 ? "rounded-b-md" : ""}`}
+                  className={`sheet-kv-label rounded-t-md px-2 py-1 text-right font-semibold ${
+                    band === value ? "bg-lime-50 !text-navy-700" : ""
+                  }`}
                 >
-                  {cell(row.from ?? "air", value)}
-                </td>
+                  {value}
+                  {moq != null && value === moq ? (
+                    <span className="ml-1 text-[10px] normal-case tracking-normal">MOQ</span>
+                  ) : null}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={row.label}>
+                <td className="border-t border-n-200 py-1 pr-2 align-middle">
+                  <span className="flex items-center gap-1.5 whitespace-nowrap">
+                    {row.chip ? <RushChip /> : null}
+                    {row.icon ? (
+                      <row.icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+                    ) : null}
+                    <span className="text-[13px]">{row.label}</span>
+                    {row.lead ? <span className="text-[11px] text-n-500">· {row.lead}</span> : null}
+                  </span>
+                </td>
+                {quantities.map((value) => (
+                  <td
+                    key={value}
+                    className={`border-t border-n-200 px-2 py-1 text-right ${
+                      band === value ? "bg-lime-50" : ""
+                    } ${band === value && index === rows.length - 1 ? "rounded-b-md" : ""}`}
+                  >
+                    {cell(row.from ?? "air", value)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -521,7 +524,8 @@ export function ProductCard({
               <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-4 text-n-500">
                 <Info className="mt-px size-3 shrink-0" strokeWidth={2} />
                 <span>
-                  Price is in US$ and includes Cost, Insurance &amp; Freight to any Caribbean island.
+                  Price is in US$ and includes Cost, Insurance &amp; Freight to any Caribbean
+                  island.
                 </span>
               </p>
             </>

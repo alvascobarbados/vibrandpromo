@@ -81,28 +81,28 @@ async function loadStaticCostingTables() {
     methodDetails,
     decorationMethods,
   ] = await Promise.all([
-      supabaseAdmin.from("suppliers").select("id, unit_system, origin_id"),
-      supabaseAdmin.from("origins").select("id, code"),
-      supabaseAdmin
-        .from("app_settings")
-        .select("id, section, key, value, value_type, display_label, display_order, description"),
-      supabaseAdmin
-        .from("shipping_methods")
-        .select(
-          "id, code, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit, transport_mode",
-        ),
-      supabaseAdmin
-        .from("shipping_method_routes")
-        .select(
-          "id, shipping_method_id, origin_id, destination_id, fixed_cost, lac_fixed_bbd, lac_per_cbm_bbd, include_inland_freight",
-        ),
-      supabaseAdmin.from("shipping_method_tiers").select("route_id, band_from, band_to, rate"),
-      supabaseAdmin.from("destinations").select("id, code"),
-      supabaseAdmin.from("categories").select("id, duty_rate_pct"),
-      supabaseAdmin.from("subcategories").select("id, duty_rate_pct"),
-      supabaseAdmin.from("method_details").select("id, decoration_method_id, detail"),
-      supabaseAdmin.from("decoration_methods").select("id, name"),
-    ]);
+    supabaseAdmin.from("suppliers").select("id, unit_system, origin_id"),
+    supabaseAdmin.from("origins").select("id, code"),
+    supabaseAdmin
+      .from("app_settings")
+      .select("id, section, key, value, value_type, display_label, display_order, description"),
+    supabaseAdmin
+      .from("shipping_methods")
+      .select(
+        "id, code, fuel_surcharge_pct, buffer_pct, chargeable_metric, chargeable_unit, transport_mode",
+      ),
+    supabaseAdmin
+      .from("shipping_method_routes")
+      .select(
+        "id, shipping_method_id, origin_id, destination_id, fixed_cost, lac_fixed_bbd, lac_per_cbm_bbd, include_inland_freight",
+      ),
+    supabaseAdmin.from("shipping_method_tiers").select("route_id, band_from, band_to, rate"),
+    supabaseAdmin.from("destinations").select("id, code"),
+    supabaseAdmin.from("categories").select("id, duty_rate_pct"),
+    supabaseAdmin.from("subcategories").select("id, duty_rate_pct"),
+    supabaseAdmin.from("method_details").select("id, decoration_method_id, detail"),
+    supabaseAdmin.from("decoration_methods").select("id, name"),
+  ]);
   return {
     suppliers,
     origins,
