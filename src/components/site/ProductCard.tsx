@@ -343,6 +343,8 @@ export function ProductCard({
   const workspace = useViewMode();
   const shipping = useShippingSettings();
   const [quickEditOpen, setQuickEditOpen] = useState(false);
+  // Drives the lime tier highlight in the expanded pricing bubbles.
+  const [stepperQty, setStepperQty] = useState(() => qtyFloor(product.moq));
   const hidden = editMode && product.status !== "live";
   const air = airLeadLabel(product, shipping);
   const sea = seaLeadLabel(product, shipping);
