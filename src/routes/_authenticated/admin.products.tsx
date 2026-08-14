@@ -249,9 +249,19 @@ function AdminProducts() {
     });
   }, [filtered, search.sort, search.dir, categoryName]);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  /** While a cell is open, keep the row order captured when editing started. */
+  const ordered = useMemo(() => {
+    if (!frozenOrder) return sorted;
+    const rank = new Map(frozenOrder.map((id, index) => [id, index] as const));
+    return [...sorted].sort(
+      (a, b) =>
+        (rank.get(a.id) ?? Number.POSITIVE_INFINITY) - (rank.get(b.id) ?? Number.POSITIVE_INFINITY),
+    );
+  }, [sorted, frozenOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(ordered.length / PAGE_SIZE));
   const page = Math.min(Math.max(1, search.page), totalPages);
-  const pageItems = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageItems = ordered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const save = useMutation({
     mutationFn: ({ id, values }: { id: string | null; values: FormState }) =>
@@ -286,6 +296,63 @@ function AdminProducts() {
     setEditingId(product.id);
   }
 
+  function startCell(product: AdminProductRow, col: EditableCell) {
+    setCellError(null);
+    setFrozenOrder((prev) => prev ?? sorted.map((row) => row.id));
+    setActiveCell({ rowId: product.id, col });
+  }
+
+  /** Inline saves reuse validateForm + persistProduct — the editors' own path. */
+  async function saveCell(
+    product: AdminProductRow,
+    col: EditableCell,
+    patch: Partial<FormState>,
+    advance: boolean,
+  ) {
+    const key = `${product.id}:${col}`;
+    const base = formFromProduct(product, rowSourcing(product));
+    const values: FormState = { ...base, ...patch };
+    const next = advance ? EDITABLE_CELLS[EDITABLE_CELLS.indexOf(col) + 1] : undefined;
+    setActiveCell(next ? { rowId: product.id, col: next } : null);
+    if (JSON.stringify(values) === JSON.stringify(base)) {
+      setCellError(null);
+      return;
+    }
+    const problem = moqProblem(values.moq) ?? validateForm(values);
+    if (problem) {
+      setCellError({ key, message: problem });
+      toast.error(problem);
+      return;
+    }
+    setCellError(null);
+    setCellPending(key);
+    try {
+      await persistProduct(product.id, values);
+      await invalidate();
+      await queryClient.invalidateQueries({ queryKey: ["product_sourcing"] });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "That change didn't save.";
+      setCellError({ key, message });
+      toast.error(message);
+    } finally {
+      setCellPending(null);
+    }
+  }
+
+  function cellProps(product: AdminProductRow, col: EditableCell) {
+    const key = `${product.id}:${col}`;
+    return {
+      editing: activeCell?.rowId === product.id && activeCell.col === col,
+      pending: cellPending === key,
+      error: cellError?.key === key ? cellError.message : null,
+      onStart: () => startCell(product, col),
+      onCancel: () => {
+        setActiveCell(null);
+        setCellError(null);
+      },
+    };
+  }
+
   function startDuplicate(product: AdminProductRow) {
     setForm({
       ...formFromProduct(product, rowSourcing(product)),
@@ -301,6 +368,8 @@ function AdminProducts() {
   const activeCount = rows.filter((p) => p.is_active).length;
 
   function toggleSort(key: SortKey) {
+    setActiveCell(null);
+    setFrozenOrder(null);
     if (search.sort !== key) return setSearch({ sort: key, dir: "asc" });
     if (search.dir === "asc") return setSearch({ sort: key, dir: "desc" });
     return setSearch({ sort: "default", dir: "asc" });
