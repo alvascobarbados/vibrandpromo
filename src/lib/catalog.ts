@@ -82,8 +82,9 @@ export function rushEligible(shippingMethods: string | null | undefined) {
  * Filter labels for the public decoration list. These are the canonical
  * `decoration_methods.name` values the staff price tables project onto
  * `products.decoration_methods`, so the customer filter shows exactly one
- * label per method. The three trailing values are legacy labels still present
- * on products that have no canonical equivalent yet.
+ * label per method. Every value here now has a matching decoration method in
+ * the staff master data (3D Printing / Sticker Logo / Woven Patch were added
+ * as methods 3DP / STK / WVP), so there are no legacy labels left.
  */
 export const DECORATION_METHODS = [
   "3D Doming",
