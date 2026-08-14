@@ -241,6 +241,44 @@ function StaffPage() {
                     </SelectContent>
                   </Select>
                 </td>
+                <td className="px-4 py-3">
+                  <form
+                    className="flex items-center gap-2"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void submitPassword(user.id);
+                    }}
+                  >
+                    <Input
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="New password"
+                      className="h-9 w-40"
+                      aria-label={`New password for ${user.display_name || user.email}`}
+                      value={passwordDrafts[user.id] ?? ""}
+                      onChange={(event) => {
+                        setPasswordDrafts((p) => ({ ...p, [user.id]: event.target.value }));
+                        setPasswordErrors((p) => ({ ...p, [user.id]: "" }));
+                      }}
+                    />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      variant="secondary"
+                      disabled={savingFor === user.id}
+                    >
+                      {savingFor === user.id ? "Setting…" : "Set"}
+                    </Button>
+                  </form>
+                  {passwordErrors[user.id] ? (
+                    <p role="alert" className="mt-1 text-xs text-destructive">
+                      {passwordErrors[user.id]}
+                    </p>
+                  ) : null}
+                  {passwordDone[user.id] ? (
+                    <p className="mt-1 text-xs text-muted-foreground">Password set</p>
+                  ) : null}
+                </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {new Date(user.created_at).toLocaleDateString()}
                 </td>
