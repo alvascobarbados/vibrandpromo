@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProductCard } from "@/components/site/ProductCard";
+import { ProductExpandedCard } from "@/components/site/ProductExpandedCard";
+import { ViewToggle, useCatalogView } from "@/components/site/ViewToggle";
 import { Pricelist } from "@/components/team/Pricelist";
 import { DesktopFilterSidebar } from "@/components/site/DesktopFilterSidebar";
 import { categoriesQuery, subcategoriesQuery } from "@/lib/catalog";
@@ -29,6 +31,7 @@ import { useShippingSettings } from "@/lib/shipping";
 import { useViewMode } from "@/lib/view-mode";
 import { READY_FILTER_OPTIONS, matchesReadyFilter } from "@/lib/costing-gate";
 import { sourcingRowsQuery } from "@/lib/sourcing";
+import { useCustomerPricing } from "@/lib/customer-pricing";
 
 const PAGE_SIZE = 20;
 const CHIP_GROUPS: FilterGroupId[] = ["cat", "sub", "moq", "prod", "colour", "deco", "src", "mat"];
@@ -116,6 +119,13 @@ export function DesktopCatalog({
   const start = (page - 1) * PAGE_SIZE;
   const visible = filtered.slice(start, start + PAGE_SIZE);
 
+  /** Expanded layout is a shop-only, desktop-only presentation choice. */
+  const expanded = !team && useCatalogView() === "expanded";
+  const pricingById = useCustomerPricing(
+    visible.map((product) => product.id),
+    expanded,
+  );
+
   const chips = CHIP_GROUPS.flatMap((group) =>
     search[group].map((value: string) => ({
       group,
@@ -175,7 +185,9 @@ export function DesktopCatalog({
               ? `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} products`
               : "No products"}
           </p>
-          <Select value={search.sort} onValueChange={(value) => update({ sort: value })}>
+          <div className="flex items-center gap-2">
+            {team ? null : <ViewToggle />}
+            <Select value={search.sort} onValueChange={(value) => update({ sort: value })}>
             <SelectTrigger className="h-10 w-44 rounded-full">
               <SelectValue />
             </SelectTrigger>
@@ -186,7 +198,8 @@ export function DesktopCatalog({
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+            </Select>
+          </div>
         </div>
 
         {chips.length || readyChips.length ? (
@@ -255,6 +268,16 @@ export function DesktopCatalog({
             categories={allCategories}
             subcategories={allSubcategories}
           />
+        ) : expanded ? (
+          <div className="mt-4 flex flex-col gap-4">
+            {visible.map((product) => (
+              <ProductExpandedCard
+                key={product.id}
+                product={product}
+                pricing={pricingById.get(product.id)}
+              />
+            ))}
+          </div>
         ) : (
           <div className={team ? "mt-4 flex flex-col gap-3" : "product-grid mt-4"}>
             {visible.map((product) => (
