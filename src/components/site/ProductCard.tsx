@@ -28,10 +28,6 @@ const EXPANDED_SPECS: { label: string; key: keyof Product }[] = [
   { label: "Features", key: "features" },
 ];
 
-function money(value: number) {
-  return `$${value.toFixed(2)}`;
-}
-
 /** Customer-side money: always explicit about the currency. */
 function usd(value: number) {
   return `US$${value.toFixed(2)}`;
