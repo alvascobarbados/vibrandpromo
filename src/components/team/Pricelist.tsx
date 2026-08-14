@@ -90,7 +90,7 @@ import {
  * takes ALL remaining width so wide monitors show more price tables before the
  * strip's own sideways scroll starts.
  */
-const COLS = "grid grid-cols-[196px_252px_296px_300px_minmax(0,1fr)] gap-6 px-4";
+const COLS = "grid grid-cols-[196px_248px_284px_344px_minmax(0,1fr)] gap-5 px-4";
 
 const DASH = <span className="text-muted-foreground">—</span>;
 
@@ -586,30 +586,31 @@ function PricelistRow({
           />
         </Kv>
         <Kv label="Ctn dims">
-          <span className="flex flex-nowrap items-center gap-1">
+          <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
-              className="w-11 shrink-0"
+              className="w-10 shrink-0"
               value={numberText(sourcing?.carton_length)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_length: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 px-0.5 text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-11 shrink-0"
+              className="w-10 shrink-0"
               value={numberText(sourcing?.carton_width)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_width: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 px-0.5 text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-11 shrink-0"
+              className="w-10 shrink-0"
               value={numberText(sourcing?.carton_height)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_height: numOrNull(raw) })}
             />
+            <span className="shrink-0 pl-1" />
             <UnitSwitch
               options={["cm", "in"] as const}
               value={units.dimension}
