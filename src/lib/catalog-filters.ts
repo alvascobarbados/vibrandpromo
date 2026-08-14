@@ -21,6 +21,13 @@ export type CatalogSearch = {
   deco: string[];
   src: string[];
   mat: string[];
+  /**
+   * STAFF-ONLY (/team) costing-gate filter: "ready" / "incomplete". It is not a
+   * FilterGroupId and never takes part in `filterProducts`, so the customer
+   * catalogue is untouched by it. The Pricelist applies it via
+   * `matchesReadyFilter` from src/lib/costing-gate.ts.
+   */
+  ready: string[];
 };
 
 export const EMPTY_SEARCH: CatalogSearch = {
@@ -34,6 +41,7 @@ export const EMPTY_SEARCH: CatalogSearch = {
   deco: [],
   src: [],
   mat: [],
+  ready: [],
 };
 
 export const SORT_OPTIONS = [
@@ -72,8 +80,13 @@ export function parseCatalogSearch(raw: Record<string, unknown>): CatalogSearch 
     deco: toArray(raw["deco"]),
     src: toArray(raw["src"]),
     mat: toArray(raw["mat"]),
+    ready: toArray(raw["ready"]).filter(
+      (value) => value === "ready" || value === "incomplete",
+    ),
   };
 }
+
+export const READY_LABEL = "Costing status";
 
 function matchesSearchTerm(product: Product, q: string) {
   const term = q.trim().toLowerCase();
@@ -146,7 +159,9 @@ export function sortProducts(products: Product[], sort: string) {
 }
 
 export function activeFilterCount(search: CatalogSearch) {
-  return GROUP_IDS.reduce((total, group) => total + search[group].length, 0);
+  return (
+    GROUP_IDS.reduce((total, group) => total + search[group].length, 0) + search.ready.length
+  );
 }
 
 export { GROUP_IDS };
