@@ -630,9 +630,10 @@ function PricelistRow({
         </div>
       </div>
 
-      {/* Packing & production */}
+      {/* Packing & production — two labelled sections, rows tight beneath. */}
       <div className="flex min-w-0 flex-col gap-1">
-        <Kv label="Pcs / ctn">
+        <SectionHead>Packing details</SectionHead>
+        <Kv label="Pcs / ctn" alert={missingKeys.has("carton_pack")}>
           <InlineField
             className="w-16"
             value={numberText(sourcing?.carton_pack)}
@@ -641,7 +642,14 @@ function PricelistRow({
             save={(raw) => savePacking({ carton_pack: numOrNull(raw) })}
           />
         </Kv>
-        <Kv label="Ctn dims">
+        <Kv
+          label="Ctn dims"
+          alert={
+            missingKeys.has("carton_length") ||
+            missingKeys.has("carton_width") ||
+            missingKeys.has("carton_height")
+          }
+        >
           <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
               className="w-10 shrink-0"
@@ -685,12 +693,12 @@ function PricelistRow({
             />
           </span>
         </Kv>
-        <Kv label="Weight">
+        <Kv label="Weight" alert={missingKeys.has("carton_weight")}>
           <span className="flex flex-nowrap items-center gap-1.5">
             <InlineField
-              className="w-16 shrink-0"
+              className="w-20 shrink-0"
               value={numberText(sourcing?.carton_weight)}
-              display={weightLabel(sourcing?.carton_weight ?? null, units.weight)}
+              display={weight3(sourcing?.carton_weight ?? null, units.weight)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_weight: numOrNull(raw) })}
@@ -711,7 +719,15 @@ function PricelistRow({
             />
           </span>
         </Kv>
-        <Kv label="Lead time">
+        {/* Display-only calc note — omitted entirely when inputs are missing. */}
+        {cbm != null && chargeable != null ? (
+          <p className="text-[11px] leading-5 text-muted-foreground">
+            Volume {cbm} CBM · Chargeable {decimals3(chargeable)} kg
+          </p>
+        ) : null}
+
+        <SectionHead>Production</SectionHead>
+        <Kv label="Lead time" alert={missingKeys.has("production_min_days")}>
           <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
               className="w-10 shrink-0"
