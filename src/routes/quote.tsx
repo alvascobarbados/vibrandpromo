@@ -20,6 +20,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { QuantityStepper } from "@/components/site/QuantityStepper";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuoteList } from "@/lib/quote-list";
+import {
+  ARTWORK_EXTENSIONS,
+  ARTWORK_MAX_BYTES,
+  createArtworkUpload,
+} from "@/lib/artwork.functions";
 import { submitQuoteRequest } from "@/lib/quote-submit.functions";
 import { TERRITORIES } from "@/lib/territories";
 
@@ -41,9 +46,6 @@ export const Route = createFileRoute("/quote")({
   }),
   component: QuotePage,
 });
-
-const ARTWORK_MAX_BYTES = 20 * 1024 * 1024;
-const ARTWORK_EXTENSIONS = ["jpg", "jpeg", "png", "pdf", "ai", "eps", "svg", "zip"];
 
 function QuotePage() {
   const { items, updateItem, removeItem, clear } = useQuoteList();
@@ -70,7 +72,7 @@ function QuotePage() {
       return;
     }
     const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!ARTWORK_EXTENSIONS.includes(extension)) {
+    if (!(ARTWORK_EXTENSIONS as readonly string[]).includes(extension)) {
       toast.error("Please attach a JPG, PNG, PDF, AI, EPS, SVG or ZIP file.");
       return;
     }
@@ -96,10 +98,15 @@ function QuotePage() {
     try {
       let artworkUrl: string | null = null;
       if (artwork) {
-        const path = `${crypto.randomUUID()}-${artwork.name.replace(/[^\w.-]+/g, "_")}`;
-        const upload = await supabase.storage.from("quote-artwork").upload(path, artwork);
+        // Server validates type/size and issues a one-object signed upload token.
+        const ticket = await createArtworkUpload({
+          data: { filename: artwork.name, size: artwork.size },
+        });
+        const upload = await supabase.storage
+          .from("quote-artwork")
+          .uploadToSignedUrl(ticket.path, ticket.token, artwork);
         if (upload.error) throw upload.error;
-        artworkUrl = path;
+        artworkUrl = ticket.path;
       }
 
       await submitQuoteRequest({
