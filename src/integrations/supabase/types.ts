@@ -555,6 +555,44 @@ export type Database = {
           },
         ]
       }
+      product_includes: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          product_id: string
+          quantity: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          product_id: string
+          quantity: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_includes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_sourcing: {
         Row: {
           carton_height: number | null
