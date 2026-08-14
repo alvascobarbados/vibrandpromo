@@ -256,6 +256,20 @@ export function weightLabel(value: number | null, unit: string) {
   return `${value} ${unit}`;
 }
 
+/**
+ * DISPLAY ONLY — carton weights always read with 3 decimals (15 → 15.000) so a
+ * column of weights aligns. The STORED value is never rewritten by this.
+ */
+export function weight3(value: number | null | undefined, unit: string) {
+  if (value == null) return "—";
+  return `${Number(value).toFixed(3)} ${unit}`;
+}
+
+/** Chargeable weight note shares the same 3-decimal display rule. */
+export function decimals3(value: number | null | undefined) {
+  return value == null ? "—" : Number(value).toFixed(3);
+}
+
 export function relativeTime(iso: string | null | undefined) {
   if (!iso) return "never";
   const then = new Date(iso).getTime();
