@@ -131,11 +131,33 @@ export async function deleteProductDecoration(id: string) {
   if (error) throw error;
 }
 
-export async function addDecorationBand(product_decoration_id: string, qty: number) {
-  const { error } = await supabase
+export async function addDecorationBand(
+  product_decoration_id: string,
+  qty: number,
+  inland_freight_usd: number | null = null,
+) {
+  const { data, error } = await supabase
     .from("product_decoration_bands")
-    .insert({ product_decoration_id, qty, unit_cost: 0, setup_cost: 0 });
+    .insert({ product_decoration_id, qty, unit_cost: 0, setup_cost: 0, inland_freight_usd })
+    .select("id")
+    .single();
   if (error) throw error;
+  return (data as { id: string }).id;
+}
+
+/**
+ * Ground freight is an optional column on a price table: turning it on seeds
+ * every existing band with 0, turning it off clears them back to null. The
+ * column shows whenever at least one band carries a value.
+ */
+export function hasGround(bands: DecorationBand[]) {
+  return bands.some((band) => band.inland_freight_usd != null);
+}
+
+export async function setDecorationGround(bands: DecorationBand[], on: boolean) {
+  for (const band of bands) {
+    await updateDecorationBand(band.id, { inland_freight_usd: on ? (band.inland_freight_usd ?? 0) : null });
+  }
 }
 
 export async function deleteDecorationBand(id: string) {

@@ -46,14 +46,16 @@ export function InlineField({
   className,
   align = "left",
   readOnly,
+  autoEdit,
 }: Base & {
   value: string;
   display?: React.ReactNode;
   numeric?: boolean;
   validate?: (raw: string) => string | null;
   save: (raw: string) => Promise<void>;
+  autoEdit?: boolean;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(Boolean(autoEdit));
   const [draft, setDraft] = useState(value);
   const ref = useRef<HTMLInputElement>(null);
   const done = useRef(false);

@@ -13,6 +13,37 @@ export async function updateProductFields(id: string, patch: Record<string, unkn
   if (error) throw error;
 }
 
+/**
+ * Row-kebab duplicate: copies the product as a hidden sibling in the same SKU
+ * family (trailing "X" is how the ERP marks variants), so nothing appears on
+ * the customer catalogue until staff publish it. Same staff-gated products
+ * path as every other write here.
+ */
+export async function duplicateProduct(id: string) {
+  const { data, error } = await supabase.from("products").select("*").eq("id", id).single();
+  if (error) throw error;
+  const row = data as Record<string, unknown>;
+  delete row['id'];
+  delete row['created_at'];
+  delete row['updated_at'];
+  const suffix = Date.now().toString(36).slice(-4);
+  const insert = {
+    ...row,
+    name: `${String(row['name'])} (copy)`,
+    slug: `${String(row['slug'])}-copy-${suffix}`,
+    sku: row['sku'] ? `${String(row['sku'])}X` : null,
+    is_active: false,
+    is_featured: false,
+  };
+  const { data: created, error: insertError } = await supabase
+    .from("products")
+    .insert(insert as never)
+    .select("id")
+    .single();
+  if (insertError) throw insertError;
+  return (created as { id: string }).id;
+}
+
 /** Blank clears the value; anything non-numeric is rejected by the caller. */
 export function numOrNull(raw: string) {
   const trimmed = raw.trim();
