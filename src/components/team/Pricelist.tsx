@@ -112,7 +112,7 @@ import {
  * strip's own sideways scroll starts.
  */
 const COLS =
-  "grid grid-cols-[120px_190px_170px_264px_280px_minmax(0,1fr)] gap-3 px-4";
+  "grid grid-cols-[120px_190px_196px_260px_268px_minmax(0,1fr)] gap-3 px-4";
 
 /** ONE vertical rhythm token — every KV row and section header uses it. */
 const ROW = "min-h-[26px]";
@@ -586,6 +586,7 @@ function PricelistRow({
           <InlineField
             value={product.material ?? ""}
             wrap
+            wrapLines={3}
             save={(raw) => saveProduct({ material: raw.trim() || null })}
           />
         </Kv>

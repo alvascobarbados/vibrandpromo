@@ -52,6 +52,7 @@ export function InlineField({
   readOnly,
   autoEdit,
   wrap,
+  wrapLines = 2,
 }: Base & {
   value: string;
   display?: React.ReactNode;
@@ -125,7 +126,9 @@ export function InlineField({
             role={readOnly ? undefined : "button"}
             title={wrap && value ? value : undefined}
             className={`min-w-0 flex-1 text-[13px] ${
-              wrap ? "line-clamp-2 whitespace-normal break-words" : "truncate"
+              wrap
+                ? `${wrapLines === 3 ? "line-clamp-3" : "line-clamp-2"} whitespace-normal break-words`
+                : "truncate"
             } ${
               align === "right" ? "text-right" : ""
             } ${readOnly ? "" : "cursor-text hover:bg-navy-50"}`}
