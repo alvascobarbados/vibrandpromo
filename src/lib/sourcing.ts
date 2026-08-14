@@ -193,6 +193,44 @@ export async function createSupplier(input: { name: string; code: string }) {
 }
 
 /**
+ * FREEZE RULE — flipping a supplier's unit system must never change what an
+ * already-stored number means. So the CURRENT effective units are written
+ * explicitly onto every one of its items that still inherits (NULL), and only
+ * then does the supplier default flip. New items pick up the new default.
+ */
+export async function applySupplierUnitSystem(supplierId: string, next: UnitSystem) {
+  const { data, error } = await supabase
+    .from("suppliers")
+    .select("unit_system")
+    .eq("id", supplierId)
+    .single();
+  if (error) throw error;
+  const metric = ((data as { unit_system: string }).unit_system ?? "metric") === "metric";
+  const dimension = metric ? "cm" : "in";
+  const weight = metric ? "kg" : "lb";
+
+  const froze = await supabase
+    .from("product_sourcing")
+    .update({ dimension_unit: dimension } as never)
+    .eq("supplier_id", supplierId)
+    .is("dimension_unit", null);
+  if (froze.error) throw froze.error;
+
+  const frozeWeight = await supabase
+    .from("product_sourcing")
+    .update({ weight_unit: weight } as never)
+    .eq("supplier_id", supplierId)
+    .is("weight_unit", null);
+  if (frozeWeight.error) throw frozeWeight.error;
+
+  const flipped = await supabase
+    .from("suppliers")
+    .update({ unit_system: next } as never)
+    .eq("id", supplierId);
+  if (flipped.error) throw flipped.error;
+}
+
+/**
  * Admin products list row: the product plus its sourcing link and supplier in a
  * single staff-only query. Public/anonymous catalogue queries (publicProductsQuery)
  * never select these fields, and `product_sourcing`/`suppliers` are staff-only by RLS.
