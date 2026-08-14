@@ -85,7 +85,7 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
       await (async () => {
         // Freight availability is read from the catalogue, never trusted from the client.
         const ids = items.map((item) => item.product_id).filter((id): id is string => !!id);
-        const shippingById = new Map<string, string>();
+        const shippingById = new Map<string, string | null>();
         if (ids.length) {
           const { data: products } = await supabaseAdmin
             .from("products")
