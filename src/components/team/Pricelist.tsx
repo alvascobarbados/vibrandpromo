@@ -217,7 +217,7 @@ function sharedName(items: Product[]) {
   return trimmed.length >= 3 ? trimmed : first;
 }
 
-function Kv({ label, children }: { label: string; children: React.ReactNode }) {
+function Kv({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[84px_1fr] items-baseline gap-x-3">
       <span className="text-[11px] uppercase leading-snug tracking-[0.04em] text-muted-foreground">
@@ -472,7 +472,29 @@ function PricelistRow({
             save={(raw) => savePacking({ carton_pack: numOrNull(raw) })}
           />
         </Kv>
-        <Kv label={`L × W × H (${metric ? "cm" : "in"})`}>
+        <Kv
+          label={
+            <span className="inline-flex items-center gap-1">
+              L × W × H
+              <UnitSwitch
+                options={["cm", "in"] as const}
+                value={units.dimension}
+                auto={units.dimensionAuto}
+                ariaLabel={`Dimension unit for ${product.name}`}
+                unitColumn="dimension_unit"
+                fields={[
+                  { key: "carton_length", label: "Length", value: sourcing?.carton_length ?? null },
+                  { key: "carton_width", label: "Width", value: sourcing?.carton_width ?? null },
+                  { key: "carton_height", label: "Height", value: sourcing?.carton_height ?? null },
+                ]}
+                convert={(value, from, to) =>
+                  convertLength(value, from as DimensionUnit, to as DimensionUnit, constants)
+                }
+                onApply={(patch) => savePacking(patch as never)}
+              />
+            </span>
+          }
+        >
           <span className="flex flex-nowrap items-center gap-1">
             <InlineField
               className="w-11 shrink-0"
@@ -501,14 +523,35 @@ function PricelistRow({
               sourcing?.carton_length ?? null,
               sourcing?.carton_width ?? null,
               sourcing?.carton_height ?? null,
-              metric,
+              units.dimension,
             )}
+            {cbm != null ? ` · ${cbm} CBM` : ""}
           </span>
         </Kv>
-        <Kv label={`Weight (${metric ? "kg" : "lb"})`}>
+        <Kv
+          label={
+            <span className="inline-flex items-center gap-1">
+              Weight
+              <UnitSwitch
+                options={["kg", "lb"] as const}
+                value={units.weight}
+                auto={units.weightAuto}
+                ariaLabel={`Weight unit for ${product.name}`}
+                unitColumn="weight_unit"
+                fields={[
+                  { key: "carton_weight", label: "Weight", value: sourcing?.carton_weight ?? null },
+                ]}
+                convert={(value, from, to) =>
+                  convertWeight(value, from as WeightUnit, to as WeightUnit, constants)
+                }
+                onApply={(patch) => savePacking(patch as never)}
+              />
+            </span>
+          }
+        >
           <InlineField
             value={numberText(sourcing?.carton_weight)}
-            display={weightLabel(sourcing?.carton_weight ?? null, metric)}
+            display={weightLabel(sourcing?.carton_weight ?? null, units.weight)}
             numeric
             validate={positiveProblem}
             save={(raw) => savePacking({ carton_weight: numOrNull(raw) })}
