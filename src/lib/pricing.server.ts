@@ -68,8 +68,19 @@ let staticCache: { at: number; value: Promise<StaticCostingTables> } | null = nu
 
 async function loadStaticCostingTables() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const [suppliers, origins, settingsRows, methods, routeRows, tiers, dests, cats, subs] =
-    await Promise.all([
+  const [
+    suppliers,
+    origins,
+    settingsRows,
+    methods,
+    routeRows,
+    tiers,
+    dests,
+    cats,
+    subs,
+    methodDetails,
+    decorationMethods,
+  ] = await Promise.all([
       supabaseAdmin.from("suppliers").select("id, unit_system, origin_id"),
       supabaseAdmin.from("origins").select("id, code"),
       supabaseAdmin
