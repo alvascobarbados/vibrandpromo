@@ -53,22 +53,20 @@ export function IncludedItems({
               value={String(row.quantity)}
               numeric
               validate={(raw) => (Number(raw) >= 1 ? null : "Quantity must be at least 1.")}
-              save={(raw) =>
-                guard(() => updateProductInclude(row.id, { quantity: Number(raw) })).then(
-                  () => undefined,
-                )
-              }
+              save={async (raw) => {
+                await updateProductInclude(row.id, { quantity: Number(raw) });
+                await onChanged();
+              }}
             />
           </span>
           <span className="shrink-0 text-[13px] text-muted-foreground">×</span>
           <span className="min-w-0 flex-1">
             <InlineField
               value={row.description}
-              save={(raw) =>
-                guard(() => updateProductInclude(row.id, { description: raw })).then(
-                  () => undefined,
-                )
-              }
+              save={async (raw) => {
+                await updateProductInclude(row.id, { description: raw });
+                await onChanged();
+              }}
             />
           </span>
           <span className="flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100">
