@@ -34,7 +34,7 @@ function AuthPage() {
   const [linkLoading, setLinkLoading] = useState(false);
   const [linkSentTo, setLinkSentTo] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   useEffect(() => {
     void supabase.auth.getSession().then(async ({ data }) => {
@@ -113,11 +113,18 @@ function AuthPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    setPasswordError(null);
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
-      toast.error(error.message);
+      setPasswordError(
+        /invalid login credentials/i.test(error.message)
+          ? "That email and password don't match an account."
+          : /email not confirmed/i.test(error.message)
+            ? "Confirm your email address before signing in with a password."
+            : "We couldn't sign you in. Please try again.",
+      );
       return;
     }
     await routeByRole();
@@ -202,42 +209,45 @@ function AuthPage() {
         )}
 
         <div className="mt-6 border-t border-border pt-4">
-          <button
-            type="button"
-            className="text-xs text-muted-foreground underline"
-            onClick={() => setShowPassword((value) => !value)}
-          >
-            {showPassword ? "Hide password sign-in" : "Use password instead"}
-          </button>
-          {showPassword ? (
-            <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-              <div>
-                <Label htmlFor="pw-email">Email</Label>
-                <Input
-                  id="pw-email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                />
-              </div>
-              <Button type="submit" variant="secondary" className="w-full" disabled={loading}>
-                {loading ? "Signing in…" : "Sign in with password"}
-              </Button>
-            </form>
-          ) : null}
+          <h2 className="text-sm font-semibold">Sign in with email and password</h2>
+          <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+            <div>
+              <Label htmlFor="pw-email">Email</Label>
+              <Input
+                id="pw-email"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setPasswordError(null);
+                }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setPasswordError(null);
+                }}
+              />
+            </div>
+            {passwordError ? (
+              <p role="alert" className="text-sm text-destructive">
+                {passwordError}
+              </p>
+            ) : null}
+            <Button type="submit" size="lg" variant="secondary" className="w-full" disabled={loading}>
+              {loading ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
         </div>
       </div>
     </main>
