@@ -318,6 +318,13 @@ function PricelistRow({
     constants,
   );
   const origin = origins.find((row) => row.id === supplier?.origin_id) ?? null;
+  /** Display-only chargeable weight: max(actual, volume × volumetric factor). */
+  const chargeable = chargeableWeightKg(
+    sourcing?.carton_weight ?? null,
+    units.weight,
+    cbm,
+    constants,
+  );
   const images = product.images ?? [];
 
   const refreshProducts = () => queryClient.invalidateQueries({ queryKey: ["products"] });
