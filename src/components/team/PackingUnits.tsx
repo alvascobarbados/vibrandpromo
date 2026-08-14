@@ -67,9 +67,10 @@ export function UnitSwitch({
 
   return (
     <>
-      <span className="inline-flex items-center gap-1">
+      <span className="inline-flex items-center">
         <select
           aria-label={ariaLabel}
+          {...(auto ? { title: "Auto — inherited from supplier" } : {})}
           value={value}
           onChange={(event) => {
             const next = event.target.value;
@@ -80,7 +81,11 @@ export function UnitSwitch({
             }
             setTarget(next);
           }}
-          className="h-5 rounded border border-navy-200 bg-card px-0.5 text-[11px] uppercase outline-none focus:border-lime-500"
+          className={`h-5 rounded border bg-card px-0.5 text-[11px] uppercase outline-none focus:border-lime-500 ${
+            auto
+              ? "border-transparent text-muted-foreground hover:border-navy-200"
+              : "border-navy-200 text-navy-700"
+          }`}
         >
           {options.map((option) => (
             <option key={option} value={option}>
@@ -88,14 +93,6 @@ export function UnitSwitch({
             </option>
           ))}
         </select>
-        {auto ? (
-          <span
-            title="Inherited from the supplier's unit system"
-            className="rounded bg-n-100 px-1 py-px text-[10px] font-medium uppercase leading-4 tracking-wide text-n-500"
-          >
-            Auto
-          </span>
-        ) : null}
       </span>
 
       <AlertDialog open={target != null} onOpenChange={(open) => (open ? null : setTarget(null))}>
