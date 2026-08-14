@@ -84,6 +84,45 @@ export type ProductSourcing = {
   supplier_item_no: string | null;
 };
 
+/** Full staff-only sourcing row, including the ERP packing fields. */
+export type SourcingRow = ProductSourcing & {
+  supplier_item_name: string | null;
+  variant_label: string | null;
+  carton_pack: number | null;
+  carton_length: number | null;
+  carton_width: number | null;
+  carton_height: number | null;
+  carton_weight: number | null;
+};
+
+export type SourcingPatch = Partial<Omit<SourcingRow, "id" | "product_id">>;
+
+export const sourcingRowsQuery = queryOptions({
+  queryKey: ["product_sourcing", "rows"],
+  queryFn: async (): Promise<SourcingRow[]> => {
+    const { data, error } = await supabase
+      .from("product_sourcing")
+      .select(
+        "id, product_id, supplier_id, supplier_item_no, supplier_item_name, variant_label, carton_pack, carton_length, carton_width, carton_height, carton_weight",
+      )
+      .returns<SourcingRow[]>();
+    if (error) throw error;
+    return data ?? [];
+  },
+});
+
+/**
+ * Partial sourcing write. PostgREST only sets the columns present in the
+ * payload, so patching packing data never clears supplier fields (and the
+ * other way round).
+ */
+export async function saveSourcingPatch(product_id: string, patch: SourcingPatch) {
+  const { error } = await supabase
+    .from("product_sourcing")
+    .upsert({ product_id, ...patch }, { onConflict: "product_id" });
+  if (error) throw error;
+}
+
 export const suppliersQuery = queryOptions({
   queryKey: ["suppliers"],
   queryFn: async (): Promise<Supplier[]> => {

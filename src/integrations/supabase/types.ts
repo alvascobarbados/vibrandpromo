@@ -104,6 +104,36 @@ export type Database = {
         }
         Relationships: []
       }
+      decoration_methods: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          sub_rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          sub_rule_type: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          sub_rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_log: {
         Row: {
           created_at: string
@@ -206,6 +236,50 @@ export type Database = {
         }
         Relationships: []
       }
+      method_details: {
+        Row: {
+          code: string
+          created_at: string
+          decoration_method_id: string
+          detail: string
+          id: string
+          n_run: number
+          n_setup: number
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          decoration_method_id: string
+          detail: string
+          id?: string
+          n_run?: number
+          n_setup?: number
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          decoration_method_id?: string
+          detail?: string
+          id?: string
+          n_run?: number
+          n_setup?: number
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "method_details_decoration_method_id_fkey"
+            columns: ["decoration_method_id"]
+            isOneToOne: false
+            referencedRelation: "decoration_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       origins: {
         Row: {
           code: string
@@ -254,30 +328,137 @@ export type Database = {
         }
         Relationships: []
       }
-      product_sourcing: {
+      product_decoration_bands: {
         Row: {
           created_at: string
           id: string
-          product_id: string
-          supplier_id: string | null
-          supplier_item_no: string | null
+          inland_freight_usd: number | null
+          product_decoration_id: string
+          qty: number
+          setup_cost: number
+          unit_cost: number
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
-          product_id: string
-          supplier_id?: string | null
-          supplier_item_no?: string | null
+          inland_freight_usd?: number | null
+          product_decoration_id: string
+          qty: number
+          setup_cost?: number
+          unit_cost: number
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          inland_freight_usd?: number | null
+          product_decoration_id?: string
+          qty?: number
+          setup_cost?: number
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_decoration_bands_product_decoration_id_fkey"
+            columns: ["product_decoration_id"]
+            isOneToOne: false
+            referencedRelation: "product_decorations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_decorations: {
+        Row: {
+          created_at: string
+          id: string
+          method_detail_id: string
+          notes: string | null
+          product_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          method_detail_id: string
+          notes?: string | null
+          product_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          method_detail_id?: string
+          notes?: string | null
           product_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_decorations_method_detail_id_fkey"
+            columns: ["method_detail_id"]
+            isOneToOne: false
+            referencedRelation: "method_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_decorations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_sourcing: {
+        Row: {
+          carton_height: number | null
+          carton_length: number | null
+          carton_pack: number | null
+          carton_weight: number | null
+          carton_width: number | null
+          created_at: string
+          id: string
+          product_id: string
+          supplier_id: string | null
+          supplier_item_name: string | null
+          supplier_item_no: string | null
+          updated_at: string
+          variant_label: string | null
+        }
+        Insert: {
+          carton_height?: number | null
+          carton_length?: number | null
+          carton_pack?: number | null
+          carton_weight?: number | null
+          carton_width?: number | null
+          created_at?: string
+          id?: string
+          product_id: string
           supplier_id?: string | null
+          supplier_item_name?: string | null
           supplier_item_no?: string | null
           updated_at?: string
+          variant_label?: string | null
+        }
+        Update: {
+          carton_height?: number | null
+          carton_length?: number | null
+          carton_pack?: number | null
+          carton_weight?: number | null
+          carton_width?: number | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          supplier_id?: string | null
+          supplier_item_name?: string | null
+          supplier_item_no?: string | null
+          updated_at?: string
+          variant_label?: string | null
         }
         Relationships: [
           {
