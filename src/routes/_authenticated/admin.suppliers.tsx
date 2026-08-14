@@ -525,6 +525,45 @@ function SuppliersTab() {
         {rows.length} supplier{rows.length === 1 ? "" : "s"} shown. A supplier that is assigned to
         products is archived instead of deleted, so past sourcing records stay intact.
       </p>
+
+      <AlertDialog
+        open={unitFlip != null}
+        onOpenChange={(open) => (open ? null : setUnitFlip(null))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Change {unitFlip?.supplier.name} to {unitFlip?.next}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Existing items keep the units they were entered in. Only new items will default to{" "}
+              {unitFlip?.next === "imperial" ? "Imperial" : "Metric"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const flip = unitFlip;
+                setUnitFlip(null);
+                if (!flip) return;
+                void applySupplierUnitSystem(flip.supplier.id, flip.next).then(
+                  async () => {
+                    await refresh();
+                    toast.success(`${flip.supplier.name} now defaults to ${flip.next}.`);
+                  },
+                  (error: unknown) =>
+                    toast.error(
+                      error instanceof Error ? error.message : "Could not change the unit system.",
+                    ),
+                );
+              }}
+            >
+              Change default
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
