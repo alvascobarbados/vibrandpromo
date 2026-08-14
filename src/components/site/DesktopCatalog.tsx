@@ -154,14 +154,10 @@ export function DesktopCatalog({
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-6 xl:gap-8">
-      <aside
-        className={`w-[240px] shrink-0 ${team ? "hidden border-r border-n-200 lg:block" : ""}`}
-      >
-        <div
-          className={`sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto ${
-            team ? "rounded-l-xl bg-n-50/70 px-3 py-3" : "pr-2"
-          }`}
-        >
+      {/* Rail styling comes from the shared .filter-rail utilities so the shop
+          sidebar and the /team rail can never drift apart. */}
+      <aside className={`filter-rail w-[240px] shrink-0 ${team ? "hidden lg:block" : ""}`}>
+        <div className="filter-rail-surface sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
           <DesktopFilterSidebar
             products={allProducts}
             categories={allCategories}
