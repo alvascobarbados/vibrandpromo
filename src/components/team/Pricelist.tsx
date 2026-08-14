@@ -833,8 +833,9 @@ function ImageSlot({
           )}
         </span>
       )}
+      {/* Count badge sits in the corner so the thumb's image stays visible. */}
       {extra ? (
-        <span className="absolute inset-0 flex items-center justify-center bg-n-900/55 text-[11px] font-semibold text-white">
+        <span className="absolute right-0 top-0 rounded-bl-md bg-n-900/80 px-1 text-[9px] font-semibold leading-4 text-white">
           +{extra}
         </span>
       ) : null}
