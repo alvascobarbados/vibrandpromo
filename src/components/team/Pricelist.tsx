@@ -24,6 +24,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { IncludedItems } from "@/components/team/IncludedItems";
+import { costingReadyMissing, type MissingField } from "@/lib/costing-gate";
+import { buildPricelistItems, memberDisplayName } from "@/lib/pricelist-groups";
+import {
+  productIncludesQuery,
+  type ProductInclude,
+} from "@/lib/product-includes";
 import {
   imageSrc,
   productionLabel,
@@ -43,11 +50,11 @@ import {
 import {
   cartonDims,
   duplicateProduct,
+  duplicateProductAsVariant,
   numOrNull,
   numberText,
   positiveProblem,
   relativeTime,
-  skuFamily,
   updateProductFields,
   weightLabel,
 } from "@/lib/pricelist";
@@ -103,8 +110,10 @@ export function Pricelist({
   const decorations = useQuery(productDecorationsQuery);
   const attributeLabels = useQuery(detailLabelsQuery);
   const attributes = useQuery(productDetailsQuery);
+  const includes = useQuery(productIncludesQuery);
   const settings = useQuery(appSettingsQuery);
   const constants = constantsFrom(settings.data);
+  const [focusVariantFor, setFocusVariantFor] = useState<string | null>(null);
 
   const sourcingByProduct = new Map(
     (sourcing.data ?? []).map((row) => [row.product_id, row] as const),
@@ -121,20 +130,18 @@ export function Pricelist({
     list.push(row);
     decorationsByProduct.set(row.product_id, list);
   }
-
-  /** Group by SKU family; single-product families render without a header. */
-  const families: Array<{ key: string; items: Product[] }> = [];
-  const index = new Map<string, number>();
-  for (const product of products) {
-    const key = skuFamily(product.sku) || product.id;
-    const at = index.get(key);
-    if (at == null) {
-      index.set(key, families.length);
-      families.push({ key, items: [product] });
-    } else {
-      families[at]?.items.push(product);
-    }
+  const includesByProduct = new Map<string, ProductInclude[]>();
+  for (const row of includes.data ?? []) {
+    const list = includesByProduct.get(row.product_id) ?? [];
+    list.push(row);
+    includesByProduct.set(row.product_id, list);
   }
+
+  /**
+   * GROUPING — pure name-based (normalized name + supplier), computed at render.
+   * No stored link: renaming a product joins/leaves its family immediately.
+   */
+  const items = buildPricelistItems(products, sourcingByProduct);
 
   const renderRow = (product: Product) => (
     <PricelistRow
@@ -150,7 +157,10 @@ export function Pricelist({
       details={details.data ?? []}
       attributeLabels={attributeLabels.data ?? []}
       attributes={attributesByProduct.get(product.id) ?? []}
+      includes={includesByProduct.get(product.id) ?? []}
       constants={constants}
+      focusVariant={focusVariantFor === product.id}
+      onDuplicated={setFocusVariantFor}
     />
   );
 
@@ -169,18 +179,18 @@ export function Pricelist({
         </div>
 
         <div className="mt-3 flex flex-col gap-3">
-          {families.map((family) =>
-            family.items.length > 1 ? (
+          {items.map((item) =>
+            item.type === "group" ? (
               <div
-                key={family.key}
+                key={`${item.supplierId ?? "none"}-${item.parentName}`}
                 className="rounded-xl border border-navy-200 bg-card/60"
               >
                 <div className="flex items-center justify-between gap-2 border-b border-navy-100 px-[18px] py-2">
                   <p className="flex items-center gap-1.5 text-xs font-semibold text-navy-700">
                     <Link2 className="size-3.5 text-navy-500" />
-                    {sharedName(family.items)}
+                    {item.parentName}
                     <span className="font-normal text-muted-foreground">
-                      · {family.items.length} variants
+                      · {item.members.length} variants
                     </span>
                   </p>
                   <span className="rounded-full bg-lime-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-700">
@@ -188,12 +198,12 @@ export function Pricelist({
                   </span>
                 </div>
                 <div className="flex flex-col divide-y divide-navy-100">
-                  {family.items.map(renderRow)}
+                  {item.members.map(renderRow)}
                 </div>
               </div>
             ) : (
-              <div key={family.key} className="rounded-xl border border-navy-100 bg-card/60">
-                {family.items.map(renderRow)}
+              <div key={item.product.id} className="rounded-xl border border-navy-100 bg-card/60">
+                {renderRow(item.product)}
               </div>
             ),
           )}
@@ -201,20 +211,6 @@ export function Pricelist({
       </div>
     </div>
   );
-}
-
-/** Family header name: the longest common prefix of the variants' names. */
-function sharedName(items: Product[]) {
-  const names = items.map((item) => item.name);
-  const first = names[0] ?? "";
-  let end = first.length;
-  for (const name of names.slice(1)) {
-    let i = 0;
-    while (i < end && i < name.length && first[i] === name[i]) i += 1;
-    end = i;
-  }
-  const trimmed = first.slice(0, end).replace(/[\s\-–—/·]+$/, "").trim();
-  return trimmed.length >= 3 ? trimmed : first;
 }
 
 function Kv({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
@@ -225,6 +221,29 @@ function Kv({ label, children }: { label: React.ReactNode; children: React.React
       </span>
       <span className="min-w-0 text-[13px] leading-snug text-navy-700">{children}</span>
     </div>
+  );
+}
+
+/**
+ * Costing-gate badge. The missing-field list comes from the ONE shared gate
+ * (src/lib/costing-gate.ts) the /team filter — and later the pricing engine —
+ * also use. It says nothing about customer visibility.
+ */
+function CostingBadge({ missing }: { missing: MissingField[] }) {
+  if (!missing.length) {
+    return (
+      <span className="w-fit rounded-full bg-lime-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-700">
+        Costing ready
+      </span>
+    );
+  }
+  return (
+    <span
+      title={`Missing for costing: ${missing.map((field) => field.label).join(", ")}`}
+      className="w-fit cursor-help rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-600"
+    >
+      Incomplete · {missing.length} missing
+    </span>
   );
 }
 
@@ -240,7 +259,10 @@ function PricelistRow({
   details,
   attributeLabels,
   attributes,
+  includes,
   constants,
+  focusVariant,
+  onDuplicated,
 }: {
   product: Product;
   categories: Category[];
@@ -253,7 +275,10 @@ function PricelistRow({
   details: MethodDetail[];
   attributeLabels: DetailLabel[];
   attributes: ProductDetailRow[];
+  includes: ProductInclude[];
   constants: Constants;
+  focusVariant: boolean;
+  onDuplicated: (productId: string) => void;
 }) {
   const queryClient = useQueryClient();
   const [imagesOpen, setImagesOpen] = useState(false);
@@ -274,6 +299,8 @@ function PricelistRow({
   const refreshSourcing = () => queryClient.invalidateQueries({ queryKey: ["product_sourcing"] });
   const refreshAttributes = () =>
     queryClient.invalidateQueries({ queryKey: ["product_details"] });
+  const refreshIncludes = () => queryClient.invalidateQueries({ queryKey: ["product_includes"] });
+  const missing = costingReadyMissing(product, sourcing);
   const labelName = (id: string) =>
     attributeLabels.find((row) => row.id === id)?.label ?? "Attribute";
   const usedLabelIds = new Set(attributes.map((row) => row.detail_label_id));
@@ -324,17 +351,20 @@ function PricelistRow({
             className="flex-1"
             value={product.name}
             display={
-              <span className="text-[13px] font-semibold text-navy-700">{product.name}</span>
+              <span className="text-[13px] font-semibold text-navy-700">
+                {memberDisplayName(product, sourcing)}
+              </span>
             }
             validate={nameProblem}
             save={(raw) => saveProduct({ name: raw.trim() })}
           />
-          <RowKebab product={product} saveProduct={saveProduct} />
+          <RowKebab product={product} saveProduct={saveProduct} onDuplicated={onDuplicated} />
         </div>
 
         <InlineField
           value={sourcing?.variant_label ?? ""}
           placeholder="Variant"
+          autoEdit={focusVariant}
           display={
             <span className="w-fit rounded-full bg-navy-100 px-2 py-0.5 text-[11px] font-medium text-navy-700">
               {sourcing?.variant_label || "Add variant"}
@@ -348,6 +378,8 @@ function PricelistRow({
             Hidden
           </span>
         ) : null}
+
+        <CostingBadge missing={missing} />
 
         <div className="mt-0.5 flex flex-col gap-1">
           <Kv label="Supplier">
@@ -468,6 +500,7 @@ function PricelistRow({
           nextSortOrder={nextAttributeSort}
           onAdded={refreshAttributes}
         />
+        <IncludedItems productId={product.id} rows={includes} onChanged={refreshIncludes} />
       </div>
 
       {/* Packing & production */}
@@ -661,9 +694,11 @@ function ImageSlot({
 function RowKebab({
   product,
   saveProduct,
+  onDuplicated,
 }: {
   product: Product;
   saveProduct: (patch: Record<string, unknown>) => Promise<void>;
+  onDuplicated: (productId: string) => void;
 }) {
   const queryClient = useQueryClient();
   return (
@@ -693,6 +728,21 @@ function RowKebab({
           }}
         >
           <Copy className="mr-2 size-3.5" /> Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => {
+            void duplicateProductAsVariant(product.id).then(
+              async (newId) => {
+                await queryClient.invalidateQueries();
+                onDuplicated(newId);
+                toast.success("Variant created — hidden until reviewed");
+              },
+              (error: unknown) =>
+                toast.error(error instanceof Error ? error.message : "Could not duplicate"),
+            );
+          }}
+        >
+          <Copy className="mr-2 size-3.5" /> Duplicate as variant
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => {

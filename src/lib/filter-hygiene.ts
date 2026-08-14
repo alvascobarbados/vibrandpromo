@@ -23,7 +23,15 @@ export const LEGACY_FILTER_KEYS = [
 ];
 
 /** Params the catalog honours. Anything else is stripped from the URL. */
-export const KNOWN_SEARCH_PARAMS = new Set<string>([...GROUP_IDS, "q", "sort", "page", "edit"]);
+export const KNOWN_SEARCH_PARAMS = new Set<string>([
+  ...GROUP_IDS,
+  "q",
+  "sort",
+  "page",
+  "edit",
+  /** /team costing-gate filter (staff-only, still URL state with a chip). */
+  "ready",
+]);
 
 export function purgeLegacyFilterStorage() {
   if (typeof window === "undefined") return;

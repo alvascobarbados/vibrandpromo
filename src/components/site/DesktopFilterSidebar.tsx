@@ -12,6 +12,7 @@ import {
 import { useFilterOptions } from "@/components/site/FilterPanel";
 import { useShippingSettings } from "@/lib/shipping";
 import { SourceDot } from "@/components/site/SourceDot";
+import { READY_FILTER_OPTIONS } from "@/lib/costing-gate";
 
 /** Always shown, regardless of category selection. */
 const BASE_GROUPS: FilterGroupId[] = ["moq", "prod", "src"];
@@ -28,6 +29,8 @@ type Props = {
   onToggle: (group: FilterGroupId, value: string) => void;
   onClear: () => void;
   activeCount: number;
+  /** /team only: the costing-gate group (staff data never reaches the shop). */
+  ready?: { counts: Record<string, number>; onToggle: (value: string) => void } | undefined;
 };
 
 function Row({
@@ -89,6 +92,7 @@ export function DesktopFilterSidebar({
   onToggle,
   onClear,
   activeCount,
+  ready,
 }: Props) {
   const options = useFilterOptions(products, categories, subcategories);
   const shipping = useShippingSettings();
@@ -185,6 +189,20 @@ export function DesktopFilterSidebar({
             </Group>
           );
         })}
+
+        {ready ? (
+          <Group label="Costing status">
+            {READY_FILTER_OPTIONS.map((option) => (
+              <Row
+                key={option.value}
+                label={option.label}
+                count={ready.counts[option.value] ?? 0}
+                checked={search.ready.includes(option.value)}
+                onChange={() => ready.onToggle(option.value)}
+              />
+            ))}
+          </Group>
+        ) : null}
       </div>
     </div>
   );

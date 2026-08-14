@@ -4,8 +4,8 @@
  * Costs are staff-only — these tables have no anonymous access at all.
  */
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Image as ImageIcon, MoreVertical, Plus, Trash2, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { MethodDetailPicker } from "@/components/team/MethodDetailPicker";
@@ -34,10 +34,16 @@ import {
   hasGround,
   setDecorationGround,
   updateDecorationBand,
+  updateProductDecoration,
   type DecorationMethod,
   type MethodDetail,
   type ProductDecoration,
 } from "@/lib/decorations";
+import {
+  removeDecorationRef,
+  signedRefUrl,
+  uploadDecorationRef,
+} from "@/lib/costing-refs";
 import { moneyLabel, numOrNull, numberText, positiveProblem } from "@/lib/pricelist";
 
 type Props = {
@@ -198,6 +204,30 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
                   {ground ? "– Remove ground freight" : "+ Add ground freight"}
                 </button>
               </div>
+
+              {/* Staff-only notes + reference image — never customer-facing. */}
+              <div className="mt-1.5 border-t border-navy-100 pt-1.5">
+                <InlineField
+                  value={decoration.notes ?? ""}
+                  placeholder="Notes"
+                  display={
+                    <span className="text-[11px] text-muted-foreground">
+                      {decoration.notes || "Add note"}
+                    </span>
+                  }
+                  save={async (raw) => {
+                    await updateProductDecoration(decoration.id, {
+                      notes: raw.trim() || null,
+                    });
+                    await refresh();
+                  }}
+                />
+                <RefImageSlot
+                  decorationId={decoration.id}
+                  path={decoration.ref_image_url}
+                  onChanged={refresh}
+                />
+              </div>
             </div>
           );
         })}
@@ -248,5 +278,118 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+/** Reference-image slot: upload / replace / remove, preview via signed URL. */
+function RefImageSlot({
+  decorationId,
+  path,
+  onChanged,
+}: {
+  decorationId: string;
+  path: string | null;
+  onChanged: () => Promise<unknown>;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    if (!path) {
+      setUrl(null);
+      return;
+    }
+    signedRefUrl(path)
+      .then((signed) => {
+        if (live) setUrl(signed);
+      })
+      .catch(() => {
+        if (live) setUrl(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [path]);
+
+  async function guard(action: () => Promise<unknown>) {
+    setBusy(true);
+    try {
+      await action();
+      await onChanged();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save reference image");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-1 flex items-center gap-1.5">
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (!file) return;
+          void guard(async () => {
+            const next = await uploadDecorationRef(decorationId, file);
+            await updateProductDecoration(decorationId, { ref_image_url: next });
+            if (path) await removeDecorationRef(path).catch(() => undefined);
+          });
+        }}
+      />
+      {path ? (
+        <>
+          <a
+            href={url ?? undefined}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open reference image"
+            className="size-8 overflow-hidden rounded border border-navy-200 bg-card"
+          >
+            {url ? (
+              <img src={url} alt="" className="size-full object-cover" />
+            ) : (
+              <ImageIcon className="m-1.5 size-5 text-muted-foreground" />
+            )}
+          </a>
+          <button
+            type="button"
+            disabled={busy}
+            className="text-[11px] font-semibold text-navy-500 hover:underline"
+            onClick={() => input.current?.click()}
+          >
+            Replace
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            className="text-[11px] font-semibold text-muted-foreground hover:text-destructive"
+            onClick={() =>
+              void guard(async () => {
+                await updateProductDecoration(decorationId, { ref_image_url: null });
+                await removeDecorationRef(path);
+              })
+            }
+          >
+            Remove
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          disabled={busy}
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-navy-500 hover:underline"
+          onClick={() => input.current?.click()}
+        >
+          <Upload className="size-3" /> Reference image
+        </button>
+      )}
+    </div>
   );
 }
