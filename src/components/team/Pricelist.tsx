@@ -406,21 +406,23 @@ function PricelistRow({
     .map((row) => ({ value: row.id, label: row.name }));
 
   return (
-    <div className={`${COLS} items-start py-3.5 ${product.is_active ? "" : "bg-n-50/70"}`}>
+    <div
+      className={`${COLS} items-start border-l-2 py-3.5 ${
+        product.status === "live" ? "border-transparent" : "border-amber-400"
+      }`}
+    >
       {/* Image */}
       <div className="flex flex-col gap-1.5">
         <ImageSlot
           label="Product image"
           path={images[0]}
-          dim={!product.is_active}
           onOpen={() => setImagesOpen(true)}
         />
         <div className="flex items-center gap-2">
           <ImageSlot
             label="Reference"
             path={images[1]}
-            dim={!product.is_active}
-            className="size-11 shrink-0"
+            className="size-[68px] shrink-0"
             extra={images.length > 2 ? images.length - 2 : 0}
             onOpen={() => setImagesOpen(true)}
           />
@@ -466,7 +468,7 @@ function PricelistRow({
 
         {/* STATUS chips — one consistent row, directly under the product name. */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <PublishChip product={product} saveProduct={saveProduct} />
+          <StatusChip product={product} saveProduct={saveProduct} />
           <CostingBadge missing={missing} />
         </div>
 
