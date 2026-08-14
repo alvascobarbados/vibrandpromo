@@ -93,6 +93,8 @@ export type SourcingRow = ProductSourcing & {
   carton_width: number | null;
   carton_height: number | null;
   carton_weight: number | null;
+  dimension_unit: string | null;
+  weight_unit: string | null;
 };
 
 export type SourcingPatch = Partial<Omit<SourcingRow, "id" | "product_id">>;
@@ -103,7 +105,7 @@ export const sourcingRowsQuery = queryOptions({
     const { data, error } = await supabase
       .from("product_sourcing")
       .select(
-        "id, product_id, supplier_id, supplier_item_no, supplier_item_name, variant_label, carton_pack, carton_length, carton_width, carton_height, carton_weight",
+        "id, product_id, supplier_id, supplier_item_no, supplier_item_name, variant_label, carton_pack, carton_length, carton_width, carton_height, carton_weight, dimension_unit, weight_unit",
       )
       .returns<SourcingRow[]>();
     if (error) throw error;
@@ -188,6 +190,44 @@ export async function createSupplier(input: { name: string; code: string }) {
     .single();
   if (error) throw error;
   return data as Supplier;
+}
+
+/**
+ * FREEZE RULE — flipping a supplier's unit system must never change what an
+ * already-stored number means. So the CURRENT effective units are written
+ * explicitly onto every one of its items that still inherits (NULL), and only
+ * then does the supplier default flip. New items pick up the new default.
+ */
+export async function applySupplierUnitSystem(supplierId: string, next: UnitSystem) {
+  const { data, error } = await supabase
+    .from("suppliers")
+    .select("unit_system")
+    .eq("id", supplierId)
+    .single();
+  if (error) throw error;
+  const metric = ((data as { unit_system: string }).unit_system ?? "metric") === "metric";
+  const dimension = metric ? "cm" : "in";
+  const weight = metric ? "kg" : "lb";
+
+  const froze = await supabase
+    .from("product_sourcing")
+    .update({ dimension_unit: dimension } as never)
+    .eq("supplier_id", supplierId)
+    .is("dimension_unit", null);
+  if (froze.error) throw froze.error;
+
+  const frozeWeight = await supabase
+    .from("product_sourcing")
+    .update({ weight_unit: weight } as never)
+    .eq("supplier_id", supplierId)
+    .is("weight_unit", null);
+  if (frozeWeight.error) throw frozeWeight.error;
+
+  const flipped = await supabase
+    .from("suppliers")
+    .update({ unit_system: next } as never)
+    .eq("id", supplierId);
+  if (flipped.error) throw flipped.error;
 }
 
 /**

@@ -78,21 +78,21 @@ export function numberText(value: number | null | undefined) {
   return value == null ? "" : String(value);
 }
 
-/** Carton dimensions read as L × W × H, blanks collapse to a dash. */
+/** Carton dimensions read as L × W × H in the effective unit; blanks collapse to a dash. */
 export function cartonDims(
   l: number | null,
   w: number | null,
   h: number | null,
-  metric: boolean,
+  unit: string,
 ) {
   if (l == null && w == null && h == null) return "—";
   const part = (value: number | null) => (value == null ? "?" : String(value));
-  return `${part(l)} × ${part(w)} × ${part(h)} ${metric ? "cm" : "in"}`;
+  return `${part(l)} × ${part(w)} × ${part(h)} ${unit}`;
 }
 
-export function weightLabel(value: number | null, metric: boolean) {
+export function weightLabel(value: number | null, unit: string) {
   if (value == null) return "—";
-  return `${value} ${metric ? "kg" : "lb"}`;
+  return `${value} ${unit}`;
 }
 
 export function relativeTime(iso: string | null | undefined) {

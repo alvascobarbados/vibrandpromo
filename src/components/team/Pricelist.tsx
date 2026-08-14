@@ -16,6 +16,7 @@ import { ImageManager } from "@/components/admin/ImageManager";
 import { AddAttributePopover } from "@/components/team/AddAttributePopover";
 import { DecorationPricing } from "@/components/team/DecorationPricing";
 import { InlineChoice, InlineField } from "@/components/team/inline-field";
+import { UnitSwitch } from "@/components/team/PackingUnits";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,7 @@ import {
   type Product,
   type Subcategory,
 } from "@/lib/catalog";
+import { appSettingsQuery } from "@/lib/costing";
 import {
   decorationMethodsQuery,
   methodDetailsQuery,
@@ -67,6 +69,16 @@ import {
   type SourcingRow,
   type Supplier,
 } from "@/lib/sourcing";
+import {
+  cartonCbm,
+  constantsFrom,
+  convertLength,
+  convertWeight,
+  effectiveUnits,
+  type Constants,
+  type DimensionUnit,
+  type WeightUnit,
+} from "@/lib/units";
 
 /** Single source of truth for the sheet's column layout (header + every row). */
 const COLS =
@@ -91,6 +103,8 @@ export function Pricelist({
   const decorations = useQuery(productDecorationsQuery);
   const attributeLabels = useQuery(detailLabelsQuery);
   const attributes = useQuery(productDetailsQuery);
+  const settings = useQuery(appSettingsQuery);
+  const constants = constantsFrom(settings.data);
 
   const sourcingByProduct = new Map(
     (sourcing.data ?? []).map((row) => [row.product_id, row] as const),
@@ -136,6 +150,7 @@ export function Pricelist({
       details={details.data ?? []}
       attributeLabels={attributeLabels.data ?? []}
       attributes={attributesByProduct.get(product.id) ?? []}
+      constants={constants}
     />
   );
 
@@ -202,7 +217,7 @@ function sharedName(items: Product[]) {
   return trimmed.length >= 3 ? trimmed : first;
 }
 
-function Kv({ label, children }: { label: string; children: React.ReactNode }) {
+function Kv({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[84px_1fr] items-baseline gap-x-3">
       <span className="text-[11px] uppercase leading-snug tracking-[0.04em] text-muted-foreground">
@@ -225,6 +240,7 @@ function PricelistRow({
   details,
   attributeLabels,
   attributes,
+  constants,
 }: {
   product: Product;
   categories: Category[];
@@ -237,11 +253,20 @@ function PricelistRow({
   details: MethodDetail[];
   attributeLabels: DetailLabel[];
   attributes: ProductDetailRow[];
+  constants: Constants;
 }) {
   const queryClient = useQueryClient();
   const [imagesOpen, setImagesOpen] = useState(false);
   const supplier = suppliers.find((row) => row.id === sourcing?.supplier_id) ?? null;
-  const metric = (supplier?.unit_system ?? "metric") === "metric";
+  const units = effectiveUnits(sourcing, supplier?.unit_system);
+  /** CBM is always normalized from the effective dimension unit, never assumed metric. */
+  const cbm = cartonCbm(
+    sourcing?.carton_length ?? null,
+    sourcing?.carton_width ?? null,
+    sourcing?.carton_height ?? null,
+    units.dimension,
+    constants,
+  );
   const origin = origins.find((row) => row.id === supplier?.origin_id) ?? null;
   const images = product.images ?? [];
 
@@ -455,7 +480,29 @@ function PricelistRow({
             save={(raw) => savePacking({ carton_pack: numOrNull(raw) })}
           />
         </Kv>
-        <Kv label={`L × W × H (${metric ? "cm" : "in"})`}>
+        <Kv
+          label={
+            <span className="inline-flex items-center gap-1">
+              L × W × H
+              <UnitSwitch
+                options={["cm", "in"] as const}
+                value={units.dimension}
+                auto={units.dimensionAuto}
+                ariaLabel={`Dimension unit for ${product.name}`}
+                unitColumn="dimension_unit"
+                fields={[
+                  { key: "carton_length", label: "Length", value: sourcing?.carton_length ?? null },
+                  { key: "carton_width", label: "Width", value: sourcing?.carton_width ?? null },
+                  { key: "carton_height", label: "Height", value: sourcing?.carton_height ?? null },
+                ]}
+                convert={(value, from, to) =>
+                  convertLength(value, from as DimensionUnit, to as DimensionUnit, constants)
+                }
+                onApply={(patch) => savePacking(patch as never)}
+              />
+            </span>
+          }
+        >
           <span className="flex flex-nowrap items-center gap-1">
             <InlineField
               className="w-11 shrink-0"
@@ -484,14 +531,35 @@ function PricelistRow({
               sourcing?.carton_length ?? null,
               sourcing?.carton_width ?? null,
               sourcing?.carton_height ?? null,
-              metric,
+              units.dimension,
             )}
+            {cbm != null ? ` · ${cbm} CBM` : ""}
           </span>
         </Kv>
-        <Kv label={`Weight (${metric ? "kg" : "lb"})`}>
+        <Kv
+          label={
+            <span className="inline-flex items-center gap-1">
+              Weight
+              <UnitSwitch
+                options={["kg", "lb"] as const}
+                value={units.weight}
+                auto={units.weightAuto}
+                ariaLabel={`Weight unit for ${product.name}`}
+                unitColumn="weight_unit"
+                fields={[
+                  { key: "carton_weight", label: "Weight", value: sourcing?.carton_weight ?? null },
+                ]}
+                convert={(value, from, to) =>
+                  convertWeight(value, from as WeightUnit, to as WeightUnit, constants)
+                }
+                onApply={(patch) => savePacking(patch as never)}
+              />
+            </span>
+          }
+        >
           <InlineField
             value={numberText(sourcing?.carton_weight)}
-            display={weightLabel(sourcing?.carton_weight ?? null, metric)}
+            display={weightLabel(sourcing?.carton_weight ?? null, units.weight)}
             numeric
             validate={positiveProblem}
             save={(raw) => savePacking({ carton_weight: numOrNull(raw) })}

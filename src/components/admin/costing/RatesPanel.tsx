@@ -4,6 +4,7 @@ import { InlineField } from "@/components/admin/costing/fields";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { appSettingsQuery, SECTION_ORDER, type AppSetting } from "@/lib/costing";
+import { CONSTANT_KEYS } from "@/lib/units";
 
 export function RatesPanel() {
   const queryClient = useQueryClient();
@@ -64,7 +65,18 @@ export function RatesPanel() {
                       ) : null}
                     </td>
                     <td className="px-4 py-2">
-                      <InlineField
+                      {CONSTANT_KEYS.has(row.key) ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-sm font-medium tabular-nums text-n-900">
+                            {row.value ?? "—"}
+                            {row.value_type === "percent" ? "%" : ""}
+                          </span>
+                          <span className="rounded-full border border-n-200 bg-n-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-n-500">
+                            physical constant
+                          </span>
+                        </div>
+                      ) : (
+                        <InlineField
                         ariaLabel={row.display_label ?? row.key}
                         value={row.value ?? ""}
                         type={row.value_type === "text" ? "text" : "number"}
@@ -74,7 +86,8 @@ export function RatesPanel() {
                         onSave={(next) =>
                           save.mutateAsync({ id: row.id, value: next, valueType: row.value_type })
                         }
-                      />
+                        />
+                      )}
                     </td>
                     <td className="px-4 py-2 text-xs text-muted-foreground">{row.key}</td>
                   </tr>

@@ -5,6 +5,16 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +22,7 @@ import { requirePage } from "@/lib/admin-guard";
 import {
   SHIPPING_MODES,
   UNIT_SYSTEMS,
+  applySupplierUnitSystem,
   createOrigin,
   normalizeOriginCode,
   originCodeProblem,
@@ -21,6 +32,7 @@ import {
   suppliersQuery,
   type Origin,
   type Supplier,
+  type UnitSystem,
 } from "@/lib/sourcing";
 
 export const Route = createFileRoute("/_authenticated/admin/suppliers")({
@@ -98,6 +110,7 @@ function SuppliersTab() {
   const [quickCode, setQuickCode] = useState("");
   const [quickName, setQuickName] = useState("");
   const [creatingOrigin, setCreatingOrigin] = useState(false);
+  const [unitFlip, setUnitFlip] = useState<{ supplier: Supplier; next: UnitSystem } | null>(null);
 
   const originList = origins.data ?? [];
   const originById = useMemo(
@@ -277,7 +290,15 @@ function SuppliersTab() {
       <td className={CELL}>
         <select
           value={String(supplier[key])}
-          onChange={(event) => void patch(supplier.id, { [key]: event.target.value })}
+          onChange={(event) => {
+            const value = event.target.value;
+            if (key === "unit_system") {
+              if (value === supplier.unit_system) return;
+              setUnitFlip({ supplier, next: value as UnitSystem });
+              return;
+            }
+            void patch(supplier.id, { [key]: value });
+          }}
           className={SELECT_CLASS}
         >
           {options.map((option) => (
@@ -504,6 +525,45 @@ function SuppliersTab() {
         {rows.length} supplier{rows.length === 1 ? "" : "s"} shown. A supplier that is assigned to
         products is archived instead of deleted, so past sourcing records stay intact.
       </p>
+
+      <AlertDialog
+        open={unitFlip != null}
+        onOpenChange={(open) => (open ? null : setUnitFlip(null))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Change {unitFlip?.supplier.name} to {unitFlip?.next}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Existing items keep the units they were entered in. Only new items will default to{" "}
+              {unitFlip?.next === "imperial" ? "Imperial" : "Metric"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const flip = unitFlip;
+                setUnitFlip(null);
+                if (!flip) return;
+                void applySupplierUnitSystem(flip.supplier.id, flip.next).then(
+                  async () => {
+                    await refresh();
+                    toast.success(`${flip.supplier.name} now defaults to ${flip.next}.`);
+                  },
+                  (error: unknown) =>
+                    toast.error(
+                      error instanceof Error ? error.message : "Could not change the unit system.",
+                    ),
+                );
+              }}
+            >
+              Change default
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
