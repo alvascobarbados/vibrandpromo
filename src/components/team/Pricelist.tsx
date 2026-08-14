@@ -579,69 +579,49 @@ function PricelistRow({
             save={(raw) => savePacking({ carton_pack: numOrNull(raw) })}
           />
         </Kv>
-        <Kv label="L × W × H">
+        <Kv label="Ctn dims">
           <span className="flex flex-nowrap items-center gap-1">
             <InlineField
-              className="w-12 shrink-0"
+              className="w-11 shrink-0"
               value={numberText(sourcing?.carton_length)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_length: numOrNull(raw) })}
             />
+            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-12 shrink-0"
+              className="w-11 shrink-0"
               value={numberText(sourcing?.carton_width)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_width: numOrNull(raw) })}
             />
+            <span className="shrink-0 text-[11px] text-muted-foreground">×</span>
             <InlineField
-              className="w-12 shrink-0"
+              className="w-11 shrink-0"
               value={numberText(sourcing?.carton_height)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_height: numOrNull(raw) })}
             />
+            <UnitSwitch
+              options={["cm", "in"] as const}
+              value={units.dimension}
+              auto={units.dimensionAuto}
+              ariaLabel={`Dimension unit for ${product.name}`}
+              unitColumn="dimension_unit"
+              fields={[
+                { key: "carton_length", label: "Length", value: sourcing?.carton_length ?? null },
+                { key: "carton_width", label: "Width", value: sourcing?.carton_width ?? null },
+                { key: "carton_height", label: "Height", value: sourcing?.carton_height ?? null },
+              ]}
+              convert={(value, from, to) =>
+                convertLength(value, from as DimensionUnit, to as DimensionUnit, constants)
+              }
+              onApply={(patch) => savePacking(patch as never)}
+            />
           </span>
         </Kv>
-        {/* Unit + computed carton: one muted line, aligned to the value edge. */}
-        <div className="flex min-w-0 items-center gap-1.5 pl-[108px]">
-          <UnitSwitch
-            options={["cm", "in"] as const}
-            value={units.dimension}
-            auto={units.dimensionAuto}
-            ariaLabel={`Dimension unit for ${product.name}`}
-            unitColumn="dimension_unit"
-            fields={[
-              { key: "carton_length", label: "Length", value: sourcing?.carton_length ?? null },
-              { key: "carton_width", label: "Width", value: sourcing?.carton_width ?? null },
-              { key: "carton_height", label: "Height", value: sourcing?.carton_height ?? null },
-            ]}
-            convert={(value, from, to) =>
-              convertLength(value, from as DimensionUnit, to as DimensionUnit, constants)
-            }
-            onApply={(patch) => savePacking(patch as never)}
-          />
-          {cbm != null ? (
-            <span
-              title={`${cartonDims(
-                sourcing?.carton_length ?? null,
-                sourcing?.carton_width ?? null,
-                sourcing?.carton_height ?? null,
-                units.dimension,
-              )} · ${cbm} CBM`}
-              className="truncate text-[11px] leading-5 text-muted-foreground"
-            >
-              {cartonDims(
-                sourcing?.carton_length ?? null,
-                sourcing?.carton_width ?? null,
-                sourcing?.carton_height ?? null,
-                units.dimension,
-              )}
-              {` · ${cbm} CBM`}
-            </span>
-          ) : null}
-        </div>
         <Kv label="Weight">
           <span className="flex flex-nowrap items-center gap-1.5">
             <InlineField
@@ -669,21 +649,21 @@ function PricelistRow({
           </span>
         </Kv>
         <Kv label="Lead time">
-          <span className="flex flex-nowrap items-center gap-1">
+          <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
               className="w-10 shrink-0"
               value={product.production_min_days == null ? "" : String(product.production_min_days)}
               numeric
               save={(raw) => saveProduct({ production_min_days: numOrNull(raw) })}
             />
-            <span className="text-muted-foreground">–</span>
+            <span className="shrink-0 text-[13px] text-muted-foreground">–</span>
             <InlineField
               className="w-10 shrink-0"
               value={product.production_max_days == null ? "" : String(product.production_max_days)}
               numeric
               save={(raw) => saveProduct({ production_max_days: numOrNull(raw) })}
             />
-            <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+            <span className="ml-1 whitespace-nowrap text-[11px] text-muted-foreground">
               {product.production_min_days == null && product.production_max_days == null
                 ? productionLabel(product.production_min_days, product.production_max_days)
                 : "days"}
@@ -699,6 +679,13 @@ function PricelistRow({
             save={(raw) => saveProduct({ moq: numOrNull(raw) })}
           />
         </Kv>
+
+        {/* Display-only calc note — omitted entirely when inputs are missing. */}
+        {cbm != null && chargeable != null ? (
+          <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">
+            Volume {cbm} CBM · Chargeable {chargeable} kg
+          </p>
+        ) : null}
       </div>
 
       {/* Pricing */}
