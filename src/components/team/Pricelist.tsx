@@ -369,22 +369,11 @@ function PricelistRow({
   const [addingInclude, setAddingInclude] = useState(false);
   const supplier = suppliers.find((row) => row.id === sourcing?.supplier_id) ?? null;
   const units = effectiveUnits(sourcing, supplier?.unit_system);
-  /** CBM is always normalized from the effective dimension unit, never assumed metric. */
-  const cbm = cartonCbm(
-    sourcing?.carton_length ?? null,
-    sourcing?.carton_width ?? null,
-    sourcing?.carton_height ?? null,
-    units.dimension,
-    constants,
-  );
   const origin = origins.find((row) => row.id === supplier?.origin_id) ?? null;
-  /** Display-only chargeable weight: max(actual, volume × volumetric factor). */
-  const chargeable = chargeableWeightKg(
-    sourcing?.carton_weight ?? null,
-    units.weight,
-    cbm,
-    constants,
-  );
+  /**
+   * CBM / chargeable weight are NOT displayed on the card any more — the shared
+   * helpers in src/lib/units.ts stay put for the pricing engine.
+   */
   const images = product.images ?? [];
 
   const refreshProducts = () => queryClient.invalidateQueries({ queryKey: ["products"] });
