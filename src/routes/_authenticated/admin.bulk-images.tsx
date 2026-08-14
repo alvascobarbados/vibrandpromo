@@ -2,13 +2,14 @@ import { requirePage } from "@/lib/admin-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImageUp } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { allProductsQuery } from "@/lib/catalog";
+import { allProductsQuery, imageSrc } from "@/lib/catalog";
 import { generateVariantsFor, uploadWithVariants } from "@/lib/image-upload";
 import { isVariantPath, variantPath, VARIANT_KEYS } from "@/lib/image-variants";
 import { listProductImageObjects } from "@/lib/image-variants.functions";
@@ -50,6 +51,67 @@ function BulkImages() {
   const [busy, setBusy] = useState(false);
   const [report, setReport] = useState<Report | null>(null);
   const [replaceMode, setReplaceMode] = useState(false);
+  const listObjects = useServerFn(listProductImageObjects);
+  const [variantBusy, setVariantBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [variantReport, setVariantReport] = useState<VariantReport | null>(null);
+
+  /**
+   * One-time backfill: walks every original in the bucket and writes the two
+   * missing derivatives. Resizing happens here in the browser because the
+   * server runtime has no image toolchain. Safe to re-run — existing variants
+   * are skipped.
+   */
+  async function runVariantBatch() {
+    setVariantBusy(true);
+    setVariantReport(null);
+    setProgress(null);
+    try {
+      const names = await listObjects();
+      const existing = new Set(names);
+      const originals = names.filter((name) => !isVariantPath(name));
+      let generated = 0;
+      let skipped = 0;
+      let failures = 0;
+      const notes: string[] = [];
+      let done = 0;
+      setProgress({ done: 0, total: originals.length });
+
+      const cursor = { i: 0 };
+      const worker = async () => {
+        for (;;) {
+          const index = cursor.i++;
+          const path = originals[index];
+          if (!path) return;
+          const missing = VARIANT_KEYS.filter((key) => !existing.has(variantPath(path, key)));
+          if (!missing.length) {
+            skipped += 1;
+          } else {
+            try {
+              const response = await fetch(imageSrc(path));
+              if (!response.ok) throw new Error(`download ${response.status}`);
+              const blob = await response.blob();
+              await generateVariantsFor(path, blob);
+              generated += missing.length;
+            } catch (error) {
+              failures += 1;
+              if (notes.length < 20) notes.push(`${path} — ${(error as Error).message}`);
+            }
+          }
+          done += 1;
+          setProgress({ done, total: originals.length });
+        }
+      };
+      await Promise.all([worker(), worker(), worker(), worker()]);
+      setVariantReport({ originals: originals.length, generated, skipped, failures, notes });
+      toast.success(`${generated} variants generated`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : "Thumbnail job failed");
+    } finally {
+      setVariantBusy(false);
+    }
+  }
 
   async function handleFiles(files: File[]) {
     if (!files.length) return;
@@ -149,6 +211,40 @@ function BulkImages() {
           </span>
         </span>
       </label>
+
+      <div className="mt-4 rounded-xl border border-border bg-card px-4 py-3 text-sm">
+        <p className="font-medium">Thumbnail variants</p>
+        <p className="mt-1 text-muted-foreground">
+          Builds a 480px card image and a 96px thumbnail for every photo already in storage so
+          the catalogue no longer downloads full-size originals. New uploads get both
+          automatically. Safe to run again — photos that already have variants are skipped.
+        </p>
+        <div className="mt-3 flex items-center gap-3">
+          <Button variant="outline" disabled={variantBusy} onClick={() => void runVariantBatch()}>
+            {variantBusy ? "Generating…" : "Generate missing thumbnails"}
+          </Button>
+          {progress ? (
+            <span className="text-muted-foreground">
+              {progress.done} / {progress.total} photos
+            </span>
+          ) : null}
+        </div>
+        {variantReport ? (
+          <div className="mt-3 text-muted-foreground">
+            <p>
+              {variantReport.originals} originals · {variantReport.generated} generated ·{" "}
+              {variantReport.skipped} skipped · {variantReport.failures} failures
+            </p>
+            {variantReport.notes.length ? (
+              <ul className="mt-1 space-y-0.5">
+                {variantReport.notes.map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       <label
         htmlFor="bulk-files"
