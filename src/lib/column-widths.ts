@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { loadPrefValue, savePrefValue } from "@/lib/user-prefs";
 
 /**
  * Per-user, resizable column widths for the Admin › Products table.
@@ -65,14 +65,7 @@ export function useColumnWidths() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) return;
-      const { data } = await supabase
-        .from("user_prefs")
-        .select("prefs")
-        .eq("user_id", auth.user.id)
-        .maybeSingle();
-      const stored = (data?.prefs as Record<string, any> | null)?.[PREFS_KEY]?.col_widths;
+      const stored = await loadPrefValue<unknown>(PREFS_KEY, "col_widths");
       const clean = sanitize(stored);
       if (!cancelled && Object.keys(clean).length)
         apply({ ...DEFAULT_COL_WIDTHS, ...clean });
@@ -86,24 +79,7 @@ export function useColumnWidths() {
   const persist = useCallback((next: Record<ColId, number>) => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      void (async () => {
-        const { data: auth } = await supabase.auth.getUser();
-        if (!auth.user) return;
-        const { data } = await supabase
-          .from("user_prefs")
-          .select("prefs")
-          .eq("user_id", auth.user.id)
-          .maybeSingle();
-        const existing = (data?.prefs as Record<string, any> | null) ?? {};
-        const { error } = await supabase.from("user_prefs").upsert({
-          user_id: auth.user.id,
-          prefs: {
-            ...existing,
-            [PREFS_KEY]: { ...(existing[PREFS_KEY] ?? {}), col_widths: next },
-          },
-        });
-        if (error) console.error("Could not save column widths", error.message);
-      })();
+      void savePrefValue(PREFS_KEY, "col_widths", next);
     }, 500);
   }, []);
 
