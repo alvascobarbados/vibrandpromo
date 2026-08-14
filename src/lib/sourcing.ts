@@ -156,12 +156,18 @@ export async function createSupplier(input: { name: string; code: string }) {
  * single staff-only query. Public/anonymous catalogue queries (publicProductsQuery)
  * never select these fields, and `product_sourcing`/`suppliers` are staff-only by RLS.
  */
+export type AdminSourcingJoin = {
+  supplier_id: string | null;
+  supplier_item_no: string | null;
+  suppliers: { id: string; code: string; name: string } | null;
+};
+
+/**
+ * `product_sourcing.product_id` is unique, so PostgREST embeds it as a single
+ * object; older responses embedded an array. Handle both shapes.
+ */
 export type AdminProductRow = Product & {
-  product_sourcing: Array<{
-    supplier_id: string | null;
-    supplier_item_no: string | null;
-    suppliers: { id: string; code: string; name: string } | null;
-  }>;
+  product_sourcing: AdminSourcingJoin | AdminSourcingJoin[] | null;
 };
 
 const sel = (s: string): string => s;
@@ -181,6 +187,8 @@ export const adminProductRowsQuery = queryOptions({
   },
 });
 
-export function rowSourcing(row: AdminProductRow) {
-  return row.product_sourcing?.[0] ?? null;
+export function rowSourcing(row: AdminProductRow): AdminSourcingJoin | null {
+  const joined = row.product_sourcing;
+  if (!joined) return null;
+  return Array.isArray(joined) ? (joined[0] ?? null) : joined;
 }

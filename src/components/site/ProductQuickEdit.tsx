@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { SHIPPING_METHOD_OPTIONS, type Product } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
+import { numberOrNull, productionProblem } from "@/lib/product-rules";
 import { RushChip } from "@/components/site/RushChip";
 import { SourcingSection } from "@/components/admin/SourcingSection";
 import { productSourcingQuery, saveProductSourcing } from "@/lib/sourcing";
@@ -96,13 +97,6 @@ export function ProductQuickEdit({
     setShippingMethods(value);
   }
 
-  function numberOrNull(value: string) {
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-    const parsed = Number(trimmed);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-
   async function save() {
     if (!name.trim()) {
       toast.error("Name is required.");
@@ -112,39 +106,17 @@ export function ProductQuickEdit({
     const normalMax = numberOrNull(productionMax);
     const rushProductionMin = numberOrNull(rushMin);
     const rushProductionMax = numberOrNull(rushMax);
-    if (normalMax != null) {
-      if (normalMin == null) {
-        toast.error("Enter a minimum production time before adding a maximum.");
-        return;
-      }
-      if (normalMax < normalMin) {
-        toast.error("The maximum production time must be the same as or longer than the minimum.");
-        return;
-      }
-    }
-    if (rushEnabled) {
-      if (shippingMethods === "sea_only") {
-        toast.error("Rush requires air shipping.");
-        return;
-      }
-      if (rushProductionMin == null || rushProductionMin < 1) {
-        toast.error("Please enter the rush production time in days.");
-        return;
-      }
-      if (rushProductionMax != null && rushProductionMax < rushProductionMin) {
-        toast.error(
-          "The maximum rush production time must be the same as or longer than the minimum.",
-        );
-        return;
-      }
-      if (normalMin == null) {
-        toast.error("Add a normal production time before offering rush.");
-        return;
-      }
-      if (rushProductionMin >= normalMin) {
-        toast.error("Rush production time must be shorter than the normal production time.");
-        return;
-      }
+    const problem = productionProblem({
+      production_min_days: productionMin,
+      production_max_days: productionMax,
+      rush_enabled: rushEnabled,
+      rush_production_min_days: rushMin,
+      rush_production_max_days: rushMax,
+      shipping_methods: shippingMethods,
+    });
+    if (problem) {
+      toast.error(problem);
+      return;
     }
     setSaving(true);
     // Writes go through the user's own authenticated client, so the staff-only

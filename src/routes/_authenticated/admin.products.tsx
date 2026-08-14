@@ -54,8 +54,15 @@ import {
   ProductForm,
   formFromProduct,
   payloadFromForm,
+  validateForm,
   type FormState,
 } from "@/components/admin/ProductForm";
+import {
+  InlineProduction,
+  InlineSelect,
+  InlineText,
+} from "@/components/admin/inline-cells";
+import { moqProblem } from "@/lib/product-rules";
 import { supabase } from "@/integrations/supabase/client";
 import {
   categoriesQuery,
@@ -93,6 +100,40 @@ const PAGE_SIZE = 50;
 
 type SortKey = "cat" | "supplier" | "name" | "sku" | "moq" | "prod";
 
+/** Cells that can be edited in place, left to right (Tab order). */
+const EDITABLE_CELLS = ["supplier", "name", "supitem", "moq", "production", "status"] as const;
+type EditableCell = (typeof EDITABLE_CELLS)[number];
+
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "hidden", label: "Hidden" },
+];
+
+/**
+ * The one product write path used by the expanded editor, the "New product"
+ * sheet and the inline cells: products.update/insert plus the sourcing upsert.
+ */
+async function persistProduct(id: string | null, values: FormState) {
+  const payload = payloadFromForm(values);
+  let productId = id;
+  if (id) {
+    const { error } = await supabase.from("products").update(payload).eq("id", id);
+    if (error) throw error;
+  } else {
+    const { data, error } = await supabase.from("products").insert(payload).select("id").single();
+    if (error) throw error;
+    productId = data?.id ?? null;
+  }
+  // Sourcing lives in its own staff-only table, so it is a second write.
+  if (productId) {
+    await saveProductSourcing({
+      product_id: productId,
+      supplier_id: values.supplier_id || null,
+      supplier_item_no: values.supplier_item_no,
+    });
+  }
+}
+
 export const Route = createFileRoute("/_authenticated/admin/products")({
   beforeLoad: ({ context }) => requirePage(context.access, "products"),
   validateSearch: zodValidator(searchSchema),
@@ -124,11 +165,19 @@ function AdminProducts() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Product | null>(null);
+  const [activeCell, setActiveCell] = useState<{ rowId: string; col: EditableCell } | null>(null);
+  const [cellPending, setCellPending] = useState<string | null>(null);
+  const [cellError, setCellError] = useState<{ key: string; message: string } | null>(null);
+  /** Rows hold their position while a cell is being edited. */
+  const [frozenOrder, setFrozenOrder] = useState<string[] | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
 
-  const setSearch = (patch: Partial<ProductSearch>) =>
+  const setSearch = (patch: Partial<ProductSearch>) => {
+    setActiveCell(null);
+    setFrozenOrder(null);
     void navigate({ search: (prev: ProductSearch) => ({ ...prev, page: 1, ...patch }) });
+  };
 
   const categoryName = useMemo(
     () => new Map((categories.data ?? []).map((c) => [c.id, c.name] as const)),
@@ -140,6 +189,15 @@ function AdminProducts() {
   );
 
   const rows = products.data ?? [];
+
+  /** "Unassigned" first, then every supplier as "CODE — Name". */
+  const supplierOptions = useMemo(
+    () => [
+      { value: "", label: "Unassigned" },
+      ...(suppliers.data ?? []).map((s) => ({ value: s.id, label: supplierLabel(s) })),
+    ],
+    [suppliers.data],
+  );
 
   /** Supplier counts drive both the dropdown labels and the footer bar. */
   const supplierCounts = useMemo(() => {
@@ -207,35 +265,23 @@ function AdminProducts() {
     });
   }, [filtered, search.sort, search.dir, categoryName]);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  /** While a cell is open, keep the row order captured when editing started. */
+  const ordered = useMemo(() => {
+    if (!frozenOrder) return sorted;
+    const rank = new Map(frozenOrder.map((id, index) => [id, index] as const));
+    return [...sorted].sort(
+      (a, b) =>
+        (rank.get(a.id) ?? Number.POSITIVE_INFINITY) - (rank.get(b.id) ?? Number.POSITIVE_INFINITY),
+    );
+  }, [sorted, frozenOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(ordered.length / PAGE_SIZE));
   const page = Math.min(Math.max(1, search.page), totalPages);
-  const pageItems = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageItems = ordered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const save = useMutation({
-    mutationFn: async ({ id, values }: { id: string | null; values: FormState }) => {
-      const payload = payloadFromForm(values);
-      let productId = id;
-      if (id) {
-        const { error } = await supabase.from("products").update(payload).eq("id", id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from("products")
-          .insert(payload)
-          .select("id")
-          .single();
-        if (error) throw error;
-        productId = data?.id ?? null;
-      }
-      // Sourcing lives in its own staff-only table, so it is a second write.
-      if (productId) {
-        await saveProductSourcing({
-          product_id: productId,
-          supplier_id: values.supplier_id || null,
-          supplier_item_no: values.supplier_item_no,
-        });
-      }
-    },
+    mutationFn: ({ id, values }: { id: string | null; values: FormState }) =>
+      persistProduct(id, values),
     onSuccess: (_result, variables) => {
       toast.success(variables.id ? "Product updated" : "Product created");
       setEditingId(null);
@@ -266,6 +312,69 @@ function AdminProducts() {
     setEditingId(product.id);
   }
 
+  function startCell(product: AdminProductRow, col: EditableCell) {
+    setCellError(null);
+    setFrozenOrder((prev) => prev ?? sorted.map((row) => row.id));
+    setActiveCell({ rowId: product.id, col });
+  }
+
+  /** Row expansion is chevron/thumbnail only now — cells own single/double clicks. */
+  function toggleOpen(id: string) {
+    setOpenIds((prev) => (prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id]));
+    setEditingId(null);
+  }
+
+  /** Inline saves reuse validateForm + persistProduct — the editors' own path. */
+  async function saveCell(
+    product: AdminProductRow,
+    col: EditableCell,
+    patch: Partial<FormState>,
+    advance: boolean,
+  ) {
+    const key = `${product.id}:${col}`;
+    const base = formFromProduct(product, rowSourcing(product));
+    const values: FormState = { ...base, ...patch };
+    const next = advance ? EDITABLE_CELLS[EDITABLE_CELLS.indexOf(col) + 1] : undefined;
+    setActiveCell(next ? { rowId: product.id, col: next } : null);
+    if (JSON.stringify(values) === JSON.stringify(base)) {
+      setCellError(null);
+      return;
+    }
+    const problem = moqProblem(values.moq) ?? validateForm(values);
+    if (problem) {
+      setCellError({ key, message: problem });
+      toast.error(problem);
+      return;
+    }
+    setCellError(null);
+    setCellPending(key);
+    try {
+      await persistProduct(product.id, values);
+      await invalidate();
+      await queryClient.invalidateQueries({ queryKey: ["product_sourcing"] });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "That change didn't save.";
+      setCellError({ key, message });
+      toast.error(message);
+    } finally {
+      setCellPending(null);
+    }
+  }
+
+  function cellProps(product: AdminProductRow, col: EditableCell) {
+    const key = `${product.id}:${col}`;
+    return {
+      editing: activeCell?.rowId === product.id && activeCell.col === col,
+      pending: cellPending === key,
+      error: cellError?.key === key ? cellError.message : null,
+      onStart: () => startCell(product, col),
+      onCancel: () => {
+        setActiveCell(null);
+        setCellError(null);
+      },
+    };
+  }
+
   function startDuplicate(product: AdminProductRow) {
     setForm({
       ...formFromProduct(product, rowSourcing(product)),
@@ -281,6 +390,8 @@ function AdminProducts() {
   const activeCount = rows.filter((p) => p.is_active).length;
 
   function toggleSort(key: SortKey) {
+    setActiveCell(null);
+    setFrozenOrder(null);
     if (search.sort !== key) return setSearch({ sort: key, dir: "asc" });
     if (search.dir === "asc") return setSearch({ sort: key, dir: "desc" });
     return setSearch({ sort: "default", dir: "asc" });
@@ -486,17 +597,15 @@ function AdminProducts() {
                   return (
                     <Fragment key={product.id}>
                       <tr
-                        className={`h-[41px] cursor-pointer border-b border-border ${rail}`}
-                        onClick={() => {
-                          setOpenIds((prev) =>
-                            prev.includes(product.id)
-                              ? prev.filter((id) => id !== product.id)
-                              : [...prev, product.id],
-                          );
-                          setEditingId(null);
-                        }}
+                        className={`h-[41px] border-b border-border ${rail}`}
                       >
                         <Td>
+                          <button
+                            type="button"
+                            aria-label={isOpen ? "Collapse product" : "Expand product"}
+                            onClick={() => toggleOpen(product.id)}
+                            className="block cursor-pointer"
+                          >
                           {cover ? (
                             <img
                               src={cover}
@@ -507,6 +616,7 @@ function AdminProducts() {
                           ) : (
                             <ProductPlaceholder className="size-[30px] rounded border border-dashed border-border" />
                           )}
+                          </button>
                         </Td>
                         <Td truncate title={categoryName.get(product.category_id ?? "") ?? ""}>
                           {categoryName.get(product.category_id ?? "") ?? "—"}
@@ -515,21 +625,40 @@ function AdminProducts() {
                           {subName.get(product.subcategory_id ?? "") ?? "—"}
                         </Td>
                         <Td>
-                          {supplier ? (
-                            <span className="flex min-w-0 items-center gap-1.5">
-                              <span className="shrink-0 rounded bg-navy-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-navy-700">
-                                {supplier.code}
-                              </span>
-                              <span className="truncate" title={supplier.name}>
-                                {supplier.name}
-                              </span>
-                            </span>
-                          ) : (
-                            <span className="text-amber-600">Unassigned</span>
-                          )}
+                          <InlineSelect
+                            {...cellProps(product, "supplier")}
+                            value={sourcing?.supplier_id ?? ""}
+                            options={supplierOptions}
+                            display={
+                              supplier ? (
+                                <span className="flex min-w-0 items-center gap-1.5">
+                                  <span className="shrink-0 rounded bg-navy-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-navy-700">
+                                    {supplier.code}
+                                  </span>
+                                  <span className="truncate" title={supplier.name}>
+                                    {supplier.name}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-amber-600">Unassigned</span>
+                              )
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(product, "supplier", { supplier_id: next }, advance)
+                            }
+                          />
                         </Td>
-                        <Td truncate title={product.name}>
-                          <span className="font-medium">{product.name}</span>
+                        <Td title={product.name}>
+                          <InlineText
+                            {...cellProps(product, "name")}
+                            value={product.name}
+                            display={
+                              <span className="block truncate font-medium">{product.name}</span>
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(product, "name", { name: next }, advance)
+                            }
+                          />
                         </Td>
                         <Td>
                           <span className="flex items-center gap-1.5 font-mono text-[12px]">
@@ -538,39 +667,109 @@ function AdminProducts() {
                           </span>
                         </Td>
                         <Td>
-                          <span className="font-mono text-[11px] text-muted-foreground">
-                            {sourcing?.supplier_item_no || "—"}
-                          </span>
+                          <InlineText
+                            {...cellProps(product, "supitem")}
+                            mono
+                            value={sourcing?.supplier_item_no ?? ""}
+                            display={
+                              <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                                {sourcing?.supplier_item_no || "—"}
+                              </span>
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(product, "supitem", { supplier_item_no: next }, advance)
+                            }
+                          />
                         </Td>
-                        <Td align="right">{product.moq ?? "—"}</Td>
                         <Td align="right">
-                          {product.production_min_days == null
-                            ? "—"
-                            : product.production_max_days &&
-                                product.production_max_days !== product.production_min_days
-                              ? `${product.production_min_days}–${product.production_max_days} d`
-                              : `${product.production_min_days} d`}
+                          <InlineText
+                            {...cellProps(product, "moq")}
+                            numeric
+                            value={product.moq == null ? "" : String(product.moq)}
+                            display={<>{product.moq ?? "—"}</>}
+                            onSave={(next, advance) =>
+                              void saveCell(product, "moq", { moq: next }, advance)
+                            }
+                          />
+                        </Td>
+                        <Td align="right">
+                          <InlineProduction
+                            {...cellProps(product, "production")}
+                            min={
+                              product.production_min_days == null
+                                ? ""
+                                : String(product.production_min_days)
+                            }
+                            max={
+                              product.production_max_days == null
+                                ? ""
+                                : String(product.production_max_days)
+                            }
+                            display={
+                              <>
+                                {product.production_min_days == null
+                                  ? "—"
+                                  : product.production_max_days &&
+                                      product.production_max_days !== product.production_min_days
+                                    ? `${product.production_min_days}–${product.production_max_days} d`
+                                    : `${product.production_min_days} d`}
+                              </>
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(
+                                product,
+                                "production",
+                                {
+                                  production_min_days: next.min,
+                                  production_max_days: next.max,
+                                },
+                                advance,
+                              )
+                            }
+                          />
                         </Td>
                         <Td>
-                          <span className="flex items-center gap-1.5">
-                            <span
-                              aria-hidden
-                              className={`size-2 shrink-0 rounded-full ${
-                                product.is_active ? "bg-lime-500" : "bg-n-400"
-                              }`}
-                            />
-                            {product.is_active ? "Active" : "Hidden"}
-                            {product.is_featured ? (
-                              <Star className="size-3 fill-lime-500 text-lime-500" />
-                            ) : null}
-                          </span>
+                          <InlineSelect
+                            {...cellProps(product, "status")}
+                            value={product.is_active ? "active" : "hidden"}
+                            options={STATUS_OPTIONS}
+                            display={
+                              <span className="flex items-center gap-1.5">
+                                <span
+                                  aria-hidden
+                                  className={`size-2 shrink-0 rounded-full ${
+                                    product.is_active ? "bg-lime-500" : "bg-n-400"
+                                  }`}
+                                />
+                                {product.is_active ? "Active" : "Hidden"}
+                                {product.is_featured ? (
+                                  <Star className="size-3 fill-lime-500 text-lime-500" />
+                                ) : null}
+                              </span>
+                            }
+                            onSave={(next, advance) =>
+                              void saveCell(
+                                product,
+                                "status",
+                                { is_active: next === "active" },
+                                advance,
+                              )
+                            }
+                          />
                         </Td>
                         <Td align="right">
-                          <ChevronDown
-                            className={`size-4 text-muted-foreground transition-transform ${
-                              isOpen ? "rotate-180" : ""
-                            }`}
-                          />
+                          <button
+                            type="button"
+                            aria-label={isOpen ? "Collapse product" : "Expand product"}
+                            onClick={() => toggleOpen(product.id)}
+                            className="cursor-pointer p-1"
+                          >
+                            <ChevronDown
+                              className={`size-4 text-muted-foreground transition-transform ${
+                                isOpen ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
                         </Td>
                       </tr>
                       {isOpen ? (
