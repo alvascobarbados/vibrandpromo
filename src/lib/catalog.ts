@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isVariantPath, variantPath, type ImageVariant } from "@/lib/image-variants";
 
 export type Category = {
   id: string;
