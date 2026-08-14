@@ -1,0 +1,449 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { Fragment, useState } from "react";
+import { toast } from "sonner";
+
+import { InlineField, nonNegative, numberOrNull } from "@/components/admin/costing/fields";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
+import {
+  CHARGEABLE_METRICS,
+  originsListQuery,
+  destinationsQuery,
+  shippingMethodsQuery,
+  shippingRoutesQuery,
+  shippingTiersQuery,
+  tierLadderWarnings,
+  type RouteRow,
+  type ShippingMethodRow,
+} from "@/lib/costing";
+
+export function RoutesPanel() {
+  const queryClient = useQueryClient();
+  const methods = useQuery(shippingMethodsQuery);
+  const routes = useQuery(shippingRoutesQuery);
+  const tiers = useQuery(shippingTiersQuery);
+  const origins = useQuery(originsListQuery);
+  const destinations = useQuery(destinationsQuery);
+  const [open, setOpen] = useState<string[]>([]);
+
+  const invalidate = (table: string) =>
+    queryClient.invalidateQueries({ queryKey: ["costing", table] });
+
+  const updateMethod = useMutation({
+    mutationFn: async (input: { id: string; patch: TablesUpdate<"shipping_methods"> }) => {
+      const { error } = await supabase
+        .from("shipping_methods")
+        .update(input.patch)
+        .eq("id", input.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => invalidate("shipping_methods"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const updateRoute = useMutation({
+    mutationFn: async (input: { id: string; patch: TablesUpdate<"shipping_method_routes"> }) => {
+      const { error } = await supabase
+        .from("shipping_method_routes")
+        .update(input.patch)
+        .eq("id", input.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => invalidate("shipping_method_routes"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const updateTier = useMutation({
+    mutationFn: async (input: { id: string; patch: TablesUpdate<"shipping_method_tiers"> }) => {
+      const { error } = await supabase
+        .from("shipping_method_tiers")
+        .update(input.patch)
+        .eq("id", input.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => invalidate("shipping_method_tiers"),
+  });
+
+  const addTier = useMutation({
+    mutationFn: async (routeId: string) => {
+      const ladder = (tiers.data ?? []).filter((tier) => tier.route_id === routeId);
+      const last = ladder[ladder.length - 1];
+      const { error } = await supabase.from("shipping_method_tiers").insert({
+        route_id: routeId,
+        band_from: last?.band_to ?? 0,
+        band_to: null,
+        rate: 0,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => invalidate("shipping_method_tiers"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const removeTier = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("shipping_method_tiers").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => invalidate("shipping_method_tiers"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  function toggle(id: string) {
+    setOpen((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  return (
+    <div className="space-y-5">
+      {(methods.data ?? []).map((method: ShippingMethodRow) => {
+        const methodRoutes = (routes.data ?? []).filter(
+          (route) => route.shipping_method_id === method.id,
+        );
+        return (
+          <section key={method.id} className="rounded-xl border border-n-200 bg-white">
+            <header className="flex flex-wrap items-end gap-4 border-b border-n-200 px-4 py-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-n-500">
+                  {method.code}
+                </p>
+                <InlineField
+                  ariaLabel={`Name for ${method.code}`}
+                  value={method.name}
+                  className="w-56"
+                  onSave={(next) =>
+                    updateMethod.mutateAsync({ id: method.id, patch: { name: next.trim() } })
+                  }
+                />
+              </div>
+              <Labelled label="Fuel %">
+                <InlineField
+                  ariaLabel={`Fuel surcharge for ${method.code}`}
+                  type="number"
+                  align="right"
+                  className="w-24"
+                  value={String(method.fuel_surcharge_pct)}
+                  onSave={(next) =>
+                    updateMethod.mutateAsync({
+                      id: method.id,
+                      patch: { fuel_surcharge_pct: nonNegative(next) },
+                    })
+                  }
+                />
+              </Labelled>
+              <Labelled label="Buffer %">
+                <InlineField
+                  ariaLabel={`Buffer for ${method.code}`}
+                  type="number"
+                  align="right"
+                  className="w-24"
+                  value={String(method.buffer_pct)}
+                  onSave={(next) =>
+                    updateMethod.mutateAsync({
+                      id: method.id,
+                      patch: { buffer_pct: nonNegative(next) },
+                    })
+                  }
+                />
+              </Labelled>
+              <Labelled label="Chargeable metric">
+                <Select
+                  value={method.chargeable_metric}
+                  onValueChange={(value) =>
+                    updateMethod.mutate({ id: method.id, patch: { chargeable_metric: value } })
+                  }
+                >
+                  <SelectTrigger className="h-8 w-52 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CHARGEABLE_METRICS.map((metric) => (
+                      <SelectItem key={metric} value={metric}>
+                        {metric}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Labelled>
+              <Labelled label="Unit">
+                <InlineField
+                  ariaLabel={`Chargeable unit for ${method.code}`}
+                  value={method.chargeable_unit}
+                  className="w-24"
+                  onSave={(next) =>
+                    updateMethod.mutateAsync({
+                      id: method.id,
+                      patch: { chargeable_unit: next.trim() },
+                    })
+                  }
+                />
+              </Labelled>
+            </header>
+
+            <table className="w-full text-sm">
+              <thead className="border-b border-n-100 text-[11px] uppercase tracking-widest text-n-500">
+                <tr>
+                  <th className="w-8" />
+                  <th className="px-3 py-2 text-left">Origin</th>
+                  <th className="px-3 py-2 text-left">Destination</th>
+                  <th className="px-3 py-2 text-left">Fixed cost</th>
+                  <th className="px-3 py-2 text-left">LAC fixed (BBD)</th>
+                  <th className="px-3 py-2 text-left">LAC / CBM (BBD)</th>
+                  <th className="px-3 py-2 text-left">Inland freight</th>
+                </tr>
+              </thead>
+              <tbody>
+                {methodRoutes.map((route: RouteRow) => {
+                  const ladder = [...(tiers.data ?? [])]
+                    .filter((tier) => tier.route_id === route.id)
+                    .sort((a, b) => a.band_from - b.band_from);
+                  const warnings = tierLadderWarnings(ladder);
+                  const isOpen = open.includes(route.id);
+                  return (
+                    <Fragment key={route.id}>
+                      <tr className="border-b border-n-100">
+                        <td className="pl-2">
+                          <button
+                            type="button"
+                            aria-label={isOpen ? "Collapse tiers" : "Expand tiers"}
+                            onClick={() => toggle(route.id)}
+                            className="rounded p-1 text-n-500 hover:bg-navy-50"
+                          >
+                            {isOpen ? (
+                              <ChevronDown className="size-4" />
+                            ) : (
+                              <ChevronRight className="size-4" />
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <Select
+                            value={route.origin_id}
+                            onValueChange={(value) =>
+                              updateRoute.mutate({ id: route.id, patch: { origin_id: value } })
+                            }
+                          >
+                            <SelectTrigger className="h-8 w-40 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(origins.data ?? []).map((origin) => (
+                                <SelectItem key={origin.id} value={origin.id}>
+                                  {origin.code} — {origin.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <Select
+                            value={route.destination_id}
+                            onValueChange={(value) =>
+                              updateRoute.mutate({ id: route.id, patch: { destination_id: value } })
+                            }
+                          >
+                            <SelectTrigger className="h-8 w-40 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(destinations.data ?? []).map((destination) => (
+                                <SelectItem key={destination.id} value={destination.id}>
+                                  {destination.code} — {destination.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <InlineField
+                            ariaLabel="Fixed cost"
+                            type="number"
+                            align="right"
+                            className="w-28"
+                            value={String(route.fixed_cost)}
+                            onSave={(next) =>
+                              updateRoute.mutateAsync({
+                                id: route.id,
+                                patch: { fixed_cost: nonNegative(next) },
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <InlineField
+                            ariaLabel="LAC fixed BBD"
+                            type="number"
+                            align="right"
+                            className="w-28"
+                            value={String(route.lac_fixed_bbd)}
+                            onSave={(next) =>
+                              updateRoute.mutateAsync({
+                                id: route.id,
+                                patch: { lac_fixed_bbd: nonNegative(next) },
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <InlineField
+                            ariaLabel="LAC per CBM BBD"
+                            type="number"
+                            align="right"
+                            className="w-28"
+                            value={String(route.lac_per_cbm_bbd)}
+                            onSave={(next) =>
+                              updateRoute.mutateAsync({
+                                id: route.id,
+                                patch: { lac_per_cbm_bbd: nonNegative(next) },
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <Switch
+                            aria-label="Include inland freight"
+                            checked={route.include_inland_freight}
+                            onCheckedChange={(checked) =>
+                              updateRoute.mutate({
+                                id: route.id,
+                                patch: { include_inland_freight: checked },
+                              })
+                            }
+                          />
+                        </td>
+                      </tr>
+                      {isOpen ? (
+                        <tr className="border-b border-n-100 bg-navy-50/60">
+                          <td />
+                          <td colSpan={6} className="px-3 py-3">
+                            {warnings.length > 0 ? (
+                              <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
+                                <AlertTriangle className="size-3.5" />
+                                {warnings.join(" ")}
+                              </div>
+                            ) : null}
+                            <table className="w-full max-w-xl text-xs">
+                              <thead className="text-[11px] uppercase tracking-widest text-n-500">
+                                <tr>
+                                  <th className="px-2 py-1 text-left">Band from</th>
+                                  <th className="px-2 py-1 text-left">Band to</th>
+                                  <th className="px-2 py-1 text-left">Rate</th>
+                                  <th className="w-8" />
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {ladder.map((tier) => (
+                                  <tr key={tier.id}>
+                                    <td className="px-2 py-1">
+                                      <InlineField
+                                        ariaLabel="Band from"
+                                        type="number"
+                                        value={String(tier.band_from)}
+                                        onSave={(next) =>
+                                          updateTier.mutateAsync({
+                                            id: tier.id,
+                                            patch: { band_from: nonNegative(next) },
+                                          })
+                                        }
+                                      />
+                                    </td>
+                                    <td className="px-2 py-1">
+                                      <InlineField
+                                        ariaLabel="Band to"
+                                        type="number"
+                                        placeholder="open"
+                                        value={tier.band_to === null ? "" : String(tier.band_to)}
+                                        onSave={(next) => {
+                                          const parsed = numberOrNull(next);
+                                          if (parsed !== null && parsed < 0)
+                                            throw new Error("Must be 0 or more");
+                                          if (parsed !== null && parsed <= tier.band_from)
+                                            throw new Error("Band to must exceed band from");
+                                          return updateTier.mutateAsync({
+                                            id: tier.id,
+                                            patch: { band_to: parsed },
+                                          });
+                                        }}
+                                      />
+                                    </td>
+                                    <td className="px-2 py-1">
+                                      <InlineField
+                                        ariaLabel="Rate"
+                                        type="number"
+                                        value={String(tier.rate)}
+                                        onSave={(next) =>
+                                          updateTier.mutateAsync({
+                                            id: tier.id,
+                                            patch: { rate: nonNegative(next) },
+                                          })
+                                        }
+                                      />
+                                    </td>
+                                    <td>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        aria-label="Delete tier"
+                                        onClick={() => removeTier.mutate(tier.id)}
+                                      >
+                                        <Trash2 className="size-3.5" />
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                ))}
+                                {ladder.length === 0 ? (
+                                  <tr>
+                                    <td colSpan={4} className="px-2 py-2 text-muted-foreground">
+                                      No tiers yet.
+                                    </td>
+                                  </tr>
+                                ) : null}
+                              </tbody>
+                            </table>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="mt-1 gap-2"
+                              onClick={() => addTier.mutate(route.id)}
+                            >
+                              <Plus className="size-4" /> Add tier
+                            </Button>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })}
+                {methodRoutes.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-3 py-3 text-sm text-muted-foreground">
+                      No routes for this method.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+function Labelled({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-n-500">{label}</p>
+      {children}
+    </div>
+  );
+}

@@ -5,17 +5,16 @@ import {
   ChevronRight,
   ClipboardList,
   Contact,
+  Coins,
   Factory,
   FileSpreadsheet,
   ImageUp,
   LayoutDashboard,
   LogOut,
-  Mail,
   Package,
+  Settings,
   Tags,
-  Truck,
   UserCog,
-  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -61,14 +60,13 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Sourcing",
     items: [
       { to: "/admin/suppliers", label: "Suppliers", icon: Factory, page: "products" },
+      { to: "/admin/costing", label: "Costing Data", icon: Coins, page: "products" },
     ],
   },
   {
     label: "Admin",
     items: [
-      { to: "/admin/email", label: "Email Settings", icon: Mail, adminOnly: true },
-      { to: "/admin/shipping", label: "Shipping Times", icon: Truck, adminOnly: true },
-      { to: "/admin/staff", label: "Staff", icon: Users, adminOnly: true },
+      { to: "/admin/settings", label: "Settings", icon: Settings, adminOnly: true },
     ],
   },
 ];
