@@ -1,10 +1,36 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
-import { Fragment, useState } from "react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  Info,
+  MoreVertical,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { InlineField, nonNegative, numberOrNull } from "@/components/admin/costing/fields";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -35,9 +61,81 @@ export function RoutesPanel() {
   const origins = useQuery(originsListQuery);
   const destinations = useQuery(destinationsQuery);
   const [open, setOpen] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const [confirm, setConfirm] = useState<
+    { kind: "method" | "route"; id: string; label: string } | null
+  >(null);
 
   const invalidate = (table: string) =>
     queryClient.invalidateQueries({ queryKey: ["costing", table] });
+
+  const addMethod = useMutation({
+    mutationFn: async () => {
+      const existing = new Set((methods.data ?? []).map((method) => method.code));
+      let code = "NEW";
+      let counter = 1;
+      while (existing.has(code)) {
+        counter += 1;
+        code = `NEW${counter}`;
+      }
+      const { error } = await supabase.from("shipping_methods").insert({
+        code,
+        name: "New Method",
+        fuel_surcharge_pct: 0,
+        buffer_pct: 0,
+        chargeable_metric: "CHARGEABLE_WEIGHT",
+        chargeable_unit: "lbs",
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => invalidate("shipping_methods"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const removeMethod = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("shipping_methods").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      invalidate("shipping_methods");
+      invalidate("shipping_method_routes");
+      invalidate("shipping_method_tiers");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const addRoute = useMutation({
+    mutationFn: async (methodId: string) => {
+      const origin = (origins.data ?? [])[0];
+      const destination = (destinations.data ?? [])[0];
+      if (!origin || !destination) throw new Error("Add an origin and destination first");
+      const { error } = await supabase.from("shipping_method_routes").insert({
+        shipping_method_id: methodId,
+        origin_id: origin.id,
+        destination_id: destination.id,
+        fixed_cost: 0,
+        lac_fixed_bbd: 0,
+        lac_per_cbm_bbd: 0,
+        include_inland_freight: false,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => invalidate("shipping_method_routes"),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const removeRoute = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("shipping_method_routes").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      invalidate("shipping_method_routes");
+      invalidate("shipping_method_tiers");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
 
   const updateMethod = useMutation({
     mutationFn: async (input: { id: string; patch: TablesUpdate<"shipping_methods"> }) => {
