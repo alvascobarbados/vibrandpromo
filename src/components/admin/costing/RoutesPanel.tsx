@@ -579,6 +579,7 @@ export function RoutesPanel() {
                                       <InlineField
                                         ariaLabel="Rate"
                                         type="number"
+                                        suffix={`/ ${unitLabel(method.chargeable_unit)}`}
                                         value={String(tier.rate)}
                                         onSave={(next) =>
                                           updateTier.mutateAsync({
@@ -623,20 +624,67 @@ export function RoutesPanel() {
                     </Fragment>
                   );
                 })}
-                {methodRoutes.length === 0 ? (
+                {visibleRoutes.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-3 py-3 text-sm text-muted-foreground">
-                      No routes for this method.
+                    <td colSpan={8} className="px-3 py-3 text-sm text-muted-foreground">
+                      {term ? "No routes match your search." : "No routes for this method."}
                     </td>
                   </tr>
                 ) : null}
               </tbody>
             </table>
+            <div className="border-t border-n-200 p-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="gap-2"
+                onClick={() => addRoute.mutate(method.id)}
+              >
+                <Plus className="size-4" /> Add Route
+              </Button>
+            </div>
           </section>
         );
       })}
+
+      <AlertDialog open={confirm !== null} onOpenChange={(next) => !next && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm?.kind === "method"
+                ? `Delete method “${confirm?.label}”?`
+                : `Delete route ${confirm?.label}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.kind === "method"
+                ? "All routes and tiers under this method will also be deleted. This cannot be undone."
+                : "All tiers under this route will also be deleted. This cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!confirm) return;
+                if (confirm.kind === "method") removeMethod.mutate(confirm.id);
+                else removeRoute.mutate(confirm.id);
+                setConfirm(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
+}
+
+/** Singularises common weight units for tier rate suffixes ("lbs" → "lb"). */
+function unitLabel(unit: string): string {
+  const trimmed = unit.trim();
+  if (/^(lbs|kgs)$/i.test(trimmed)) return trimmed.slice(0, -1);
+  return trimmed;
 }
 
 function Labelled({ label, children }: { label: string; children: React.ReactNode }) {
