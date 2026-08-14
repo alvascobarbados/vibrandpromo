@@ -17,6 +17,7 @@ import { AddAttributePopover } from "@/components/team/AddAttributePopover";
 import { DecorationPricing } from "@/components/team/DecorationPricing";
 import { InlineChoice, InlineField } from "@/components/team/inline-field";
 import { UnitSwitch } from "@/components/team/PackingUnits";
+import { ProductionExtras } from "@/components/team/ProductionExtras";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,7 +53,8 @@ import {
   positiveProblem,
   relativeTime,
   updateProductFields,
-  weightLabel,
+  decimals3,
+  weight3,
 } from "@/lib/pricelist";
 import { moqProblem, nameProblem } from "@/lib/product-rules";
 import {
@@ -366,6 +368,8 @@ function PricelistRow({
   const refreshAttributes = () => queryClient.invalidateQueries({ queryKey: ["product_details"] });
   const refreshIncludes = () => queryClient.invalidateQueries({ queryKey: ["product_includes"] });
   const missing = costingReadyMissing(product, sourcing);
+  /** Which fields the gate is waiting on — drives the amber dots. */
+  const missingKeys = new Set(missing.map((field) => field.key));
   const labelName = (id: string) =>
     attributeLabels.find((row) => row.id === id)?.label ?? "Attribute";
   const usedLabelIds = new Set(attributes.map((row) => row.detail_label_id));
