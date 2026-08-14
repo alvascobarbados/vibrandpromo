@@ -201,23 +201,80 @@ export function RoutesPanel() {
     setOpen((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
+  const originById = useMemo(
+    () => new Map((origins.data ?? []).map((origin) => [origin.id, origin])),
+    [origins.data],
+  );
+  const destinationById = useMemo(
+    () => new Map((destinations.data ?? []).map((destination) => [destination.id, destination])),
+    [destinations.data],
+  );
+
+  const term = search.trim().toLowerCase();
+  function routeMatches(route: RouteRow) {
+    if (!term) return true;
+    const origin = originById.get(route.origin_id);
+    const destination = destinationById.get(route.destination_id);
+    return [origin?.code, origin?.name, destination?.code, destination?.name]
+      .filter(Boolean)
+      .some((value) => value!.toLowerCase().includes(term));
+  }
+
   return (
     <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative w-full max-w-xs">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-n-500" />
+          <Input
+            aria-label="Search methods and routes"
+            placeholder="Search method, origin or destination"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="h-9 pl-8 text-xs"
+          />
+        </div>
+        <Button size="sm" className="gap-2" onClick={() => addMethod.mutate()}>
+          <Plus className="size-4" /> Add Method
+        </Button>
+      </div>
+
+      <div className="flex items-start gap-2 rounded-lg border border-n-200 bg-navy-50/60 px-3 py-2 text-[12px] text-n-600">
+        <Info className="mt-0.5 size-4 shrink-0 text-n-500" />
+        <p>
+          Tier ranges are inclusive at the lower bound and exclusive at the upper bound. A value
+          equal to a tier&apos;s upper limit moves to the next tier.
+        </p>
+      </div>
+
       {(methods.data ?? []).map((method: ShippingMethodRow) => {
         const methodRoutes = (routes.data ?? []).filter(
           (route) => route.shipping_method_id === method.id,
         );
+        const methodMatches =
+          !term ||
+          method.name.toLowerCase().includes(term) ||
+          method.code.toLowerCase().includes(term);
+        const visibleRoutes = methodMatches ? methodRoutes : methodRoutes.filter(routeMatches);
+        if (term && !methodMatches && visibleRoutes.length === 0) return null;
         return (
           <section key={method.id} className="rounded-xl border border-n-200 bg-white">
             <header className="flex flex-wrap items-end gap-4 border-b border-n-200 px-4 py-3">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-n-500">
-                  {method.code}
-                </p>
+                <InlineField
+                  ariaLabel={`Code for ${method.code}`}
+                  value={method.code}
+                  className="w-28"
+                  onSave={(next) =>
+                    updateMethod.mutateAsync({
+                      id: method.id,
+                      patch: { code: next.trim().toUpperCase() },
+                    })
+                  }
+                />
                 <InlineField
                   ariaLabel={`Name for ${method.code}`}
                   value={method.name}
-                  className="w-56"
+                  className="mt-1 w-56"
                   onSave={(next) =>
                     updateMethod.mutateAsync({ id: method.id, patch: { name: next.trim() } })
                   }
@@ -285,6 +342,25 @@ export function RoutesPanel() {
                   }
                 />
               </Labelled>
+              <div className="ml-auto">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="icon" variant="ghost" aria-label={`Actions for ${method.code}`}>
+                      <MoreVertical className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="z-[60]">
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onSelect={() =>
+                        setConfirm({ kind: "method", id: method.id, label: method.name })
+                      }
+                    >
+                      <Trash2 className="mr-2 size-4" /> Delete method
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </header>
 
             <table className="w-full text-sm">
