@@ -25,6 +25,7 @@ import {
 } from "@/lib/catalog-filters";
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
+import { useViewMode } from "@/lib/view-mode";
 
 const PAGE_SIZE = 20;
 const CHIP_GROUPS: FilterGroupId[] = ["cat", "sub", "moq", "prod", "colour", "deco", "src", "mat"];
@@ -46,6 +47,8 @@ export function DesktopCatalog({
   const subcategories = useQuery(subcategoriesQuery);
   const shipping = useShippingSettings();
   const preselected = useRef(false);
+  /** /team lists one landscape row per product; the shop keeps its portrait grid. */
+  const team = useViewMode() === "supplier";
 
   const allProducts = products.data ?? [];
   const allCategories = categories.data ?? [];
@@ -100,7 +103,7 @@ export function DesktopCatalog({
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-6 xl:gap-8">
-      <aside className="w-[240px] shrink-0">
+      <aside className={`w-[240px] shrink-0 ${team ? "hidden lg:block" : ""}`}>
         <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2">
           <DesktopFilterSidebar
             products={allProducts}
@@ -162,9 +165,12 @@ export function DesktopCatalog({
         ) : null}
 
         {products.isLoading ? (
-          <div className="product-grid mt-4">
+          <div className={team ? "mt-4 flex flex-col gap-3" : "product-grid mt-4"}>
             {Array.from({ length: 8 }).map((_, index) => (
-              <Skeleton key={index} className="aspect-[3/4] w-full rounded-2xl" />
+              <Skeleton
+                key={index}
+                className={team ? "h-[180px] w-full rounded-2xl" : "aspect-[3/4] w-full rounded-2xl"}
+              />
             ))}
           </div>
         ) : visible.length === 0 ? (
@@ -179,7 +185,7 @@ export function DesktopCatalog({
             </Button>
           </div>
         ) : (
-          <div className="product-grid mt-4">
+          <div className={team ? "mt-4 flex flex-col gap-3" : "product-grid mt-4"}>
             {visible.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
