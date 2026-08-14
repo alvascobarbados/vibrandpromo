@@ -45,7 +45,6 @@ import {
   type ProductDecoration,
 } from "@/lib/decorations";
 import {
-  cartonDims,
   duplicateProduct,
   duplicateProductAsVariant,
   numOrNull,
