@@ -544,7 +544,7 @@ function RowKebab({
       >
         <MoreVertical className="size-4" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="z-[60]">
         <DropdownMenuItem asChild>
           <Link to="/admin/products" search={{ q: product.sku ?? product.name }}>
             <ExternalLink className="mr-2 size-3.5" /> Open in editor
