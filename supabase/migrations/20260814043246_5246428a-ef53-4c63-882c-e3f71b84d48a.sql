@@ -1,0 +1,1 @@
+UPDATE public.app_settings SET section = 'Conversions', updated_at = now() WHERE section = 'conversions';

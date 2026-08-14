@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { categoryDutyQuery } from "@/lib/costing";
 import {
   allProductsQuery,
   categoriesQuery,
@@ -57,11 +58,82 @@ type PendingDelete = {
   name: string;
 };
 
+/** Inline duty % editor. Empty shows an em dash; blank subcategories hint at the parent value. */
+function DutyField({
+  label,
+  value,
+  inherited,
+  onSave,
+}: {
+  label: string;
+  value: number | null;
+  inherited: number | null;
+  onSave: (value: number | null) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  if (draft === null) {
+    return (
+      <button
+        type="button"
+        aria-label={`Duty percent for ${label}`}
+        onClick={() => setDraft(value === null ? "" : String(value))}
+        className="shrink-0 rounded-md border border-transparent px-2 py-1 text-xs tabular-nums hover:border-border hover:bg-secondary"
+      >
+        <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">Duty</span>
+        {value !== null ? (
+          <span className="font-medium">{value}%</span>
+        ) : inherited !== null ? (
+          <span className="text-muted-foreground/70">{inherited}%</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </button>
+    );
+  }
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      if (value !== null) onSave(null);
+      setDraft(null);
+      return;
+    }
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+      toast.error("Duty % must be a number between 0 and 100.");
+      return;
+    }
+    if (parsed !== value) onSave(parsed);
+    setDraft(null);
+  };
+
+  return (
+    <Input
+      autoFocus
+      type="number"
+      aria-label={`Duty percent for ${label}`}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          commit();
+        }
+        if (event.key === "Escape") setDraft(null);
+      }}
+      className="h-8 w-20 shrink-0 text-xs"
+    />
+  );
+}
+
 function AdminCategories() {
   const queryClient = useQueryClient();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const products = useQuery(allProductsQuery);
+  const duty = useQuery(categoryDutyQuery);
 
   const [expanded, setExpanded] = useState<string[]>([]);
   const [editing, setEditing] = useState<{ id: string; value: string } | null>(null);
@@ -76,6 +148,40 @@ function AdminCategories() {
       queryClient.invalidateQueries({ queryKey: ["subcategories"] }),
       queryClient.invalidateQueries({ queryKey: ["products"] }),
     ]);
+  };
+
+  const saveDuty = useMutation({
+    mutationFn: async (input: {
+      table: "categories" | "subcategories";
+      id: string;
+      value: number | null;
+    }) => {
+      const { error } = await supabase
+        .from(input.table)
+        .update({ duty_rate_pct: input.value })
+        .eq("id", input.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["costing", "category_duty"] }),
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const dutyCell = (
+    table: "categories" | "subcategories",
+    id: string,
+    name: string,
+    inherited?: number | null,
+  ) => {
+    const own =
+      table === "categories" ? (duty.data?.categories[id] ?? null) : (duty.data?.subcategories[id] ?? null);
+    return (
+      <DutyField
+        label={name}
+        value={own}
+        inherited={inherited ?? null}
+        onSave={(value) => saveDuty.mutate({ table, id, value })}
+      />
+    );
   };
 
   const counts = useMemo(() => {
@@ -322,6 +428,7 @@ function AdminCategories() {
                             subcategories
                           </span>
                         </button>
+                        {dutyCell("categories", category.id, category.name)}
                         <Button
                           size="icon"
                           variant="ghost"
@@ -403,6 +510,12 @@ function AdminCategories() {
                                       {counts.bySub.get(sub.id) ?? 0} products
                                     </p>
                                   </div>
+                                  {dutyCell(
+                                    "subcategories",
+                                    sub.id,
+                                    sub.name,
+                                    duty.data?.categories[category.id] ?? null,
+                                  )}
                                   <Button
                                     size="icon"
                                     variant="ghost"
