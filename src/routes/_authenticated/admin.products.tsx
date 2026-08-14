@@ -64,6 +64,7 @@ import {
   CellView,
 } from "@/components/admin/inline-cells";
 import { moqProblem } from "@/lib/product-rules";
+import { InlineProduction, InlineSelect, InlineText } from "@/components/admin/inline-cells";
 import { supabase } from "@/integrations/supabase/client";
 import {
   categoriesQuery,
@@ -104,6 +105,11 @@ type SortKey = "cat" | "supplier" | "name" | "sku" | "moq" | "prod";
 /** Cells that can be edited in place, left to right (Tab order). */
 const EDITABLE_CELLS = ["supplier", "name", "supitem", "moq", "production", "status"] as const;
 type EditableCell = (typeof EDITABLE_CELLS)[number];
+
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "hidden", label: "Hidden" },
+] as const satisfies ReadonlyArray<{ value: string; label: string }>;
 
 /**
  * The one product write path used by the expanded editor, the "New product"
