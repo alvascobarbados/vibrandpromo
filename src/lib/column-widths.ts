@@ -9,20 +9,21 @@ import { loadPrefValue, savePrefValue } from "@/lib/user-prefs";
 export type ColId =
   | "cat"
   | "subcat"
-  | "supplier"
-  | "name"
   | "sku"
+  | "name"
+  | "supplier"
   | "supitem"
   | "moq"
   | "production"
   | "status";
 
+/** Key order here is the table's visual column order (ids never change). */
 export const DEFAULT_COL_WIDTHS: Record<ColId, number> = {
   cat: 130,
   subcat: 130,
-  supplier: 180,
-  name: 260,
   sku: 110,
+  name: 260,
+  supplier: 180,
   supitem: 130,
   moq: 70,
   production: 100,
