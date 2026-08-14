@@ -34,6 +34,7 @@ import {
 import { AddAttributePopover } from "@/components/team/AddAttributePopover";
 import { DecorationPricing } from "@/components/team/DecorationPricing";
 import { InlineChoice, InlineField } from "@/components/team/inline-field";
+import { RangeRow } from "@/components/team/range-row";
 import { UnitSwitch } from "@/components/team/PackingUnits";
 import { ProductionExtras } from "@/components/team/ProductionExtras";
 import {
@@ -72,7 +73,6 @@ import {
   positiveProblem,
   relativeTime,
   updateProductFields,
-  decimals3,
   weight3,
 } from "@/lib/pricelist";
 import { moqProblem, nameProblem } from "@/lib/product-rules";
@@ -94,8 +94,6 @@ import {
   type Supplier,
 } from "@/lib/sourcing";
 import {
-  cartonCbm,
-  chargeableWeightKg,
   constantsFrom,
   convertLength,
   convertWeight,
@@ -114,8 +112,8 @@ import {
 const COLS =
   "grid grid-cols-[120px_190px_196px_260px_268px_minmax(0,1fr)] gap-3 px-4";
 
-/** ONE vertical rhythm token — every KV row and section header uses it. */
-const ROW = "min-h-[26px]";
+/** ONE vertical rhythm token — matched to the decoration pricing QTY rows. */
+const ROW = "min-h-[22px]";
 /** Shared label gutter so all four data columns align on one vertical line. */
 const GUTTER = "grid grid-cols-[88px_minmax(0,1fr)] gap-x-3";
 
@@ -256,11 +254,11 @@ function Kv({
 }) {
   return (
     <div className={`${GUTTER} ${ROW} items-baseline`}>
-      <span className="flex min-w-0 items-baseline gap-1 text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
+      <span className="flex min-w-0 items-baseline gap-1 text-[11px] uppercase leading-5 tracking-[0.04em] text-muted-foreground">
         <span className="truncate whitespace-nowrap">{label}</span>
         {alert ? <MissingDot /> : null}
       </span>
-      <span className="min-w-0 text-[14px] leading-6 text-navy-700">{children}</span>
+      <span className="min-w-0 text-[14px] leading-5 text-navy-700">{children}</span>
     </div>
   );
 }
@@ -280,7 +278,7 @@ function MissingDot() {
 function SectionHead({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className={`${ROW} flex items-center text-[11px] font-semibold uppercase leading-6 tracking-[0.06em] text-muted-foreground`}
+      className={`${ROW} flex items-center text-[11px] font-semibold uppercase leading-5 tracking-[0.06em] text-muted-foreground`}
     >
       {children}
     </p>
