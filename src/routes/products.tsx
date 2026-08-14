@@ -1,6 +1,7 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { LayoutGrid, Rows3, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ProductCard } from "@/components/site/ProductCard";
+import { ProductExpandedCard } from "@/components/site/ProductExpandedCard";
 import { FilterPanel } from "@/components/site/FilterPanel";
 import { FilterBar } from "@/components/site/FilterBar";
 import { FilterSheet } from "@/components/site/FilterSheet";
@@ -31,13 +33,18 @@ import {
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
 import { warnInvisibleFilter } from "@/lib/filter-hygiene";
+import { getCustomerPricing } from "@/lib/pricing.functions";
+import { useIsDesktop } from "@/hooks/use-desktop";
 
 const PAGE_SIZE = 20;
 
 export const Route = createFileRoute("/products")({
-  validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> & { page?: number } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): Partial<CatalogSearch> & { page?: number; view?: string } => ({
     ...parseCatalogSearch(search),
     page: Number(search['page']) > 0 ? Number(search['page']) : 1,
+    view: search['view'] === "expanded" ? "expanded" : "grid",
   }),
   search: {
     middlewares: [
@@ -45,6 +52,7 @@ export const Route = createFileRoute("/products")({
         q: "",
         sort: "default",
         page: 1,
+        view: "grid",
         cat: [],
         sub: [],
         moq: [],
@@ -75,12 +83,15 @@ export const Route = createFileRoute("/products")({
 });
 
 function CatalogPage() {
-  const rawPage = Route.useSearch().page ?? 1;
+  const routeSearch = Route.useSearch();
+  const rawPage = routeSearch.page ?? 1;
+  const view = routeSearch.view === "expanded" ? "expanded" : "grid";
   const { search, toggle, clear, update, activeCount } = useCatalogFilters();
   const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const shipping = useShippingSettings();
+  const isDesktop = useIsDesktop();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const allProducts = products.data ?? [];
@@ -106,6 +117,21 @@ function CatalogPage() {
   const page = Math.min(Math.max(1, rawPage), totalPages);
   const start = (page - 1) * PAGE_SIZE;
   const visible = filtered.slice(start, start + PAGE_SIZE);
+
+  // Expanded view is desktop-only; prices are fetched for the visible page only.
+  const expanded = isDesktop && view === "expanded";
+  const fetchPricing = useServerFn(getCustomerPricing);
+  const visibleIds = visible.map((product) => product.id);
+  const pricing = useQuery({
+    queryKey: ["customer-pricing", visibleIds],
+    queryFn: () => fetchPricing({ data: { productIds: visibleIds } }),
+    enabled: expanded && visibleIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+  const pricingById = useMemo(
+    () => new Map((pricing.data ?? []).map((entry) => [entry.productId, entry])),
+    [pricing.data],
+  );
 
   const chips = (
     ["cat", "sub", "moq", "prod", "colour", "deco", "src", "mat"] as FilterGroupId[]
@@ -146,7 +172,31 @@ function CatalogPage() {
           </aside>
 
           <div className="@container min-w-0 flex-1">
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-2">
+              {isDesktop ? (
+                <div className="flex items-center gap-1 rounded-full border border-n-200 p-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Grid view"
+                    aria-pressed={view === "grid"}
+                    className={`h-8 rounded-full px-3 ${view === "grid" ? "bg-navy-900 text-white hover:bg-navy-900 hover:text-white" : ""}`}
+                    onClick={() => update({ view: "grid" })}
+                  >
+                    <LayoutGrid className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Expanded view"
+                    aria-pressed={view === "expanded"}
+                    className={`h-8 rounded-full px-3 ${view === "expanded" ? "bg-navy-900 text-white hover:bg-navy-900 hover:text-white" : ""}`}
+                    onClick={() => update({ view: "expanded" })}
+                  >
+                    <Rows3 className="size-4" />
+                  </Button>
+                </div>
+              ) : null}
               <Select value={search.sort} onValueChange={(value) => update({ sort: value })}>
                 <SelectTrigger className="h-10 w-40 rounded-full sm:w-44">
                   <SelectValue />
@@ -207,11 +257,23 @@ function CatalogPage() {
                 <p className="mt-4 text-xs text-muted-foreground">
                   {`Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} products`}
                 </p>
-                <div className="product-grid mt-2">
-                  {visible.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+                {expanded ? (
+                  <div className="mt-2 flex flex-col gap-4">
+                    {visible.map((product) => (
+                      <ProductExpandedCard
+                        key={product.id}
+                        product={product}
+                        pricing={pricingById.get(product.id)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="product-grid mt-2">
+                    {visible.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                )}
               </>
             )}
 
