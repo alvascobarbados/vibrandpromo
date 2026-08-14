@@ -20,11 +20,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { QuantityStepper } from "@/components/site/QuantityStepper";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuoteList } from "@/lib/quote-list";
-import {
-  ARTWORK_EXTENSIONS,
-  ARTWORK_MAX_BYTES,
-  createArtworkUpload,
-} from "@/lib/artwork.functions";
+import { ARTWORK_MAX_BYTES, isAllowedArtwork } from "@/lib/artwork";
+import { createArtworkUpload } from "@/lib/artwork.functions";
 import { submitQuoteRequest } from "@/lib/quote-submit.functions";
 import { TERRITORIES } from "@/lib/territories";
 
@@ -71,8 +68,7 @@ function QuotePage() {
       setArtwork(null);
       return;
     }
-    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!(ARTWORK_EXTENSIONS as readonly string[]).includes(extension)) {
+    if (!isAllowedArtwork(file.name)) {
       toast.error("Please attach a JPG, PNG, PDF, AI, EPS, SVG or ZIP file.");
       return;
     }
