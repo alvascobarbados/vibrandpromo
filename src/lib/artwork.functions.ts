@@ -23,10 +23,27 @@ export const createArtworkUpload = createServerFn({ method: "POST" })
     const path = `incoming/${crypto.randomUUID()}/${safeArtworkName(data.filename)}`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Same per-IP window used for quote submissions: at most 10 tokens per hour.
+    const { requestIpHash, countRecent, logAttempt } = await import("@/lib/rate-limit.server");
+    const ipHash = await requestIpHash();
+    const { count, error: countError } = await countRecent(
+      supabaseAdmin,
+      "artwork_token_log",
+      ipHash,
+    );
+    if (!countError && count >= 10) {
+      throw new Error(
+        "Too many artwork uploads from this connection in the last hour. Please try again later or email sales@vibrand.com.",
+      );
+    }
+
     const { data: signed, error } = await supabaseAdmin.storage
       .from("quote-artwork")
       .createSignedUploadUrl(path);
     if (error || !signed) throw new Error("Could not prepare artwork upload.");
+
+    await logAttempt(supabaseAdmin, "artwork_token_log", ipHash);
 
     return { path: signed.path, token: signed.token };
   });
