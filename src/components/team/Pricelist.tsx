@@ -225,6 +225,38 @@ function Kv({ label, children }: { label: React.ReactNode; children: React.React
   );
 }
 
+/**
+ * Costing-gate badge. The missing-field list comes from the ONE shared gate
+ * (src/lib/costing-gate.ts) the /team filter — and later the pricing engine —
+ * also use. It says nothing about customer visibility.
+ */
+function CostingBadge({ missing }: { missing: string[] }) {
+  if (!missing.length) {
+    return (
+      <span className="w-fit rounded-full bg-lime-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-700">
+        Costing ready
+      </span>
+    );
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="w-fit cursor-help rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-600">
+          Incomplete · {missing.length} missing
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[220px] text-left">
+        <p className="font-semibold">Missing for costing</p>
+        <ul className="mt-1 list-inside list-disc">
+          {missing.map((label) => (
+            <li key={label}>{label}</li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function PricelistRow({
   product,
   categories,
