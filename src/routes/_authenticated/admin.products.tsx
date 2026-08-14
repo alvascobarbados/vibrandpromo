@@ -784,6 +784,7 @@ function AdminProducts() {
                                 saving={save.isPending}
                                 submitLabel="Save changes"
                                 idPrefix={`edit-${product.id}`}
+                                productId={product.id}
                                 onSubmit={() => save.mutate({ id: product.id, values: form })}
                                 onCancel={() => setEditingId(null)}
                               />

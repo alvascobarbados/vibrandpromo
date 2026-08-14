@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProductCard } from "@/components/site/ProductCard";
+import { Pricelist } from "@/components/team/Pricelist";
 import { DesktopFilterSidebar } from "@/components/site/DesktopFilterSidebar";
 import { categoriesQuery, subcategoriesQuery } from "@/lib/catalog";
 import { useCatalogProducts } from "@/lib/staff-session";
@@ -184,6 +185,12 @@ export function DesktopCatalog({
               Clear filters
             </Button>
           </div>
+        ) : team ? (
+          <Pricelist
+            products={visible}
+            categories={allCategories}
+            subcategories={allSubcategories}
+          />
         ) : (
           <div className={team ? "mt-4 flex flex-col gap-3" : "product-grid mt-4"}>
             {visible.map((product) => (

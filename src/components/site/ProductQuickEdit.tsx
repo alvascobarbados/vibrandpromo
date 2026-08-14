@@ -23,6 +23,7 @@ import { RushChip } from "@/components/site/RushChip";
 import { SourcingSection } from "@/components/admin/SourcingSection";
 import { productSourcingQuery, saveProductSourcing } from "@/lib/sourcing";
 import { useQuery } from "@tanstack/react-query";
+import { decoratedProductIdsQuery } from "@/lib/decorations";
 
 export function ProductQuickEdit({
   product,
@@ -66,6 +67,9 @@ export function ProductQuickEdit({
     setSupplierItemNo(sourcingRow?.supplier_item_no ?? "");
   }
   const shipping = useShippingSettings();
+  /** Decoration methods hand over to the /team price table once it exists. */
+  const decorated = useQuery(decoratedProductIdsQuery);
+  const derivedDecoration = (decorated.data ?? []).includes(product.id);
   const preview = {
     production_min_days: numberOrNull(productionMin),
     production_max_days: numberOrNull(productionMax),
@@ -177,6 +181,29 @@ export function ProductQuickEdit({
             <Label htmlFor="qe-name">Name</Label>
             <Input id="qe-name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
+
+          {derivedDecoration ? (
+            <div>
+              <Label>Decoration methods</Label>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {(product.decoration_methods ?? []).length ? (
+                  (product.decoration_methods ?? []).map((method) => (
+                    <span
+                      key={method}
+                      className="rounded-full bg-n-100 px-2 py-0.5 text-xs text-n-700"
+                    >
+                      {method}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground">None</span>
+                )}
+              </div>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Managed by the decoration pricing on the supplier pricelist.
+              </p>
+            </div>
+          ) : null}
 
           <div>
             <Label htmlFor="qe-moq">MOQ</Label>

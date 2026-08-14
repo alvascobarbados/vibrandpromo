@@ -268,6 +268,23 @@ function AdminImport() {
       if (readError) throw readError;
       const existingSkus = new Set((existing ?? []).map((p) => (p.sku ?? "").toLowerCase()));
 
+      /**
+       * Products with decoration pricing on the supplier pricelist own their
+       * decoration list — the import keeps the value the price table produced
+       * instead of overwriting it from the CSV.
+       */
+      const { data: priced, error: pricedError } = await supabase
+        .from("product_decorations")
+        .select("products(sku, decoration_methods)");
+      if (pricedError) throw pricedError;
+      const lockedDecorations = new Map<string, string[]>();
+      for (const row of (priced ?? []) as Array<{
+        products: { sku: string | null; decoration_methods: string[] } | null;
+      }>) {
+        const sku = row.products?.sku;
+        if (sku) lockedDecorations.set(sku.toLowerCase(), row.products?.decoration_methods ?? []);
+      }
+
       let created = 0;
       let updated = 0;
       const failed: Problem[] = [...problems];
@@ -275,7 +292,12 @@ function AdminImport() {
       for (let i = 0; i < ready.length; i += 50) {
         const batch = ready.slice(i, i + 50);
         const { error } = await supabase.from("products").upsert(
-          batch.map((item) => item.payload as never),
+          batch.map((item) => {
+            const locked = lockedDecorations.get(item.sku.toLowerCase());
+            return (
+              locked ? { ...item.payload, decoration_methods: locked } : item.payload
+            ) as never;
+          }),
           { onConflict: "sku" },
         );
         if (error) {
