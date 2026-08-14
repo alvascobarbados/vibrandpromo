@@ -668,7 +668,9 @@ function PricelistRow({
             missingKeys.has("carton_height")
           }
         >
-          <span className="flex flex-nowrap items-center gap-0.5">
+          {/* ONE flex row, equal gaps: each × sits dead-centre between inputs and
+              the unit dropdown is snug at the end with the same gap. */}
+          <span className="flex flex-nowrap items-center gap-1.5">
             <InlineField
               className="w-8 shrink-0"
               value={numberText(sourcing?.carton_length)}
@@ -676,7 +678,7 @@ function PricelistRow({
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_length: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-center text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-[11px] leading-none text-muted-foreground">×</span>
             <InlineField
               className="w-8 shrink-0"
               value={numberText(sourcing?.carton_width)}
@@ -684,7 +686,7 @@ function PricelistRow({
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_width: numOrNull(raw) })}
             />
-            <span className="shrink-0 text-center text-[11px] text-muted-foreground">×</span>
+            <span className="shrink-0 text-[11px] leading-none text-muted-foreground">×</span>
             <InlineField
               className="w-8 shrink-0"
               value={numberText(sourcing?.carton_height)}
@@ -692,7 +694,6 @@ function PricelistRow({
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_height: numOrNull(raw) })}
             />
-            <span className="shrink-0 pl-0.5" />
             <UnitSwitch
               options={["cm", "in"] as const}
               value={units.dimension}
@@ -716,7 +717,7 @@ function PricelistRow({
             <InlineField
               className="w-16 shrink-0"
               value={numberText(sourcing?.carton_weight)}
-              display={weight3(sourcing?.carton_weight ?? null, units.weight)}
+              display={weight3(sourcing?.carton_weight ?? null)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_weight: numOrNull(raw) })}
@@ -737,16 +738,6 @@ function PricelistRow({
             />
           </span>
         </Kv>
-        {/* Derived footnote of the packing block — anchored under WEIGHT, aligned
-            to the VALUE column. Omitted entirely when inputs are missing. */}
-        {cbm != null && chargeable != null ? (
-          <div className={GUTTER}>
-            <span />
-            <p className="text-[11px] leading-5 text-muted-foreground">
-              = {cbm} CBM · chargeable {decimals3(chargeable)} kg
-            </p>
-          </div>
-        ) : null}
 
         <SectionHead>Production</SectionHead>
         <Kv label="MOQ">
@@ -759,26 +750,13 @@ function PricelistRow({
           />
         </Kv>
         <Kv label="Lead time" alert={missingKeys.has("production_min_days")}>
-          <span className="flex flex-nowrap items-center gap-0.5">
-            <InlineField
-              className="w-9 shrink-0"
-              value={product.production_min_days == null ? "" : String(product.production_min_days)}
-              numeric
-              save={(raw) => saveProduct({ production_min_days: numOrNull(raw) })}
-            />
-            <span className="shrink-0 text-[11px] text-muted-foreground">–</span>
-            <InlineField
-              className="w-9 shrink-0"
-              value={product.production_max_days == null ? "" : String(product.production_max_days)}
-              numeric
-              save={(raw) => saveProduct({ production_max_days: numOrNull(raw) })}
-            />
-            <span className="ml-1 whitespace-nowrap text-[11px] text-muted-foreground">
-              {product.production_min_days == null && product.production_max_days == null
-                ? productionLabel(product.production_min_days, product.production_max_days)
-                : "days"}
-            </span>
-          </span>
+          <RangeRow
+            min={product.production_min_days == null ? "" : String(product.production_min_days)}
+            max={product.production_max_days == null ? "" : String(product.production_max_days)}
+            saveMin={(raw) => saveProduct({ production_min_days: numOrNull(raw) })}
+            saveMax={(raw) => saveProduct({ production_max_days: numOrNull(raw) })}
+            suffix="days"
+          />
         </Kv>
         <ProductionExtras product={product} save={saveProduct} />
       </div>
