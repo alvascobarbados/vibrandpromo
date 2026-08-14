@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { QuoteDetailDrawer } from "@/components/admin/QuoteDetailDrawer";
 import { useIsDesktop } from "@/hooks/use-desktop";
 import { supabase } from "@/integrations/supabase/client";
+import { usePrefValue } from "@/lib/user-prefs";
 import {
   QUOTE_STATUSES,
   quoteProductsQuery,
@@ -54,7 +55,23 @@ const OPTIONAL_COLUMNS: { id: OptionalColumn; label: string }[] = [
   { id: "submitted", label: "Submitted date" },
 ];
 
-const COLUMN_PREFS_KEY = "vibrand.admin.quotes.columns";
+const LEGACY_COLUMN_PREFS_KEY = "vibrand.admin.quotes.columns";
+
+const DEFAULT_OPTIONAL: Record<OptionalColumn, boolean> = {
+  email: false,
+  phone: false,
+  submitted: false,
+};
+
+function sanitizeOptional(raw: unknown): Record<OptionalColumn, boolean> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const value = raw as Partial<Record<OptionalColumn, unknown>>;
+  return {
+    email: value.email === true,
+    phone: value.phone === true,
+    submitted: value.submitted === true,
+  };
+}
 
 function relativeAge(iso: string) {
   const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
@@ -96,38 +113,16 @@ function AdminQuotes() {
   const raw = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const [open, setOpen] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [optional, setOptional] = useState<Record<OptionalColumn, boolean>>({
-    email: false,
-    phone: false,
-    submitted: false,
-  });
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(COLUMN_PREFS_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<Record<OptionalColumn, boolean>>;
-        setOptional({
-          email: parsed.email === true,
-          phone: parsed.phone === true,
-          submitted: parsed.submitted === true,
-        });
-      }
-    } catch {
-      /* ignore unreadable preferences */
-    }
-  }, []);
+  const [optional, setOptional] = usePrefValue<Record<OptionalColumn, boolean>>(
+    "quotes_table",
+    "columns",
+    DEFAULT_OPTIONAL,
+    sanitizeOptional,
+    LEGACY_COLUMN_PREFS_KEY,
+  );
 
   function toggleOptional(id: OptionalColumn) {
-    setOptional((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      try {
-        window.localStorage.setItem(COLUMN_PREFS_KEY, JSON.stringify(next));
-      } catch {
-        /* ignore unwritable preferences */
-      }
-      return next;
-    });
+    setOptional({ ...optional, [id]: !optional[id] });
   }
 
   const search = typeof raw["q"] === "string" ? (raw["q"] as string) : "";

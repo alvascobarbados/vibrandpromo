@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      artwork_token_log: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
