@@ -90,7 +90,8 @@ import {
  * takes ALL remaining width so wide monitors show more price tables before the
  * strip's own sideways scroll starts.
  */
-const COLS = "grid grid-cols-[196px_248px_284px_344px_minmax(0,1fr)] gap-5 px-4";
+const COLS =
+  "grid grid-cols-[180px_236px_212px_248px_300px_minmax(0,1fr)] gap-5 px-4";
 
 const DASH = <span className="text-muted-foreground">—</span>;
 
@@ -167,12 +168,13 @@ export function Pricelist({
 
   return (
     <div className="mt-4 overflow-x-auto">
-      <div className="min-w-[1160px]">
+      <div className="min-w-[1420px]">
         <div
           className={`${COLS} sticky top-0 z-10 items-end border-b border-navy-200 bg-card/95 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground backdrop-blur`}
         >
           <span>Image</span>
-          <span>Product</span>
+          <span>Identity</span>
+          <span>Sourcing</span>
           <span>Product Details</span>
           <span>Packing &amp; Production</span>
           <span>Pricing</span>
@@ -213,14 +215,47 @@ export function Pricelist({
   );
 }
 
-function Kv({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
+/**
+ * Labelled row. `alert` marks a field the costing gate is still waiting on —
+ * a small amber dot beside the label, gone the moment it is filled.
+ */
+function Kv({
+  label,
+  children,
+  alert,
+}: {
+  label: React.ReactNode;
+  children: React.ReactNode;
+  alert?: boolean;
+}) {
   return (
     <div className="grid min-h-6 grid-cols-[96px_minmax(0,1fr)] items-baseline gap-x-3">
-      <span className="truncate whitespace-nowrap text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
-        {label}
+      <span className="flex min-w-0 items-baseline gap-1 text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
+        <span className="truncate whitespace-nowrap">{label}</span>
+        {alert ? <MissingDot /> : null}
       </span>
       <span className="min-w-0 text-[14px] leading-6 text-navy-700">{children}</span>
     </div>
+  );
+}
+
+/** Costing-gate marker. Purely informational — it blocks nothing. */
+function MissingDot() {
+  return (
+    <span
+      title="Needed for costing"
+      aria-label="Needed for costing"
+      className="size-1.5 shrink-0 self-center rounded-full bg-amber-500"
+    />
+  );
+}
+
+/** Small muted section header inside the packing / production column. */
+function SectionHead({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      {children}
+    </p>
   );
 }
 
