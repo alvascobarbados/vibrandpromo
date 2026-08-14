@@ -92,7 +92,7 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
             .select("id, shipping_methods")
             .in("id", ids);
           for (const product of products ?? []) {
-            shippingById.set(product.id, product.shipping_methods ?? "air_sea");
+            shippingById.set(product.id, product.shipping_methods ?? null);
           }
         }
         return items.map((item) => ({

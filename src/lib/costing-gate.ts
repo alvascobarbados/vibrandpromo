@@ -9,7 +9,7 @@
  *   - the costing engine's eligibility predicate (later)
  *
  * There is exactly ONE copy of these rules. It deliberately says nothing about
- * customer visibility: `is_active` / `show_price` stay independent of it.
+ * customer visibility: `status` / `show_price` stay independent of it.
  */
 
 export type MissingField = { key: string; label: string };
