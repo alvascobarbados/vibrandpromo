@@ -119,12 +119,21 @@ export function InlineField({
           />
         ) : (
           <span
+            tabIndex={readOnly ? -1 : 0}
+            role={readOnly ? undefined : "button"}
             title={wrap && value ? value : undefined}
             className={`min-w-0 flex-1 text-[13px] ${
               wrap ? "line-clamp-2 whitespace-normal break-words" : "truncate"
             } ${
               align === "right" ? "text-right" : ""
             } ${readOnly ? "" : "cursor-text hover:bg-navy-50"}`}
+            onKeyDown={(event) => {
+              if (readOnly) return;
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setEditing(true);
+              }
+            }}
             onClick={(event) => {
               if (readOnly) return;
               event.stopPropagation();
@@ -192,9 +201,17 @@ export function InlineChoice({
           </select>
         ) : (
           <span
+            tabIndex={0}
+            role="button"
             className={`min-w-0 flex-1 cursor-pointer text-[13px] hover:bg-navy-50 ${
               wrap ? "line-clamp-2 whitespace-normal break-words" : "truncate"
             }`}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setEditing(true);
+              }
+            }}
             onClick={(event) => {
               event.stopPropagation();
               setEditing(true);

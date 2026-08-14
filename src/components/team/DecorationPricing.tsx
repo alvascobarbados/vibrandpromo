@@ -80,7 +80,8 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
         {decorations.map((decoration) => {
           const detail = detailById.get(decoration.method_detail_id);
           const method = detail ? methodById.get(detail.decoration_method_id) : undefined;
-          const bands = decoration.product_decoration_bands;
+          /** Tiers ALWAYS read as a qty-ascending ladder, whatever the write order. */
+          const bands = [...decoration.product_decoration_bands].sort((a, b) => a.qty - b.qty);
           const ground = hasGround(bands);
           const cols = ground
             ? "grid-cols-[52px_66px_66px_66px_18px]"
@@ -196,9 +197,10 @@ export function DecorationPricing({ productId, decorations, methods, details }: 
                   className="inline-flex items-center gap-1 text-[11px] font-semibold text-navy-500 hover:underline"
                   onClick={() => {
                     void guard(async () => {
+                      const highest = bands.reduce((max, band) => Math.max(max, band.qty), 0);
                       const id = await addDecorationBand(
                         decoration.id,
-                        (bands[bands.length - 1]?.qty ?? 0) + 1,
+                        highest + 1,
                         ground ? 0 : null,
                       );
                       setFocusBandId(id);

@@ -297,6 +297,24 @@
   box-shadow: var(--shadow-hover);
 }
 
+/* ---- Brief "not allowed" nudge (last-enabled shipping chip) ---- */
+@keyframes vib-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+@utility animate-shake {
+  animation: vib-shake 0.22s ease-in-out 2;
+}
+
 /* ---- Public layout container: one shared left edge everywhere ---- */
 @utility site-container {
   margin-inline: auto;

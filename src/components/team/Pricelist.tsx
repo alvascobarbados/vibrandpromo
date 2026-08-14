@@ -17,6 +17,7 @@ import { AddAttributePopover } from "@/components/team/AddAttributePopover";
 import { DecorationPricing } from "@/components/team/DecorationPricing";
 import { InlineChoice, InlineField } from "@/components/team/inline-field";
 import { UnitSwitch } from "@/components/team/PackingUnits";
+import { ProductionExtras } from "@/components/team/ProductionExtras";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,7 +53,8 @@ import {
   positiveProblem,
   relativeTime,
   updateProductFields,
-  weightLabel,
+  decimals3,
+  weight3,
 } from "@/lib/pricelist";
 import { moqProblem, nameProblem } from "@/lib/product-rules";
 import {
@@ -90,7 +92,8 @@ import {
  * takes ALL remaining width so wide monitors show more price tables before the
  * strip's own sideways scroll starts.
  */
-const COLS = "grid grid-cols-[196px_248px_284px_344px_minmax(0,1fr)] gap-5 px-4";
+const COLS =
+  "grid grid-cols-[180px_226px_200px_240px_336px_minmax(0,1fr)] gap-5 px-4";
 
 const DASH = <span className="text-muted-foreground">—</span>;
 
@@ -167,12 +170,13 @@ export function Pricelist({
 
   return (
     <div className="mt-4 overflow-x-auto">
-      <div className="min-w-[1160px]">
+      <div className="min-w-[1420px]">
         <div
           className={`${COLS} sticky top-0 z-10 items-end border-b border-navy-200 bg-card/95 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground backdrop-blur`}
         >
           <span>Image</span>
-          <span>Product</span>
+          <span>Identity</span>
+          <span>Sourcing</span>
           <span>Product Details</span>
           <span>Packing &amp; Production</span>
           <span>Pricing</span>
@@ -213,14 +217,47 @@ export function Pricelist({
   );
 }
 
-function Kv({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
+/**
+ * Labelled row. `alert` marks a field the costing gate is still waiting on —
+ * a small amber dot beside the label, gone the moment it is filled.
+ */
+function Kv({
+  label,
+  children,
+  alert,
+}: {
+  label: React.ReactNode;
+  children: React.ReactNode;
+  alert?: boolean;
+}) {
   return (
     <div className="grid min-h-6 grid-cols-[96px_minmax(0,1fr)] items-baseline gap-x-3">
-      <span className="truncate whitespace-nowrap text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
-        {label}
+      <span className="flex min-w-0 items-baseline gap-1 text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
+        <span className="truncate whitespace-nowrap">{label}</span>
+        {alert ? <MissingDot /> : null}
       </span>
       <span className="min-w-0 text-[14px] leading-6 text-navy-700">{children}</span>
     </div>
+  );
+}
+
+/** Costing-gate marker. Purely informational — it blocks nothing. */
+function MissingDot() {
+  return (
+    <span
+      title="Needed for costing"
+      aria-label="Needed for costing"
+      className="size-1.5 shrink-0 self-center rounded-full bg-amber-500"
+    />
+  );
+}
+
+/** Small muted section header inside the packing / production column. */
+function SectionHead({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      {children}
+    </p>
   );
 }
 
@@ -331,6 +368,8 @@ function PricelistRow({
   const refreshAttributes = () => queryClient.invalidateQueries({ queryKey: ["product_details"] });
   const refreshIncludes = () => queryClient.invalidateQueries({ queryKey: ["product_includes"] });
   const missing = costingReadyMissing(product, sourcing);
+  /** Which fields the gate is waiting on — drives the amber dots. */
+  const missingKeys = new Set(missing.map((field) => field.key));
   const labelName = (id: string) =>
     attributeLabels.find((row) => row.id === id)?.label ?? "Attribute";
   const usedLabelIds = new Set(attributes.map((row) => row.detail_label_id));
@@ -381,21 +420,30 @@ function PricelistRow({
         </p>
       </div>
 
-      {/* Product */}
+      {/* Identity — read-mostly: who this product is, in one compact block. */}
       <div className="flex min-w-0 flex-col gap-1.5">
         <div className="flex items-start justify-between gap-1">
-          <InlineField
-            className="flex-1"
-            value={product.name}
-            wrap
-            display={
-              <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-navy-700">
-                {memberDisplayName(product, sourcing)}
-              </span>
-            }
-            validate={nameProblem}
-            save={(raw) => saveProduct({ name: raw.trim() })}
-          />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="flex items-center gap-1">
+              <InlineField
+                className="min-w-0 flex-1"
+                value={product.name}
+                wrap
+                display={
+                  <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-navy-700">
+                    {memberDisplayName(product, sourcing)}
+                  </span>
+                }
+                validate={nameProblem}
+                save={(raw) => saveProduct({ name: raw.trim() })}
+              />
+              {missingKeys.has("name") ? <MissingDot /> : null}
+            </span>
+            {/* SKU sits with the name so an unnamed row still has identity. */}
+            <span className="font-mono text-[11px] leading-4 text-muted-foreground">
+              {product.sku ?? "No SKU"}
+            </span>
+          </div>
           <RowKebab product={product} saveProduct={saveProduct} onDuplicated={onDuplicated} />
         </div>
 
@@ -425,8 +473,44 @@ function PricelistRow({
           save={(raw) => savePacking({ variant_label: raw.trim() || null })}
         />
 
-        <div className="mt-0.5 flex flex-col gap-1">
-          <Kv label="Supplier">
+        {/* System facts as plain text — still the pickers on click. */}
+        <div className="mt-0.5 flex flex-col gap-0.5">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-[12px] leading-5">
+            {missingKeys.has("subcategory") ? <MissingDot /> : null}
+            <span className="min-w-0 max-w-full">
+              <InlineChoice
+                value={product.category_id ?? ""}
+                wrap
+                options={[
+                  { value: "", label: "—" },
+                  ...categories.map((row) => ({ value: row.id, label: row.name })),
+                ]}
+                save={(next) => saveProduct({ category_id: next || null })}
+              />
+            </span>
+            <span className="text-muted-foreground">›</span>
+            <span className="min-w-0 max-w-full">
+              {subOptions.length === 0 ? (
+                DASH
+              ) : (
+                <InlineChoice
+                  value={product.subcategory_id ?? ""}
+                  wrap
+                  options={subOptions}
+                  save={(next) => saveProduct({ subcategory_id: next })}
+                />
+              )}
+            </span>
+          </div>
+          <p className="text-[11px] leading-5 text-muted-foreground">
+            Origin {origin?.name ?? "—"} · auto
+          </p>
+        </div>
+      </div>
+
+      {/* Sourcing entry — the three fields staff actually type here. */}
+      <div className="flex min-w-0 flex-col gap-1">
+        <Kv label="Supplier" alert={missingKeys.has("supplier")}>
             <InlineChoice
               value={sourcing?.supplier_id ?? ""}
               options={[
@@ -464,34 +548,6 @@ function PricelistRow({
               save={(raw) => savePacking({ supplier_item_name: raw.trim() || null })}
             />
           </Kv>
-          <Kv label="Origin">{origin?.name ?? DASH}</Kv>
-          <Kv label="Category">
-            <InlineChoice
-              value={product.category_id ?? ""}
-              wrap
-              options={[
-                { value: "", label: "—" },
-                ...categories.map((row) => ({ value: row.id, label: row.name })),
-              ]}
-              save={(next) => saveProduct({ category_id: next || null })}
-            />
-          </Kv>
-          <Kv label="Subcategory">
-            {subOptions.length === 0 ? (
-              DASH
-            ) : (
-              <InlineChoice
-                value={product.subcategory_id ?? ""}
-                wrap
-                options={subOptions}
-                save={(next) => saveProduct({ subcategory_id: next })}
-              />
-            )}
-          </Kv>
-          <Kv label="SKU">
-            <span className="font-mono text-xs text-muted-foreground">{product.sku ?? "—"}</span>
-          </Kv>
-        </div>
       </div>
 
       {/* Product details */}
@@ -574,9 +630,10 @@ function PricelistRow({
         </div>
       </div>
 
-      {/* Packing & production */}
+      {/* Packing & production — two labelled sections, rows tight beneath. */}
       <div className="flex min-w-0 flex-col gap-1">
-        <Kv label="Pcs / ctn">
+        <SectionHead>Packing details</SectionHead>
+        <Kv label="Pcs / ctn" alert={missingKeys.has("carton_pack")}>
           <InlineField
             className="w-16"
             value={numberText(sourcing?.carton_pack)}
@@ -585,7 +642,14 @@ function PricelistRow({
             save={(raw) => savePacking({ carton_pack: numOrNull(raw) })}
           />
         </Kv>
-        <Kv label="Ctn dims">
+        <Kv
+          label="Ctn dims"
+          alert={
+            missingKeys.has("carton_length") ||
+            missingKeys.has("carton_width") ||
+            missingKeys.has("carton_height")
+          }
+        >
           <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
               className="w-10 shrink-0"
@@ -629,12 +693,12 @@ function PricelistRow({
             />
           </span>
         </Kv>
-        <Kv label="Weight">
+        <Kv label="Weight" alert={missingKeys.has("carton_weight")}>
           <span className="flex flex-nowrap items-center gap-1.5">
             <InlineField
-              className="w-16 shrink-0"
+              className="w-20 shrink-0"
               value={numberText(sourcing?.carton_weight)}
-              display={weightLabel(sourcing?.carton_weight ?? null, units.weight)}
+              display={weight3(sourcing?.carton_weight ?? null, units.weight)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_weight: numOrNull(raw) })}
@@ -655,7 +719,15 @@ function PricelistRow({
             />
           </span>
         </Kv>
-        <Kv label="Lead time">
+        {/* Display-only calc note — omitted entirely when inputs are missing. */}
+        {cbm != null && chargeable != null ? (
+          <p className="text-[11px] leading-5 text-muted-foreground">
+            Volume {cbm} CBM · Chargeable {decimals3(chargeable)} kg
+          </p>
+        ) : null}
+
+        <SectionHead>Production</SectionHead>
+        <Kv label="Lead time" alert={missingKeys.has("production_min_days")}>
           <span className="flex flex-nowrap items-center gap-0.5">
             <InlineField
               className="w-10 shrink-0"
@@ -677,6 +749,7 @@ function PricelistRow({
             </span>
           </span>
         </Kv>
+        <ProductionExtras product={product} save={saveProduct} />
         <Kv label="MOQ">
           <InlineField
             className="w-16"
@@ -686,13 +759,6 @@ function PricelistRow({
             save={(raw) => saveProduct({ moq: numOrNull(raw) })}
           />
         </Kv>
-
-        {/* Display-only calc note — omitted entirely when inputs are missing. */}
-        {cbm != null && chargeable != null ? (
-          <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">
-            Volume {cbm} CBM · Chargeable {chargeable} kg
-          </p>
-        ) : null}
       </div>
 
       {/* Pricing */}
@@ -767,8 +833,9 @@ function ImageSlot({
           )}
         </span>
       )}
+      {/* Count badge sits in the corner so the thumb's image stays visible. */}
       {extra ? (
-        <span className="absolute inset-0 flex items-center justify-center bg-n-900/55 text-[11px] font-semibold text-white">
+        <span className="absolute right-0 top-0 rounded-bl-md bg-n-900/80 px-1 text-[9px] font-semibold leading-4 text-white">
           +{extra}
         </span>
       ) : null}
