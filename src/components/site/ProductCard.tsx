@@ -132,7 +132,7 @@ export function ProductCard({
   const viewMode = useViewMode();
   const shipping = useShippingSettings();
   const [quickEditOpen, setQuickEditOpen] = useState(false);
-  const hidden = editMode && !product.is_active;
+  const hidden = editMode && product.status !== "live";
   const air = airLeadLabel(product, shipping);
   const sea = seaLeadLabel(product, shipping);
   const rush = rushLeadLabel(product, shipping);

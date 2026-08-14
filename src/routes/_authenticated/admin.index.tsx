@@ -30,7 +30,10 @@ function AdminDashboard() {
   const newQuotes = (quotes.data ?? []).filter((quote) => quote.status === "new").length;
 
   const stats = [
-    { label: "Active products", value: (products.data ?? []).filter((p) => p.is_active).length },
+    {
+      label: "Live products",
+      value: (products.data ?? []).filter((p) => p.status === "live").length,
+    },
     { label: "Total products", value: (products.data ?? []).length },
     { label: "Categories", value: (categories.data ?? []).length },
     { label: "New quote requests", value: newQuotes },

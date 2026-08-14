@@ -45,7 +45,7 @@ export function ProductQuickEdit({
   );
   const [price, setPrice] = useState(product.price == null ? "" : String(product.price));
   const [showPrice, setShowPrice] = useState(product.show_price);
-  const [shippingMethods, setShippingMethods] = useState(product.shipping_methods ?? "air_sea");
+  const [shippingMethods, setShippingMethods] = useState(product.shipping_methods ?? "none");
   const [rushEnabled, setRushEnabled] = useState(product.rush_enabled ?? false);
   const [rushMin, setRushMin] = useState(
     product.rush_production_min_days == null ? "" : String(product.rush_production_min_days),
@@ -53,7 +53,7 @@ export function ProductQuickEdit({
   const [rushMax, setRushMax] = useState(
     product.rush_production_max_days == null ? "" : String(product.rush_production_max_days),
   );
-  const [isActive, setIsActive] = useState(product.is_active);
+  const [status, setStatus] = useState(product.status);
   const [isFeatured, setIsFeatured] = useState(product.is_featured);
   const [saving, setSaving] = useState(false);
   const sourcing = useQuery(productSourcingQuery);
@@ -88,7 +88,7 @@ export function ProductQuickEdit({
   );
 
   function changeShipping(value: string) {
-    if (value === "sea_only" && rushEnabled) {
+    if ((value === "sea_only" || value === "none") && rushEnabled) {
       if (
         !window.confirm(
           "Rush requires air shipping. Switching to Sea only will turn rush off. Continue?",
@@ -104,6 +104,10 @@ export function ProductQuickEdit({
   async function save() {
     if (!name.trim()) {
       toast.error("Name is required.");
+      return;
+    }
+    if (status === "live" && (product.images ?? []).length === 0) {
+      toast.error("Add at least one catalogue image before going live.");
       return;
     }
     const normalMin = numberOrNull(productionMin);
@@ -137,10 +141,10 @@ export function ProductQuickEdit({
         rush_production_max_days: rushEnabled ? rushProductionMax : null,
         price: numberOrNull(price),
         show_price: showPrice,
-        shipping_methods: shippingMethods,
-        is_active: isActive,
+        shipping_methods: shippingMethods === "none" ? null : shippingMethods,
+        status,
         is_featured: isFeatured,
-      })
+      } as never)
       .eq("id", product.id);
     setSaving(false);
     if (error) {
@@ -329,8 +333,11 @@ export function ProductQuickEdit({
               <Switch checked={showPrice} onCheckedChange={setShowPrice} />
             </label>
             <label className="flex items-center justify-between gap-3 text-sm font-medium">
-              {isActive ? "Active" : "Hidden"}
-              <Switch checked={isActive} onCheckedChange={setIsActive} />
+              {status === "live" ? "Live" : "Draft"}
+              <Switch
+                checked={status === "live"}
+                onCheckedChange={(next) => setStatus(next ? "live" : "draft")}
+              />
             </label>
             <label className="flex items-center justify-between gap-3 text-sm font-medium">
               Featured
