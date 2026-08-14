@@ -13,6 +13,8 @@ type Base = {
   className?: string;
   align?: "left" | "right";
   readOnly?: boolean;
+  /** Long values wrap to two lines (with a native tooltip) instead of truncating. */
+  wrap?: boolean;
 };
 
 const box =
@@ -47,6 +49,7 @@ export function InlineField({
   align = "left",
   readOnly,
   autoEdit,
+  wrap,
 }: Base & {
   value: string;
   display?: React.ReactNode;
@@ -116,7 +119,10 @@ export function InlineField({
           />
         ) : (
           <span
-            className={`min-w-0 flex-1 truncate text-[13px] ${
+            title={wrap && value ? value : undefined}
+            className={`min-w-0 flex-1 text-[13px] ${
+              wrap ? "line-clamp-2 whitespace-normal break-words" : "truncate"
+            } ${
               align === "right" ? "text-right" : ""
             } ${readOnly ? "" : "cursor-text hover:bg-navy-50"}`}
             onClick={(event) => {

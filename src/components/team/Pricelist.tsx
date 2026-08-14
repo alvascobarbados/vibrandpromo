@@ -87,9 +87,14 @@ import {
   type WeightUnit,
 } from "@/lib/units";
 
-/** Single source of truth for the sheet's column layout (header + every row). */
+/**
+ * Single source of truth for the sheet's column layout (header + every row).
+ * Identity / details / packing keep fixed comfortable widths; the pricing strip
+ * takes ALL remaining width so wide monitors show more price tables before the
+ * strip's own sideways scroll starts.
+ */
 const COLS =
-  "grid grid-cols-[296px_260px_200px_290px_max-content_1fr] gap-8 px-[18px]";
+  "grid grid-cols-[232px_252px_216px_324px_minmax(0,1fr)] gap-6 px-4";
 
 const DASH = <span className="text-muted-foreground">—</span>;
 
@@ -166,7 +171,7 @@ export function Pricelist({
 
   return (
     <div className="mt-4 overflow-x-auto">
-      <div className="min-w-[1440px]">
+      <div className="min-w-[1160px]">
         <div
           className={`${COLS} sticky top-0 z-10 items-end border-b border-navy-200 bg-card/95 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground backdrop-blur`}
         >
@@ -175,7 +180,6 @@ export function Pricelist({
           <span>Product Details</span>
           <span>Packing &amp; Production</span>
           <span>Pricing</span>
-          <span aria-hidden />
         </div>
 
         <div className="mt-3 flex flex-col gap-3">
@@ -215,12 +219,41 @@ export function Pricelist({
 
 function Kv({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[84px_1fr] items-baseline gap-x-3">
-      <span className="text-[11px] uppercase leading-snug tracking-[0.04em] text-muted-foreground">
+    <div className="grid min-h-6 grid-cols-[96px_minmax(0,1fr)] items-baseline gap-x-3">
+      <span className="truncate whitespace-nowrap text-[11px] uppercase leading-6 tracking-[0.04em] text-muted-foreground">
         {label}
       </span>
-      <span className="min-w-0 text-[13px] leading-snug text-navy-700">{children}</span>
+      <span className="min-w-0 text-[14px] leading-6 text-navy-700">{children}</span>
     </div>
+  );
+}
+
+/**
+ * STATUS chips only — one geometry for every state. Actions are never chips.
+ */
+function StatusChip({
+  tone,
+  title,
+  children,
+}: {
+  tone: "ready" | "warn" | "hidden";
+  title?: string;
+  children: React.ReactNode;
+}) {
+  const tones = {
+    ready: "bg-lime-100 text-navy-700",
+    warn: "bg-amber-100 text-amber-800",
+    hidden: "bg-n-700 text-white",
+  } as const;
+  return (
+    <span
+      {...(title ? { title } : {})}
+      className={`inline-flex h-[18px] items-center rounded-full px-2 text-[11px] font-semibold leading-none ${tones[tone]} ${
+        title ? "cursor-help" : ""
+      }`}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -230,20 +263,14 @@ function Kv({ label, children }: { label: React.ReactNode; children: React.React
  * also use. It says nothing about customer visibility.
  */
 function CostingBadge({ missing }: { missing: MissingField[] }) {
-  if (!missing.length) {
-    return (
-      <span className="w-fit rounded-full bg-lime-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-700">
-        Costing ready
-      </span>
-    );
-  }
+  if (!missing.length) return <StatusChip tone="ready">Costing ready</StatusChip>;
   return (
-    <span
+    <StatusChip
+      tone="warn"
       title={`Missing for costing: ${missing.map((field) => field.label).join(", ")}`}
-      className="w-fit cursor-help rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-600"
     >
       Incomplete · {missing.length} missing
-    </span>
+    </StatusChip>
   );
 }
 
@@ -321,16 +348,26 @@ function PricelistRow({
     .map((row) => ({ value: row.id, label: row.name }));
 
   return (
-    <div className={`${COLS} items-start py-3.5`}>
+    <div
+      className={`${COLS} items-start py-3.5 ${
+        product.is_active ? "" : "bg-n-50/70"
+      }`}
+    >
       {/* Image */}
       <div className="flex flex-col gap-2">
         <div className="grid grid-cols-2 gap-2">
           <ImageSlot
             label="Product Image"
             path={images[0]}
+            dim={!product.is_active}
             onOpen={() => setImagesOpen(true)}
           />
-          <ImageSlot label="Reference" path={images[1]} onOpen={() => setImagesOpen(true)} />
+          <ImageSlot
+            label="Reference"
+            path={images[1]}
+            dim={!product.is_active}
+            onOpen={() => setImagesOpen(true)}
+          />
         </div>
         <button
           type="button"
@@ -350,8 +387,9 @@ function PricelistRow({
           <InlineField
             className="flex-1"
             value={product.name}
+            wrap
             display={
-              <span className="text-[13px] font-semibold text-navy-700">
+              <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-navy-700">
                 {memberDisplayName(product, sourcing)}
               </span>
             }
@@ -361,25 +399,31 @@ function PricelistRow({
           <RowKebab product={product} saveProduct={saveProduct} onDuplicated={onDuplicated} />
         </div>
 
+        {/* STATUS chips — one consistent row, directly under the product name. */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <CostingBadge missing={missing} />
+          {!product.is_active ? <StatusChip tone="hidden">Hidden</StatusChip> : null}
+        </div>
+
+        {/* Variant is an ACTION, not a status — quiet link affordance. */}
         <InlineField
           value={sourcing?.variant_label ?? ""}
           placeholder="Variant"
           autoEdit={focusVariant}
           display={
-            <span className="w-fit rounded-full bg-navy-100 px-2 py-0.5 text-[11px] font-medium text-navy-700">
-              {sourcing?.variant_label || "Add variant"}
-            </span>
+            sourcing?.variant_label ? (
+              <span className="text-[13px] text-navy-700">
+                <span className="text-muted-foreground">Variant · </span>
+                {sourcing.variant_label}
+              </span>
+            ) : (
+              <span className="text-[12px] font-medium text-navy-500 underline decoration-dotted underline-offset-2 hover:text-navy-700">
+                + Add variant
+              </span>
+            )
           }
           save={(raw) => savePacking({ variant_label: raw.trim() || null })}
         />
-
-        {!product.is_active ? (
-          <span className="w-fit rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-navy-600">
-            Hidden
-          </span>
-        ) : null}
-
-        <CostingBadge missing={missing} />
 
         <div className="mt-0.5 flex flex-col gap-1">
           <Kv label="Supplier">
@@ -401,7 +445,7 @@ function PricelistRow({
               save={(next) => savePacking({ supplier_id: next || null })}
             />
           </Kv>
-          <Kv label="Supplier item number">
+          <Kv label="Supplier item #">
             <span className="flex min-w-0 items-center gap-1.5">
               <span className="shrink-0 rounded bg-navy-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-navy-700">
                 {supplier?.code ?? "—"}
@@ -413,9 +457,10 @@ function PricelistRow({
               />
             </span>
           </Kv>
-          <Kv label="Supplier item name">
+          <Kv label="Item name">
             <InlineField
               value={sourcing?.supplier_item_name ?? ""}
+              wrap
               save={(raw) => savePacking({ supplier_item_name: raw.trim() || null })}
             />
           </Kv>
@@ -452,12 +497,14 @@ function PricelistRow({
         <Kv label="Material">
           <InlineField
             value={product.material ?? ""}
+            wrap
             save={(raw) => saveProduct({ material: raw.trim() || null })}
           />
         </Kv>
         <Kv label="Size">
           <InlineField
             value={product.size ?? ""}
+            wrap
             save={(raw) => saveProduct({ size: raw.trim() || null })}
           />
         </Kv>
@@ -467,6 +514,7 @@ function PricelistRow({
               <Kv label={labelName(row.detail_label_id)}>
                 <InlineField
                   value={row.value}
+                  wrap
                   save={async (raw) => {
                     await updateProductDetailValue(row.id, raw);
                     await refreshAttributes();
@@ -507,98 +555,103 @@ function PricelistRow({
       <div className="flex min-w-0 flex-col gap-1">
         <Kv label="Pcs / ctn">
           <InlineField
+            className="w-16"
             value={numberText(sourcing?.carton_pack)}
             numeric
             validate={positiveProblem}
             save={(raw) => savePacking({ carton_pack: numOrNull(raw) })}
           />
         </Kv>
-        <Kv
-          label={
-            <span className="inline-flex items-center gap-1">
-              L × W × H
-              <UnitSwitch
-                options={["cm", "in"] as const}
-                value={units.dimension}
-                auto={units.dimensionAuto}
-                ariaLabel={`Dimension unit for ${product.name}`}
-                unitColumn="dimension_unit"
-                fields={[
-                  { key: "carton_length", label: "Length", value: sourcing?.carton_length ?? null },
-                  { key: "carton_width", label: "Width", value: sourcing?.carton_width ?? null },
-                  { key: "carton_height", label: "Height", value: sourcing?.carton_height ?? null },
-                ]}
-                convert={(value, from, to) =>
-                  convertLength(value, from as DimensionUnit, to as DimensionUnit, constants)
-                }
-                onApply={(patch) => savePacking(patch as never)}
-              />
-            </span>
-          }
-        >
+        <Kv label="L × W × H">
           <span className="flex flex-nowrap items-center gap-1">
             <InlineField
-              className="w-11 shrink-0"
+              className="w-12 shrink-0"
               value={numberText(sourcing?.carton_length)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_length: numOrNull(raw) })}
             />
             <InlineField
-              className="w-11 shrink-0"
+              className="w-12 shrink-0"
               value={numberText(sourcing?.carton_width)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_width: numOrNull(raw) })}
             />
             <InlineField
-              className="w-11 shrink-0"
+              className="w-12 shrink-0"
               value={numberText(sourcing?.carton_height)}
               numeric
               validate={positiveProblem}
               save={(raw) => savePacking({ carton_height: numOrNull(raw) })}
             />
           </span>
-          <span className="block text-[11px] text-muted-foreground">
-            {cartonDims(
+        </Kv>
+        {/* Unit + computed carton: one muted line, aligned to the value edge. */}
+        <div className="flex min-w-0 items-center gap-1.5 pl-[108px]">
+          <UnitSwitch
+            options={["cm", "in"] as const}
+            value={units.dimension}
+            auto={units.dimensionAuto}
+            ariaLabel={`Dimension unit for ${product.name}`}
+            unitColumn="dimension_unit"
+            fields={[
+              { key: "carton_length", label: "Length", value: sourcing?.carton_length ?? null },
+              { key: "carton_width", label: "Width", value: sourcing?.carton_width ?? null },
+              { key: "carton_height", label: "Height", value: sourcing?.carton_height ?? null },
+            ]}
+            convert={(value, from, to) =>
+              convertLength(value, from as DimensionUnit, to as DimensionUnit, constants)
+            }
+            onApply={(patch) => savePacking(patch as never)}
+          />
+          {cbm != null ? (
+            <span
+              title={`${cartonDims(
+                sourcing?.carton_length ?? null,
+                sourcing?.carton_width ?? null,
+                sourcing?.carton_height ?? null,
+                units.dimension,
+              )} · ${cbm} CBM`}
+              className="truncate text-[11px] leading-5 text-muted-foreground"
+            >
+              {cartonDims(
               sourcing?.carton_length ?? null,
               sourcing?.carton_width ?? null,
               sourcing?.carton_height ?? null,
               units.dimension,
-            )}
-            {cbm != null ? ` · ${cbm} CBM` : ""}
+              )}
+              {` · ${cbm} CBM`}
+            </span>
+          ) : null}
+        </div>
+        <Kv label="Weight">
+          <span className="flex flex-nowrap items-center gap-1.5">
+            <InlineField
+              className="w-16 shrink-0"
+              value={numberText(sourcing?.carton_weight)}
+              display={weightLabel(sourcing?.carton_weight ?? null, units.weight)}
+              numeric
+              validate={positiveProblem}
+              save={(raw) => savePacking({ carton_weight: numOrNull(raw) })}
+            />
+            <UnitSwitch
+              options={["kg", "lb"] as const}
+              value={units.weight}
+              auto={units.weightAuto}
+              ariaLabel={`Weight unit for ${product.name}`}
+              unitColumn="weight_unit"
+              fields={[
+                { key: "carton_weight", label: "Weight", value: sourcing?.carton_weight ?? null },
+              ]}
+              convert={(value, from, to) =>
+                convertWeight(value, from as WeightUnit, to as WeightUnit, constants)
+              }
+              onApply={(patch) => savePacking(patch as never)}
+            />
           </span>
         </Kv>
-        <Kv
-          label={
-            <span className="inline-flex items-center gap-1">
-              Weight
-              <UnitSwitch
-                options={["kg", "lb"] as const}
-                value={units.weight}
-                auto={units.weightAuto}
-                ariaLabel={`Weight unit for ${product.name}`}
-                unitColumn="weight_unit"
-                fields={[
-                  { key: "carton_weight", label: "Weight", value: sourcing?.carton_weight ?? null },
-                ]}
-                convert={(value, from, to) =>
-                  convertWeight(value, from as WeightUnit, to as WeightUnit, constants)
-                }
-                onApply={(patch) => savePacking(patch as never)}
-              />
-            </span>
-          }
-        >
-          <InlineField
-            value={numberText(sourcing?.carton_weight)}
-            display={weightLabel(sourcing?.carton_weight ?? null, units.weight)}
-            numeric
-            validate={positiveProblem}
-            save={(raw) => savePacking({ carton_weight: numOrNull(raw) })}
-          />
-        </Kv>
-        <Kv label="Lead time (days)">
+        <Kv label="Lead time">
           <span className="flex flex-nowrap items-center gap-1">
             <InlineField
               className="w-10 shrink-0"
@@ -613,13 +666,16 @@ function PricelistRow({
               numeric
               save={(raw) => saveProduct({ production_max_days: numOrNull(raw) })}
             />
-          </span>
-          <span className="block text-[11px] text-muted-foreground">
-            {productionLabel(product.production_min_days, product.production_max_days)}
+            <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+              {product.production_min_days == null && product.production_max_days == null
+                ? productionLabel(product.production_min_days, product.production_max_days)
+                : "days"}
+            </span>
           </span>
         </Kv>
         <Kv label="MOQ">
           <InlineField
+            className="w-16"
             value={product.moq == null ? "" : String(product.moq)}
             numeric
             validate={moqProblem}
@@ -629,14 +685,14 @@ function PricelistRow({
       </div>
 
       {/* Pricing */}
-      <DecorationPricing
-        productId={product.id}
-        decorations={decorations}
-        methods={methods}
-        details={details}
-      />
-
-      <span aria-hidden />
+      <div className="min-w-0">
+        <DecorationPricing
+          productId={product.id}
+          decorations={decorations}
+          methods={methods}
+          details={details}
+        />
+      </div>
 
       <Sheet open={imagesOpen} onOpenChange={setImagesOpen}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
@@ -663,10 +719,12 @@ function PricelistRow({
 function ImageSlot({
   label,
   path,
+  dim,
   onOpen,
 }: {
   label: string;
   path: string | undefined;
+  dim?: boolean;
   onOpen: () => void;
 }) {
   return (
@@ -677,7 +735,12 @@ function ImageSlot({
       className="group relative flex aspect-square w-full flex-col items-center justify-center overflow-hidden rounded-lg border border-navy-100 bg-navy-50"
     >
       {path ? (
-        <img src={imageSrc(path)} alt="" loading="lazy" className="size-full object-cover" />
+        <img
+          src={imageSrc(path)}
+          alt=""
+          loading="lazy"
+          className={`size-full object-cover ${dim ? "opacity-50 saturate-[0.35]" : ""}`}
+        />
       ) : (
         <span className="flex flex-col items-center gap-1 text-muted-foreground">
           <ImageIcon className="size-5" />

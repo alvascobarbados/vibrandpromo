@@ -95,7 +95,13 @@ export function CatalogHome({ page, viewMode = "customer" }: { page: number; vie
   if (isDesktop || viewMode === "supplier") {
     return (
       <SiteLayout viewMode={viewMode}>
-        <div className="site-container xl:max-w-[1344px] py-8 pb-16">
+        <div
+          className={
+            viewMode === "supplier"
+              ? "mx-auto w-full max-w-[1920px] px-4 py-8 pb-16 lg:px-8"
+              : "site-container py-8 pb-16 xl:max-w-[1344px]"
+          }
+        >
           <h1 className="sr-only">Vibrand promotional products catalogue</h1>
           <DesktopCatalog page={page} />
         </div>

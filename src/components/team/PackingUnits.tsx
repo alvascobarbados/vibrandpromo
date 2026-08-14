@@ -91,9 +91,9 @@ export function UnitSwitch({
         {auto ? (
           <span
             title="Inherited from the supplier's unit system"
-            className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+            className="rounded bg-n-100 px-1 py-px text-[10px] font-medium uppercase leading-4 tracking-wide text-n-500"
           >
-            auto
+            Auto
           </span>
         ) : null}
       </span>
