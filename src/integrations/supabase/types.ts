@@ -675,7 +675,6 @@ export type Database = {
           id: string
           images: string[]
           inventory_source: string
-          is_active: boolean
           is_featured: boolean
           material: string | null
           moq: number | null
@@ -686,11 +685,12 @@ export type Database = {
           rush_enabled: boolean
           rush_production_max_days: number | null
           rush_production_min_days: number | null
-          shipping_methods: string
+          shipping_methods: string | null
           show_price: boolean
           size: string | null
           sku: string | null
           slug: string
+          status: string
           subcategory_id: string
           updated_at: string
           weight: string | null
@@ -707,7 +707,6 @@ export type Database = {
           id?: string
           images?: string[]
           inventory_source?: string
-          is_active?: boolean
           is_featured?: boolean
           material?: string | null
           moq?: number | null
@@ -718,11 +717,12 @@ export type Database = {
           rush_enabled?: boolean
           rush_production_max_days?: number | null
           rush_production_min_days?: number | null
-          shipping_methods?: string
+          shipping_methods?: string | null
           show_price?: boolean
           size?: string | null
           sku?: string | null
           slug: string
+          status?: string
           subcategory_id: string
           updated_at?: string
           weight?: string | null
@@ -739,7 +739,6 @@ export type Database = {
           id?: string
           images?: string[]
           inventory_source?: string
-          is_active?: boolean
           is_featured?: boolean
           material?: string | null
           moq?: number | null
@@ -750,11 +749,12 @@ export type Database = {
           rush_enabled?: boolean
           rush_production_max_days?: number | null
           rush_production_min_days?: number | null
-          shipping_methods?: string
+          shipping_methods?: string | null
           show_price?: boolean
           size?: string | null
           sku?: string | null
           slug?: string
+          status?: string
           subcategory_id?: string
           updated_at?: string
           weight?: string | null
