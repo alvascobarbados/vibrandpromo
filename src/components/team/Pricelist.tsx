@@ -24,6 +24,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { IncludedItems } from "@/components/team/IncludedItems";
+import { costingReadyMissing } from "@/lib/costing-gate";
+import { buildPricelistItems, memberDisplayName } from "@/lib/pricelist-groups";
+import {
+  productIncludesQuery,
+  type ProductInclude,
+} from "@/lib/product-includes";
 import {
   imageSrc,
   productionLabel,
@@ -43,11 +51,11 @@ import {
 import {
   cartonDims,
   duplicateProduct,
+  duplicateProductAsVariant,
   numOrNull,
   numberText,
   positiveProblem,
   relativeTime,
-  skuFamily,
   updateProductFields,
   weightLabel,
 } from "@/lib/pricelist";
@@ -103,8 +111,10 @@ export function Pricelist({
   const decorations = useQuery(productDecorationsQuery);
   const attributeLabels = useQuery(detailLabelsQuery);
   const attributes = useQuery(productDetailsQuery);
+  const includes = useQuery(productIncludesQuery);
   const settings = useQuery(appSettingsQuery);
   const constants = constantsFrom(settings.data);
+  const [focusVariantFor, setFocusVariantFor] = useState<string | null>(null);
 
   const sourcingByProduct = new Map(
     (sourcing.data ?? []).map((row) => [row.product_id, row] as const),
@@ -121,20 +131,18 @@ export function Pricelist({
     list.push(row);
     decorationsByProduct.set(row.product_id, list);
   }
-
-  /** Group by SKU family; single-product families render without a header. */
-  const families: Array<{ key: string; items: Product[] }> = [];
-  const index = new Map<string, number>();
-  for (const product of products) {
-    const key = skuFamily(product.sku) || product.id;
-    const at = index.get(key);
-    if (at == null) {
-      index.set(key, families.length);
-      families.push({ key, items: [product] });
-    } else {
-      families[at]?.items.push(product);
-    }
+  const includesByProduct = new Map<string, ProductInclude[]>();
+  for (const row of includes.data ?? []) {
+    const list = includesByProduct.get(row.product_id) ?? [];
+    list.push(row);
+    includesByProduct.set(row.product_id, list);
   }
+
+  /**
+   * GROUPING — pure name-based (normalized name + supplier), computed at render.
+   * No stored link: renaming a product joins/leaves its family immediately.
+   */
+  const items = buildPricelistItems(products, sourcingByProduct);
 
   const renderRow = (product: Product) => (
     <PricelistRow
@@ -150,7 +158,10 @@ export function Pricelist({
       details={details.data ?? []}
       attributeLabels={attributeLabels.data ?? []}
       attributes={attributesByProduct.get(product.id) ?? []}
+      includes={includesByProduct.get(product.id) ?? []}
       constants={constants}
+      focusVariant={focusVariantFor === product.id}
+      onDuplicated={setFocusVariantFor}
     />
   );
 
@@ -169,18 +180,18 @@ export function Pricelist({
         </div>
 
         <div className="mt-3 flex flex-col gap-3">
-          {families.map((family) =>
-            family.items.length > 1 ? (
+          {items.map((item) =>
+            item.type === "group" ? (
               <div
-                key={family.key}
+                key={`${item.supplierId ?? "none"}-${item.parentName}`}
                 className="rounded-xl border border-navy-200 bg-card/60"
               >
                 <div className="flex items-center justify-between gap-2 border-b border-navy-100 px-[18px] py-2">
                   <p className="flex items-center gap-1.5 text-xs font-semibold text-navy-700">
                     <Link2 className="size-3.5 text-navy-500" />
-                    {sharedName(family.items)}
+                    {item.parentName}
                     <span className="font-normal text-muted-foreground">
-                      · {family.items.length} variants
+                      · {item.members.length} variants
                     </span>
                   </p>
                   <span className="rounded-full bg-lime-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-700">
@@ -188,12 +199,12 @@ export function Pricelist({
                   </span>
                 </div>
                 <div className="flex flex-col divide-y divide-navy-100">
-                  {family.items.map(renderRow)}
+                  {item.members.map(renderRow)}
                 </div>
               </div>
             ) : (
-              <div key={family.key} className="rounded-xl border border-navy-100 bg-card/60">
-                {family.items.map(renderRow)}
+              <div key={item.product.id} className="rounded-xl border border-navy-100 bg-card/60">
+                {renderRow(item.product)}
               </div>
             ),
           )}
@@ -201,20 +212,6 @@ export function Pricelist({
       </div>
     </div>
   );
-}
-
-/** Family header name: the longest common prefix of the variants' names. */
-function sharedName(items: Product[]) {
-  const names = items.map((item) => item.name);
-  const first = names[0] ?? "";
-  let end = first.length;
-  for (const name of names.slice(1)) {
-    let i = 0;
-    while (i < end && i < name.length && first[i] === name[i]) i += 1;
-    end = i;
-  }
-  const trimmed = first.slice(0, end).replace(/[\s\-–—/·]+$/, "").trim();
-  return trimmed.length >= 3 ? trimmed : first;
 }
 
 function Kv({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
