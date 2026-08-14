@@ -306,6 +306,18 @@ function AdminProducts() {
     setActiveCell({ rowId: product.id, col });
   }
 
+  /** Row expansion is chevron/thumbnail only now — cells own single/double clicks. */
+  function toggleOpen(id: string) {
+    setOpenIds((prev) => (prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id]));
+    setEditingId(null);
+  }
+
+  function startCellUnused(product: AdminProductRow, col: EditableCell) {
+    setCellError(null);
+    setFrozenOrder((prev) => prev ?? sorted.map((row) => row.id));
+    setActiveCell({ rowId: product.id, col });
+  }
+
   /** Inline saves reuse validateForm + persistProduct — the editors' own path. */
   async function saveCell(
     product: AdminProductRow,
