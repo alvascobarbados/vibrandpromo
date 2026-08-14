@@ -20,12 +20,24 @@ export function IncludedItems({
   productId,
   rows,
   onChanged,
+  adding: controlledAdding,
+  onAddingChange,
+  hideTrigger,
 }: {
   productId: string;
   rows: ProductInclude[];
   onChanged: () => Promise<unknown>;
+  /** The column footer can own the "+ Included item" link instead of this block. */
+  adding?: boolean;
+  onAddingChange?: (next: boolean) => void;
+  hideTrigger?: boolean;
 }) {
-  const [adding, setAdding] = useState(false);
+  const [localAdding, setLocalAdding] = useState(false);
+  const adding = controlledAdding ?? localAdding;
+  const setAdding = (next: boolean) => {
+    if (onAddingChange) onAddingChange(next);
+    else setLocalAdding(next);
+  };
   const [qty, setQty] = useState("1");
   const [description, setDescription] = useState("");
   const sorted = [...rows].sort((a, b) => a.sort_order - b.sort_order);
@@ -141,7 +153,7 @@ export function IncludedItems({
             Add
           </button>
         </form>
-      ) : (
+      ) : hideTrigger ? null : (
         <button
           type="button"
           onClick={() => setAdding(true)}

@@ -30,12 +30,16 @@ export function AddAttributePopover({
   usedLabelIds,
   nextSortOrder,
   onAdded,
+  triggerLabel,
+  triggerClassName,
 }: {
   productId: string;
   labels: DetailLabel[];
   usedLabelIds: Set<string>;
   nextSortOrder: number;
   onAdded: () => void | Promise<unknown>;
+  triggerLabel?: string;
+  triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -95,9 +99,12 @@ export function AddAttributePopover({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="mt-1 w-fit rounded-full border border-dashed border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-lime-500 hover:text-foreground"
+          className={
+            triggerClassName ??
+            "mt-1 w-fit rounded-full border border-dashed border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-lime-500 hover:text-foreground"
+          }
         >
-          + Add attribute
+          {triggerLabel ?? "+ Add attribute"}
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 p-0 z-[60]">
