@@ -403,33 +403,34 @@ function PricelistRow({
 
   return (
     <div
-      className={`${COLS} items-start border-l-2 py-3.5 ${
-        product.status === "live" ? "border-transparent" : "border-amber-400"
+      className={`${COLS} items-start border-l-[3px] py-3.5 ${
+        product.status === "live"
+          ? "border-transparent"
+          : "border-amber-400 bg-amber-50/80"
       }`}
     >
       {/* Image */}
-      <div className="flex flex-col gap-1.5">
+      {/* Fixed-width cell, one item per row: hero, thumb, Upload, timestamp. */}
+      <div className="flex w-[120px] flex-col gap-1.5">
         <ImageSlot
           label="Product image"
           path={images[0]}
           onOpen={() => setImagesOpen(true)}
         />
-        <div className="flex items-center gap-2">
-          <ImageSlot
-            label="Reference"
-            path={images[1]}
-            className="size-[68px] shrink-0"
-            extra={images.length > 2 ? images.length - 2 : 0}
-            onOpen={() => setImagesOpen(true)}
-          />
-          <button
-            type="button"
-            onClick={() => setImagesOpen(true)}
-            className="inline-flex w-fit items-center gap-1.5 rounded-full border border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-navy-700 hover:bg-navy-50"
-          >
-            <Upload className="size-3" /> Upload
-          </button>
-        </div>
+        <ImageSlot
+          label="Reference"
+          path={images[1]}
+          className="size-[68px] shrink-0"
+          extra={images.length > 2 ? images.length - 2 : 0}
+          onOpen={() => setImagesOpen(true)}
+        />
+        <button
+          type="button"
+          onClick={() => setImagesOpen(true)}
+          className="inline-flex w-fit items-center gap-1.5 rounded-full border border-navy-200 px-2.5 py-1 text-[11px] font-semibold text-navy-700 hover:bg-navy-50"
+        >
+          <Upload className="size-3" /> Upload
+        </button>
         <p className="text-[11px] text-muted-foreground">
           Updated {relativeTime(product.updated_at)}
         </p>
