@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProductCard } from "@/components/site/ProductCard";
-import { ProductExpandedCard } from "@/components/site/ProductExpandedCard";
 import { ViewToggle, useCatalogView } from "@/components/site/ViewToggle";
 import { Pricelist } from "@/components/team/Pricelist";
 import { DesktopFilterSidebar } from "@/components/site/DesktopFilterSidebar";
@@ -271,7 +270,8 @@ export function DesktopCatalog({
         ) : expanded ? (
           <div className="mt-4 flex flex-col gap-4">
             {visible.map((product) => (
-              <ProductExpandedCard
+              <ProductCard
+                viewMode="expanded"
                 key={product.id}
                 product={product}
                 pricing={pricingById.get(product.id)}
