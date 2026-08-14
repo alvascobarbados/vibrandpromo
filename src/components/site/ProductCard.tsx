@@ -105,7 +105,8 @@ function PricingBubble({
   return (
     <div className="rounded-xl border border-n-200 bg-white p-3">
       <p className="card-value text-[13px]">{bubble.methodName}</p>
-      <table className="mt-2 w-full border-separate border-spacing-0 text-sm tabular-nums">
+      <div className="-mx-1 mt-2 overflow-x-auto px-1">
+      <table className="w-full min-w-max border-separate border-spacing-0 text-sm tabular-nums">
         <thead>
           <tr>
             <th className="sheet-kv-label py-1 text-left font-semibold" />
@@ -153,6 +154,7 @@ function PricingBubble({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
