@@ -510,41 +510,52 @@ export function ProductCard({
 
           {specs.length ? (
             <Section title="Product details">
-              {specs.map((spec) => (
-                <Kv key={spec.label} label={spec.label}>
-                  {String(product[spec.key])}
-                </Kv>
-              ))}
+              {specs
+                .filter((spec) => spec.line === "own")
+                .map((spec) => (
+                  <IconFact key={spec.label} icon={spec.icon} label={spec.label}>
+                    {String(product[spec.key])}
+                  </IconFact>
+                ))}
+              {specs.some((spec) => spec.line === "pair") ? (
+                <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
+                  {specs
+                    .filter((spec) => spec.line === "pair")
+                    .map((spec) => (
+                      <IconFact key={spec.label} icon={spec.icon} label={spec.label}>
+                        {String(product[spec.key])}
+                      </IconFact>
+                    ))}
+                </div>
+              ) : null}
             </Section>
           ) : null}
 
           {showProduction ? (
             <Section title="Production">
-              {product.moq != null ? <Kv label="MOQ">{specValue(product.moq)}</Kv> : null}
-              {showAir ? (
-                <Kv label="Air">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Plane className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+              <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
+                {product.moq != null ? (
+                  <span className="sheet-kv-value flex items-baseline gap-1.5">
+                    <span className="sheet-kv-label">MOQ</span>
+                    {specValue(product.moq)}
+                  </span>
+                ) : null}
+                {showAir ? (
+                  <IconFact icon={Plane} label="Air">
                     {air ?? "—"}
-                  </span>
-                </Kv>
-              ) : null}
-              {showSea ? (
-                <Kv label="Sea">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Ship className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+                  </IconFact>
+                ) : null}
+                {showSea ? (
+                  <IconFact icon={Ship} label="Sea">
                     {sea ?? "—"}
-                  </span>
-                </Kv>
-              ) : null}
-              {rush ? (
-                <Kv label="Rush">
-                  <span className="inline-flex items-center gap-1.5">
-                    <RushChip />
+                  </IconFact>
+                ) : null}
+                {rush ? (
+                  <IconFact chip label="Rush">
                     {rush}
-                  </span>
-                </Kv>
-              ) : null}
+                  </IconFact>
+                ) : null}
+              </div>
             </Section>
           ) : null}
 
@@ -564,8 +575,16 @@ export function ProductCard({
               if (!carton && !freight) return null;
               return (
                 <Section title="Packaging">
-                  {carton ? <Kv label="Carton">{carton}</Kv> : null}
-                  {freight ? <Kv label="Freight / ctn">{freight}</Kv> : null}
+                  {carton ? (
+                    <IconFact icon={Package} label="Carton">
+                      {carton}
+                    </IconFact>
+                  ) : null}
+                  {freight ? (
+                    <IconFact icon={Container} label="Freight per carton">
+                      {freight}
+                    </IconFact>
+                  ) : null}
                 </Section>
               );
             })()
