@@ -18,17 +18,15 @@ function Row({
   flash,
   onQuantity,
   onRemove,
-  onNavigate,
 }: {
   item: QuoteItem;
   flash: boolean;
   onQuantity: (value: number) => void;
   onRemove: () => void;
-  onNavigate: () => void;
 }) {
   return (
     <li
-      className={`flex gap-3 rounded-lg p-2 transition-colors duration-[1200ms] ease-out ${
+      className={`flex gap-3 px-2 py-3 transition-colors duration-[1200ms] ease-out ${
         flash ? "bg-lime-50" : "bg-transparent"
       }`}
     >
@@ -46,15 +44,14 @@ function Row({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <button
-          type="button"
-          onClick={onNavigate}
-          className="line-clamp-2 text-left text-sm font-medium text-foreground hover:underline"
-        >
-          {item.name}
-        </button>
-        <div className="mt-2 w-[168px] [container-type:inline-size]">
-          <QuantityStepper quantity={item.quantity} moq={item.moq ?? null} onChange={onQuantity} />
+        <p className="line-clamp-2 text-sm font-medium text-foreground">{item.name}</p>
+        <div className="mt-2">
+          <QuantityStepper
+            quantity={item.quantity}
+            moq={item.moq ?? null}
+            onChange={onQuantity}
+            size="compact"
+          />
         </div>
       </div>
       <button
@@ -101,6 +98,7 @@ export function QuoteDrawer() {
         side="right"
         className="flex w-full flex-col gap-0 p-0 sm:max-w-[400px]"
         aria-describedby={undefined}
+        onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <div className="flex items-center justify-between border-b border-n-200 px-4 py-4">
           <div>
@@ -128,7 +126,7 @@ export function QuoteDrawer() {
             </button>
           </div>
         ) : (
-          <ul className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
+          <ul className="flex-1 divide-y divide-n-100 overflow-y-auto px-2 py-1">
             {sorted.map((item) => (
               <Row
                 key={item.productId}
@@ -136,17 +134,6 @@ export function QuoteDrawer() {
                 flash={flashId === item.productId}
                 onQuantity={(value) => updateItem(item.productId, { quantity: value })}
                 onRemove={() => removeItem(item.productId)}
-                onNavigate={() => {
-                  closeDrawer();
-                  void navigate({
-                    to: "/products",
-                    search: (prev: Record<string, unknown>) => ({
-                      ...prev,
-                      q: item.name,
-                      page: 1,
-                    }),
-                  });
-                }}
               />
             ))}
           </ul>
@@ -159,7 +146,7 @@ export function QuoteDrawer() {
               closeDrawer();
               void navigate({ to: "/quote" });
             }}
-            className="card-value inline-flex h-11 w-full items-center justify-center rounded-full bg-navy-700 !text-white shadow-card outline-none transition-colors hover:bg-navy-500 focus-visible:ring-2 focus-visible:ring-lime-500"
+            className="card-value inline-flex h-10 w-full items-center justify-center rounded-full bg-navy-700 !text-white shadow-card outline-none transition-colors hover:bg-navy-500 focus-visible:ring-2 focus-visible:ring-lime-500"
           >
             Review &amp; request quote
           </button>
