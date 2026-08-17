@@ -4,6 +4,8 @@ export type QuoteItem = {
   productId: string;
   slug: string;
   name: string;
+  /** Optional item number; older stored items may not have it. */
+  sku?: string | null;
   image: string | null;
   quantity: number;
   notes: string;

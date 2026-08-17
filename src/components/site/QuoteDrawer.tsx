@@ -44,6 +44,7 @@ function Row({
         )}
       </div>
       <div className="min-w-0 flex-1">
+        {item.sku ? <p className="card-label truncate">{item.sku}</p> : null}
         <p className="line-clamp-2 text-sm font-medium text-foreground">{item.name}</p>
         <div className="mt-2">
           <QuantityStepper
