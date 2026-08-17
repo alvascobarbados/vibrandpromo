@@ -54,7 +54,7 @@ function Logo({ viewMode }: { viewMode: ViewMode }) {
         className="hidden h-8 w-auto sm:block"
       />
       {supplier ? (
-        <span className="hidden text-sm font-semibold uppercase tracking-wide text-lime-500 sm:inline">
+        <span className="mb-[3px] self-end rounded-[5px] bg-lime-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-navy-900">
           Supplier
         </span>
       ) : null}

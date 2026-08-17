@@ -31,6 +31,8 @@ export const KNOWN_SEARCH_PARAMS = new Set<string>([
   "edit",
   /** /team costing-gate filter (staff-only, still URL state with a chip). */
   "ready",
+  /** /team supplier filter (staff-only, URL state with removable chips). */
+  "sup",
   /** Desktop catalogue layout toggle (grid | expanded) — never narrows the list. */
   "view",
 ]);
