@@ -505,7 +505,7 @@ export function ProductCard({
           ) : null}
 
           <div className="mt-4 max-w-[336px] border-t border-n-200 pt-3">
-            <AddToQuoteRow product={product} layout="stacked" onQuantityChange={setStepperQty} />
+            <AddToQuoteRow product={product} variant="primary" onQuantityChange={setStepperQty} />
           </div>
         </div>
 

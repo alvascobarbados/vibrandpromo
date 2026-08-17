@@ -62,14 +62,18 @@ export function AddToQuoteRow({
         : "border-n-200 bg-white hover:border-navy-700 hover:bg-navy-700 hover:!text-white active:border-navy-700 active:bg-navy-700 active:!text-white";
 
   return (
-    <div className="flex flex-col items-stretch gap-2 [@container(min-width:340px)]:flex-row">
+    <div
+      className={`flex items-stretch gap-2 ${
+        variant === "primary" ? "flex-row" : "flex-col [@container(min-width:340px)]:flex-row"
+      }`}
+    >
       <div className="shrink-0">
         <QuantityStepper quantity={quantity} moq={product.moq} onChange={setQty} tone={tone} />
       </div>
       <button
         type="button"
         onClick={add}
-        className={`card-value inline-flex h-10 min-h-10 w-full min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 transition-colors duration-[150ms] ease-out [@container(min-width:340px)]:w-auto ${buttonClass}`}
+        className={`card-value inline-flex h-10 min-h-10 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 transition-colors duration-[150ms] ease-out ${buttonClass}`}
       >
         <Plus className="size-3.5 shrink-0" /> Add to quote
       </button>
