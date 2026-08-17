@@ -19,6 +19,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+/** "2026-09-12" -> "12 Sep 2026" */
+function formatDeadline(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${d} ${months[m - 1]} ${y}`;
+}
+
 export function QuoteDetailDrawer({
   quote,
   items,
@@ -90,6 +98,9 @@ export function QuoteDetailDrawer({
                 </a>
               </Field>
               <Field label="Phone">{quote.phone || "—"}</Field>
+              {quote.in_hand_date ? (
+                <Field label="In-hand deadline">{formatDeadline(quote.in_hand_date)}</Field>
+              ) : null}
             </div>
 
             <div className="mt-5 border-t border-n-200 pt-4">

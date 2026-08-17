@@ -856,6 +856,7 @@ export type Database = {
           customer_name: string
           email: string
           id: string
+          in_hand_date: string | null
           internal_notes: string | null
           internal_notes_updated_at: string | null
           internal_notes_updated_by: string | null
@@ -872,6 +873,7 @@ export type Database = {
           customer_name: string
           email: string
           id?: string
+          in_hand_date?: string | null
           internal_notes?: string | null
           internal_notes_updated_at?: string | null
           internal_notes_updated_by?: string | null
@@ -888,6 +890,7 @@ export type Database = {
           customer_name?: string
           email?: string
           id?: string
+          in_hand_date?: string | null
           internal_notes?: string | null
           internal_notes_updated_at?: string | null
           internal_notes_updated_by?: string | null

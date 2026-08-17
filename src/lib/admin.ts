@@ -9,6 +9,7 @@ export type QuoteRequest = {
   phone: string | null;
   territory: string;
   message: string | null;
+  in_hand_date: string | null;
   artwork_url: string | null;
   status: string;
   created_at: string;
