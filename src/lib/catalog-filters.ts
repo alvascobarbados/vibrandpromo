@@ -28,6 +28,12 @@ export type CatalogSearch = {
    * `matchesReadyFilter` from src/lib/costing-gate.ts.
    */
   ready: string[];
+  /**
+   * STAFF-ONLY (/team) supplier filter: supplier CODES plus the literal "none"
+   * for products with no sourcing row / no supplier. Not a FilterGroupId, so it
+   * never takes part in `filterProducts` and is inert on the customer shop.
+   */
+  sup: string[];
 };
 
 export const EMPTY_SEARCH: CatalogSearch = {
@@ -43,6 +49,9 @@ export const EMPTY_SEARCH: CatalogSearch = {
   mat: [],
   ready: [],
 };
+
+export const SUPPLIER_LABEL = "Supplier";
+export const UNASSIGNED_SUPPLIER = "none";
 
 export const SORT_OPTIONS = [
   { value: "default", label: "Default" },
