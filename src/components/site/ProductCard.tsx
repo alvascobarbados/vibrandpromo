@@ -189,25 +189,30 @@ function MiniPricing({
   };
 
   return (
-    <div className="mt-3 hidden rounded-xl border border-n-200 p-2 [@container(min-width:220px)]:block">
-      <div className="flex items-center gap-1.5">
-        <p className="card-value min-w-0 flex-1 truncate text-[13px]">{bubble.methodName}</p>
-        <span className="sheet-kv-label shrink-0">CIF US$</span>
+    <div className="mt-2.5 hidden rounded-xl border border-n-200 p-2 [@container(min-width:220px)]:block">
+      <p className="text-[13px] font-semibold leading-snug text-navy-700 line-clamp-2">
+        {bubble.methodName}
+      </p>
+      <div className="mt-0.5 flex h-[18px] items-center">
+        <span className="sheet-kv-label">CIF US$</span>
         {bubbles.length > 1 ? (
-          <span className="flex shrink-0 items-center gap-1">
+          <span className="ml-auto flex shrink-0 items-center gap-1">
             <button
               type="button"
               aria-label="Previous method"
               onClick={() => setIndex((current) => (current - 1 + bubbles.length) % bubbles.length)}
-              className="inline-flex size-[18px] items-center justify-center rounded-full border border-n-200 text-n-600 hover:bg-n-100"
+              className="inline-flex size-[18px] items-center justify-center rounded-full text-n-600 outline-none transition-colors hover:text-navy-700 focus-visible:ring-2 focus-visible:ring-lime-500"
             >
               <ChevronLeft className="size-3" />
             </button>
+            <span className="text-[11px] tabular-nums text-n-500">
+              {Math.min(index, bubbles.length - 1) + 1} / {bubbles.length}
+            </span>
             <button
               type="button"
               aria-label="Next method"
               onClick={() => setIndex((current) => (current + 1) % bubbles.length)}
-              className="inline-flex size-[18px] items-center justify-center rounded-full border border-n-200 text-n-600 hover:bg-n-100"
+              className="inline-flex size-[18px] items-center justify-center rounded-full text-n-600 outline-none transition-colors hover:text-navy-700 focus-visible:ring-2 focus-visible:ring-lime-500"
             >
               <ChevronRight className="size-3" />
             </button>
@@ -856,7 +861,7 @@ export function ProductCard({
           qty={stepperQty}
         />
 
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-2.5">
           <AddToQuoteRow product={product} onQuantityChange={setStepperQty} />
         </div>
       </div>
