@@ -171,7 +171,9 @@ export function sortProducts(products: Product[], sort: string) {
 
 export function activeFilterCount(search: CatalogSearch) {
   return (
-    GROUP_IDS.reduce((total, group) => total + search[group].length, 0) + search.ready.length
+    GROUP_IDS.reduce((total, group) => total + search[group].length, 0) +
+    search.ready.length +
+    search.sup.length
   );
 }
 
