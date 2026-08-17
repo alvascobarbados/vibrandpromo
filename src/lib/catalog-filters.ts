@@ -48,8 +48,8 @@ export const EMPTY_SEARCH: CatalogSearch = {
   src: [],
   mat: [],
   ready: [],
-};
   sup: [],
+};
 
 export const SUPPLIER_LABEL = "Supplier";
 export const UNASSIGNED_SUPPLIER = "none";
@@ -93,6 +93,7 @@ export function parseCatalogSearch(raw: Record<string, unknown>): CatalogSearch 
     ready: toArray(raw["ready"]).filter(
       (value) => value === "ready" || value === "incomplete",
     ),
+    sup: toArray(raw["sup"]),
   };
 }
 
