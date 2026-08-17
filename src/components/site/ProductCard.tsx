@@ -368,10 +368,12 @@ function PricingBubble({
 function ExpandedImages({
   images,
   alt,
+  source,
   onOpen,
 }: {
   images: string[];
   alt: string;
+  source: string;
   onOpen: (index: number) => void;
 }) {
   const [active, setActive] = useState(0);
@@ -379,6 +381,7 @@ function ExpandedImages({
     return (
       <div className="image-field">
         <ProductPlaceholder className="size-full" />
+        <FlagBadge source={source} />
       </div>
     );
   }
@@ -395,6 +398,7 @@ function ExpandedImages({
           onClick={() => onOpen(active)}
           className="image-field-media cursor-zoom-in"
         />
+        <FlagBadge source={source} />
       </div>
       {images.length > 1 ? (
         <div className="mt-2 flex flex-wrap gap-1.5">
