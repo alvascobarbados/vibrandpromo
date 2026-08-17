@@ -368,10 +368,12 @@ function PricingBubble({
 function ExpandedImages({
   images,
   alt,
+  source,
   onOpen,
 }: {
   images: string[];
   alt: string;
+  source: string;
   onOpen: (index: number) => void;
 }) {
   const [active, setActive] = useState(0);
@@ -379,6 +381,7 @@ function ExpandedImages({
     return (
       <div className="image-field">
         <ProductPlaceholder className="size-full" />
+        <FlagBadge source={source} />
       </div>
     );
   }
@@ -395,6 +398,7 @@ function ExpandedImages({
           onClick={() => onOpen(active)}
           className="image-field-media cursor-zoom-in"
         />
+        <FlagBadge source={source} />
       </div>
       {images.length > 1 ? (
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -648,7 +652,12 @@ export function ProductCard({
       <article className="@container group relative grid gap-4 overflow-hidden rounded-2xl border border-n-200 bg-white p-3 lg:grid-cols-[300px_minmax(320px,380px)_1fr] lg:gap-6 lg:p-4">
         {editAffordance}
         <div className="min-w-0">
-          <ExpandedImages images={images} alt={product.name} onOpen={setLightboxIndex} />
+          <ExpandedImages
+            images={images}
+            alt={product.name}
+            source={product.inventory_source}
+            onOpen={setLightboxIndex}
+          />
         </div>
 
         <div className="min-w-0">
