@@ -18,17 +18,15 @@ function Row({
   flash,
   onQuantity,
   onRemove,
-  onNavigate,
 }: {
   item: QuoteItem;
   flash: boolean;
   onQuantity: (value: number) => void;
   onRemove: () => void;
-  onNavigate: () => void;
 }) {
   return (
     <li
-      className={`flex gap-3 rounded-lg p-2 transition-colors duration-[1200ms] ease-out ${
+      className={`flex gap-3 px-2 py-3 transition-colors duration-[1200ms] ease-out ${
         flash ? "bg-lime-50" : "bg-transparent"
       }`}
     >
@@ -46,15 +44,14 @@ function Row({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <button
-          type="button"
-          onClick={onNavigate}
-          className="line-clamp-2 text-left text-sm font-medium text-foreground hover:underline"
-        >
-          {item.name}
-        </button>
-        <div className="mt-2 w-[168px] [container-type:inline-size]">
-          <QuantityStepper quantity={item.quantity} moq={item.moq ?? null} onChange={onQuantity} />
+        <p className="line-clamp-2 text-sm font-medium text-foreground">{item.name}</p>
+        <div className="mt-2">
+          <QuantityStepper
+            quantity={item.quantity}
+            moq={item.moq ?? null}
+            onChange={onQuantity}
+            size="compact"
+          />
         </div>
       </div>
       <button

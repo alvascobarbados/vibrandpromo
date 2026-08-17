@@ -8,11 +8,13 @@ export function QuantityStepper({
   moq,
   onChange,
   tone = "light",
+  size = "default",
 }: {
   quantity: number;
   moq: number | null;
   onChange: (value: number) => void;
   tone?: "light" | "dark";
+  size?: "default" | "compact";
 }) {
   const floor = qtyFloor(moq);
   const [draft, setDraft] = useState(String(quantity));
@@ -45,10 +47,20 @@ export function QuantityStepper({
       ? "text-white hover:bg-white/15 disabled:text-white/30"
       : "text-n-700 hover:bg-n-200 disabled:text-n-400";
 
+  const compact = size === "compact";
+
   return (
-    <div className="relative w-full shrink-0 [@container(min-width:280px)]:w-auto">
+    <div
+      className={`relative shrink-0 ${
+        compact ? "w-auto" : "w-full [@container(min-width:280px)]:w-auto"
+      }`}
+    >
       <div
-        className={`flex h-10 w-full items-center justify-between rounded-full [@container(min-width:280px)]:inline-flex [@container(min-width:280px)]:w-auto [@container(min-width:280px)]:justify-start ${
+        className={`${
+          compact
+            ? "inline-flex h-9 w-auto items-center justify-start rounded-full"
+            : "flex h-10 w-full items-center justify-between rounded-full [@container(min-width:280px)]:inline-flex [@container(min-width:280px)]:w-auto [@container(min-width:280px)]:justify-start"
+        } ${
           tone === "dark" ? "border" : ""
         } ${shell}`}
       >
@@ -57,7 +69,9 @@ export function QuantityStepper({
           aria-label="Decrease quantity"
           disabled={quantity <= floor}
           onClick={() => onChange(stepQty(quantity, -1, moq))}
-          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-[150ms] ease-out focus-visible:ring-2 focus-visible:ring-lime-500 disabled:cursor-not-allowed disabled:hover:bg-transparent [@container(min-width:280px)]:size-9 ${btn}`}
+          className={`inline-flex shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-[150ms] ease-out focus-visible:ring-2 focus-visible:ring-lime-500 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
+            compact ? "size-8" : "size-10 [@container(min-width:280px)]:size-9"
+          } ${btn}`}
         >
           <Minus className="size-3.5" />
         </button>
@@ -80,7 +94,9 @@ export function QuantityStepper({
           type="button"
           aria-label="Increase quantity"
           onClick={() => onChange(stepQty(quantity, 1, moq))}
-          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-[150ms] ease-out focus-visible:ring-2 focus-visible:ring-lime-500 [@container(min-width:280px)]:size-9 ${btn}`}
+          className={`inline-flex shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-[150ms] ease-out focus-visible:ring-2 focus-visible:ring-lime-500 ${
+            compact ? "size-8" : "size-10 [@container(min-width:280px)]:size-9"
+          } ${btn}`}
         >
           <Plus className="size-3.5" />
         </button>
