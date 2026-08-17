@@ -1,4 +1,17 @@
-import { Info, Pencil, Plane, Ship } from "lucide-react";
+import {
+  Container,
+  Droplet,
+  Info,
+  Layers,
+  Package,
+  Palette,
+  Pencil,
+  Plane,
+  Ruler,
+  Sparkles,
+  Ship,
+  Weight,
+} from "lucide-react";
 import { useState } from "react";
 
 import { airAvailable, imageSrc, seaAvailable, specValue, type Product } from "@/lib/catalog";
@@ -20,13 +33,20 @@ import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
 /** Layout variants of the ONE product card. */
 export type ProductCardViewMode = "grid" | "expanded";
 
-const EXPANDED_SPECS: { label: string; key: keyof Product }[] = [
-  { label: "Material", key: "material" },
-  { label: "Size", key: "size" },
-  { label: "Capacity", key: "capacity" },
-  { label: "Weight", key: "weight" },
-  { label: "Colours", key: "colour_option" },
-  { label: "Features", key: "features" },
+type SpecIcon = typeof Layers;
+
+const EXPANDED_SPECS: {
+  label: string;
+  key: keyof Product;
+  icon: SpecIcon;
+  line: "own" | "pair";
+}[] = [
+  { label: "Material", key: "material", icon: Layers, line: "own" },
+  { label: "Features", key: "features", icon: Sparkles, line: "own" },
+  { label: "Size", key: "size", icon: Ruler, line: "pair" },
+  { label: "Capacity", key: "capacity", icon: Droplet, line: "pair" },
+  { label: "Weight", key: "weight", icon: Weight, line: "pair" },
+  { label: "Colours", key: "colour_option", icon: Palette, line: "pair" },
 ];
 
 /** Customer-side money: always explicit about the currency. */
@@ -57,12 +77,33 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Kv({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * Icon-led fact: icon replaces the label column. The fact word lives in the
+ * native tooltip plus an sr-only span; values wrap under themselves.
+ */
+function IconFact({
+  icon: Icon,
+  label,
+  chip = false,
+  children,
+}: {
+  icon?: SpecIcon;
+  label: string;
+  chip?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="grid grid-cols-[120px_1fr] items-baseline gap-x-2">
-      <span className="sheet-kv-label">{label}</span>
+    <span className="flex items-start gap-1.5" title={label}>
+      {chip ? (
+        <span className="mt-[2px] flex shrink-0 items-center">
+          <RushChip size="static" />
+        </span>
+      ) : Icon ? (
+        <Icon className="mt-[3px] size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+      ) : null}
+      <span className="sr-only">{label}</span>
       <span className="sheet-kv-value min-w-0">{children}</span>
-    </div>
+    </span>
   );
 }
 
