@@ -66,6 +66,7 @@ function bandFor(quantities: number[], qty: number) {
  */
 function PricingBubble({
   bubble,
+  quantities,
   showAir,
   showSea,
   air,
@@ -75,6 +76,7 @@ function PricingBubble({
   qty,
 }: {
   bubble: PublicDecorationPricing;
+  quantities: number[];
   showAir: boolean;
   showSea: boolean;
   air: string | null;
@@ -85,9 +87,6 @@ function PricingBubble({
 }) {
   const airTable = bubble.tables.find((table) => table.mode === "air");
   const seaTable = bubble.tables.find((table) => table.mode === "sea");
-  const quantities = Array.from(
-    new Set([...(airTable?.rows ?? []), ...(seaTable?.rows ?? [])].map((row) => row.qty)),
-  ).sort((a, b) => a - b);
   const band = bandFor(quantities, qty);
   const rows: {
     label: string;
@@ -96,9 +95,9 @@ function PricingBubble({
     lead: string | null;
     from?: "air" | "sea";
   }[] = [];
-  if (showAir && airTable) rows.push({ label: "Air", icon: Plane, lead: air, from: "air" });
-  if (showSea && seaTable) rows.push({ label: "Sea", icon: Ship, lead: sea, from: "sea" });
-  if (rush && airTable) rows.push({ label: "Rush", chip: true, lead: rush, from: "air" });
+  if (showAir) rows.push({ label: "Air", icon: Plane, lead: air, from: "air" });
+  if (showSea) rows.push({ label: "Sea", icon: Ship, lead: sea, from: "sea" });
+  if (rush) rows.push({ label: "Rush", chip: true, lead: rush, from: "air" });
   if (!quantities.length || !rows.length) return null;
 
   const cell = (from: "air" | "sea", value: number) => {
@@ -111,10 +110,10 @@ function PricingBubble({
     <div className="min-w-0 rounded-xl border border-n-200 bg-white p-3">
       <p className="card-value text-[13px]">{bubble.methodName}</p>
       <div className="-mx-1 mt-2 overflow-x-auto px-1">
-        <table className="w-full min-w-max border-separate border-spacing-0 text-sm tabular-nums">
+        <table className="w-full min-w-[560px] table-fixed border-separate border-spacing-0 text-sm tabular-nums">
           <thead>
             <tr>
-              <th className="sheet-kv-label py-1 text-left font-semibold" />
+              <th className="sheet-kv-label w-[176px] py-1 text-left font-semibold" />
               {quantities.map((value) => (
                 <th
                   key={value}
@@ -183,7 +182,7 @@ function ExpandedImages({
   const current = images[Math.min(active, images.length - 1)] ?? images[0]!;
   return (
     <div>
-      <div className="image-field overflow-hidden rounded-xl">
+      <div className="image-field image-field-bleed overflow-hidden rounded-xl">
         <img
           src={imageSrc(current, "card")}
           alt={alt}
@@ -431,6 +430,14 @@ export function ProductCard({
         ? [{ methodName: "Blank / undecorated", tables: pricing.tables }]
         : [];
     const priceBubbles = bubbles.length ? bubbles : fallbackBubble;
+    // One unified tier list across every method/table — computed at render only.
+    const unifiedQuantities = Array.from(
+      new Set(
+        priceBubbles.flatMap((bubble) =>
+          bubble.tables.flatMap((table) => table.rows.map((row) => row.qty)),
+        ),
+      ),
+    ).sort((a, b) => a - b);
     const showProduction = showAir || showSea || rush != null || product.moq != null;
 
     return (
@@ -511,6 +518,7 @@ export function ProductCard({
                   <PricingBubble
                     key={bubble.methodName}
                     bubble={bubble}
+                    quantities={unifiedQuantities}
                     showAir={showAir}
                     showSea={showSea}
                     air={air}
