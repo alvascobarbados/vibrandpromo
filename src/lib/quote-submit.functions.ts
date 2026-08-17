@@ -53,6 +53,14 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
       return { ok: true as const };
     }
 
+    // A deadline in the past is never a real request — reject before any write.
+    if (request.in_hand_date) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (request.in_hand_date < today) {
+        throw new Error("Please choose an in-hand deadline of today or later.");
+      }
+    }
+
     // Basic abuse guard: at most 5 submissions per hour per visitor.
     const { requestIpHash, countRecent, logAttempt } = await import("@/lib/rate-limit.server");
     const ipHash = await requestIpHash();
@@ -77,6 +85,7 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
         phone: request.phone ? request.phone : null,
         territory: request.territory,
         message: request.message ? request.message : null,
+        in_hand_date: request.in_hand_date ?? null,
         artwork_url: request.artwork_url ?? null,
       })
       .select("id")
@@ -152,6 +161,7 @@ export const submitQuoteRequest = createServerFn({ method: "POST" })
         phone: request.phone ? request.phone : null,
         territory: request.territory,
         message: request.message ? request.message : null,
+        in_hand_date: request.in_hand_date ?? null,
         items: items.map((item) => ({
           sku: item.product_id ? (skuById.get(item.product_id) ?? null) : null,
           product_name: item.product_name,
