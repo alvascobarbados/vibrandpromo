@@ -53,7 +53,7 @@ function Row({
         >
           {item.name}
         </button>
-        <div className="mt-2">
+        <div className="mt-2 w-[168px] [container-type:inline-size]">
           <QuantityStepper quantity={item.quantity} moq={item.moq ?? null} onChange={onQuantity} />
         </div>
       </div>
