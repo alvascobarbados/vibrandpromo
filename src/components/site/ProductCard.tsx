@@ -495,13 +495,26 @@ export function ProductCard({
           ) : null}
 
           {packing ? (
-            <Section title="Packaging">
-              <Kv label="Pcs / ctn">{packing.pcsPerCtn}</Kv>
-              <Kv label="Ctn dims">{packing.ctnDims}</Kv>
-              <Kv label="Ctn weight">{packing.ctnWeight}</Kv>
-              <Kv label="Volume / ctn">{packing.volPerCtn}</Kv>
-              <Kv label="Chargeable / ctn">{packing.chargeablePerCtn}</Kv>
-            </Section>
+            (() => {
+              const carton = joinDots([
+                packing.pcsPerCtn != null ? `${packing.pcsPerCtn} pcs` : null,
+                packing.ctnDims || null,
+                trimZeros(packing.ctnWeight),
+              ]);
+              const freight = joinDots([
+                packing.volPerCtn || null,
+                packing.chargeablePerCtn
+                  ? `${trimZeros(packing.chargeablePerCtn)} chargeable`
+                  : null,
+              ]);
+              if (!carton && !freight) return null;
+              return (
+                <Section title="Packaging">
+                  {carton ? <Kv label="Carton">{carton}</Kv> : null}
+                  {freight ? <Kv label="Freight / ctn">{freight}</Kv> : null}
+                </Section>
+              );
+            })()
           ) : null}
 
           <div className="mt-4 max-w-[336px] border-t border-n-200 pt-3">
