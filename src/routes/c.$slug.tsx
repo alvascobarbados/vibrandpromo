@@ -94,6 +94,7 @@ export const Route = createFileRoute("/c/$slug")({
 function CategoryPage() {
   const { slug } = Route.useParams();
   const isDesktop = useIsDesktop();
+  const catalogView = useCatalogView();
   const page = Route.useSearch().page ?? 1;
   const products = useCatalogProducts();
   const categories = useQuery(categoriesQuery);
