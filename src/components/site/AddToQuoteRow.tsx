@@ -64,7 +64,9 @@ export function AddToQuoteRow({
   return (
     <div
       className={`flex items-stretch gap-2 ${
-        variant === "primary" ? "flex-row" : "flex-col [@container(min-width:340px)]:flex-row"
+        variant === "primary"
+          ? "flex-row flex-wrap"
+          : "flex-col flex-wrap [@container(min-width:280px)]:flex-row"
       }`}
     >
       <div className="shrink-0">
