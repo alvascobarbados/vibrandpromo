@@ -34,6 +34,19 @@ function usd(value: number) {
   return `US$${value.toFixed(2)}`;
 }
 
+/** Display-only: "15.000 kg" → "15 kg", "15.500 kg" → "15.5 kg". */
+function trimZeros(value: string | null | undefined) {
+  if (!value) return null;
+  return value.replace(/(\d+)\.(\d*?)0+(?=\D|$)/g, (_m, int, frac) =>
+    frac ? `${int}.${frac}` : int,
+  );
+}
+
+/** Joins present fragments with the " · " separator grammar. */
+function joinDots(parts: (string | null | undefined)[]) {
+  return parts.filter(Boolean).join(" · ");
+}
+
 /** Sections with no data are omitted entirely on the customer side. */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
