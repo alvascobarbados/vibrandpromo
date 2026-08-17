@@ -1,7 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { Check, Plus } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { QuantityStepper } from "@/components/site/QuantityStepper";
 import { productImage, type Product } from "@/lib/catalog";
@@ -22,7 +20,7 @@ export function AddToQuoteRow({
   variant?: "outline" | "primary";
   onQuantityChange?: (quantity: number) => void;
 }) {
-  const { addItem, items } = useQuoteList();
+  const { addItem, items, openDrawer } = useQuoteList();
   const existing = items.find((item) => item.productId === product.id);
   const [quantity, setQuantity] = useState(() => qtyFloor(product.moq));
   const setQty = (value: number) => {
@@ -32,12 +30,13 @@ export function AddToQuoteRow({
 
   if (existing) {
     return (
-      <Link
-        to="/quote"
-        className="card-value inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-lime-500 px-3 transition-colors duration-[150ms] ease-out hover:bg-lime-300"
+      <button
+        type="button"
+        onClick={() => openDrawer()}
+        className="card-value inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-lime-500 px-3 outline-none transition-colors duration-[150ms] ease-out hover:bg-lime-300 focus-visible:ring-2 focus-visible:ring-navy-700"
       >
         <Check className="size-3.5" /> In quote · {existing.quantity}
-      </Link>
+      </button>
     );
   }
 
@@ -51,7 +50,7 @@ export function AddToQuoteRow({
       notes: "",
       moq: product.moq,
     });
-    toast.success(`${product.name} added — quantity ${quantity}`);
+    openDrawer(product.id);
   };
 
   const buttonClass =
