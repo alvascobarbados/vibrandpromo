@@ -557,6 +557,21 @@ export function ProductCard({
   const showSea = seaAvailable(product.shipping_methods);
   const team = workspace === "supplier" && isStaff;
 
+  // ONE source of pricing derivation, shared by the grid and expanded branches.
+  const bubbles = pricing?.decorations ?? [];
+  const priceBubbles = bubbles.length
+    ? bubbles
+    : pricing?.tables.length
+      ? [{ methodName: "Blank / undecorated", tables: pricing.tables }]
+      : ([] as PublicDecorationPricing[]);
+  const unifiedQuantities = Array.from(
+    new Set(
+      priceBubbles.flatMap((bubble) =>
+        bubble.tables.flatMap((table) => table.rows.map((row) => row.qty)),
+      ),
+    ),
+  ).sort((a, b) => a - b);
+
   const editAffordance = editMode ? (
     <>
       <button
@@ -622,20 +637,6 @@ export function ProductCard({
       (spec) => product[spec.key] != null && product[spec.key] !== "",
     );
     const packing = pricing?.packing;
-    const bubbles = pricing?.decorations ?? [];
-    const fallbackBubble: PublicDecorationPricing[] =
-      !bubbles.length && pricing?.tables.length
-        ? [{ methodName: "Blank / undecorated", tables: pricing.tables }]
-        : [];
-    const priceBubbles = bubbles.length ? bubbles : fallbackBubble;
-    // One unified tier list across every method/table — computed at render only.
-    const unifiedQuantities = Array.from(
-      new Set(
-        priceBubbles.flatMap((bubble) =>
-          bubble.tables.flatMap((table) => table.rows.map((row) => row.qty)),
-        ),
-      ),
-    ).sort((a, b) => a - b);
     const showProduction = showAir || showSea || rush != null || product.moq != null;
 
     return (
@@ -838,7 +839,7 @@ export function ProductCard({
         </ProductImageCarousel>
       </div>
 
-      <div className="flex flex-col p-2 pt-3 [@container(min-width:170px)]:p-3 [@container(min-width:170px)]:pt-3">
+      <div className="flex flex-1 flex-col p-2 pt-3 [@container(min-width:170px)]:p-3 [@container(min-width:170px)]:pt-3">
         <p className="card-label truncate">{product.sku ?? "—"}</p>
         <h3 className="card-title mt-1 line-clamp-2 h-[39px] overflow-hidden lg:h-[42px]">
           {product.name}
@@ -846,8 +847,17 @@ export function ProductCard({
 
         {specRow}
 
-        <div className="mt-3">
-          <AddToQuoteRow product={product} />
+        <MiniPricing
+          bubbles={priceBubbles}
+          quantities={unifiedQuantities}
+          showAir={showAir}
+          showSea={showSea}
+          moq={product.moq}
+          qty={stepperQty}
+        />
+
+        <div className="mt-auto pt-3">
+          <AddToQuoteRow product={product} onQuantityChange={setStepperQty} />
         </div>
       </div>
 
