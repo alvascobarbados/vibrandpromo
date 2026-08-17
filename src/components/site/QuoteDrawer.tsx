@@ -125,7 +125,7 @@ export function QuoteDrawer() {
             </button>
           </div>
         ) : (
-          <ul className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
+          <ul className="flex-1 divide-y divide-n-100 overflow-y-auto px-2 py-1">
             {sorted.map((item) => (
               <Row
                 key={item.productId}
@@ -133,17 +133,6 @@ export function QuoteDrawer() {
                 flash={flashId === item.productId}
                 onQuantity={(value) => updateItem(item.productId, { quantity: value })}
                 onRemove={() => removeItem(item.productId)}
-                onNavigate={() => {
-                  closeDrawer();
-                  void navigate({
-                    to: "/products",
-                    search: (prev: Record<string, unknown>) => ({
-                      ...prev,
-                      q: item.name,
-                      page: 1,
-                    }),
-                  });
-                }}
               />
             ))}
           </ul>
@@ -156,7 +145,7 @@ export function QuoteDrawer() {
               closeDrawer();
               void navigate({ to: "/quote" });
             }}
-            className="card-value inline-flex h-11 w-full items-center justify-center rounded-full bg-navy-700 !text-white shadow-card outline-none transition-colors hover:bg-navy-500 focus-visible:ring-2 focus-visible:ring-lime-500"
+            className="card-value inline-flex h-10 w-full items-center justify-center rounded-full bg-navy-700 !text-white shadow-card outline-none transition-colors hover:bg-navy-500 focus-visible:ring-2 focus-visible:ring-lime-500"
           >
             Review &amp; request quote
           </button>
