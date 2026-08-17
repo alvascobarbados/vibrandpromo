@@ -34,6 +34,19 @@ function usd(value: number) {
   return `US$${value.toFixed(2)}`;
 }
 
+/** Display-only: "15.000 kg" → "15 kg", "15.500 kg" → "15.5 kg". */
+function trimZeros(value: string | null | undefined) {
+  if (!value) return null;
+  return value.replace(/(\d+)\.(\d*?)0+(?=\D|$)/g, (_m, int, frac) =>
+    frac ? `${int}.${frac}` : int,
+  );
+}
+
+/** Joins present fragments with the " · " separator grammar. */
+function joinDots(parts: (string | null | undefined)[]) {
+  return parts.filter(Boolean).join(" · ");
+}
+
 /** Sections with no data are omitted entirely on the customer side. */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -495,13 +508,26 @@ export function ProductCard({
           ) : null}
 
           {packing ? (
-            <Section title="Packaging">
-              <Kv label="Pcs / ctn">{packing.pcsPerCtn}</Kv>
-              <Kv label="Ctn dims">{packing.ctnDims}</Kv>
-              <Kv label="Ctn weight">{packing.ctnWeight}</Kv>
-              <Kv label="Volume / ctn">{packing.volPerCtn}</Kv>
-              <Kv label="Chargeable / ctn">{packing.chargeablePerCtn}</Kv>
-            </Section>
+            (() => {
+              const carton = joinDots([
+                packing.pcsPerCtn != null ? `${packing.pcsPerCtn} pcs` : null,
+                packing.ctnDims || null,
+                trimZeros(packing.ctnWeight),
+              ]);
+              const freight = joinDots([
+                packing.volPerCtn || null,
+                packing.chargeablePerCtn
+                  ? `${trimZeros(packing.chargeablePerCtn)} chargeable`
+                  : null,
+              ]);
+              if (!carton && !freight) return null;
+              return (
+                <Section title="Packaging">
+                  {carton ? <Kv label="Carton">{carton}</Kv> : null}
+                  {freight ? <Kv label="Freight / ctn">{freight}</Kv> : null}
+                </Section>
+              );
+            })()
           ) : null}
 
           <div className="mt-4 max-w-[336px] border-t border-n-200 pt-3">
