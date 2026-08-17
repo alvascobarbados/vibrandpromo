@@ -143,6 +143,20 @@ export function DesktopFilterSidebar({
       </div>
 
       <div className="divide-y divide-n-200/80">
+        {supplier && supplier.options.length ? (
+          <Group label="Supplier">
+            {supplier.options.map((option) => (
+              <Row
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                checked={search.sup.includes(option.value)}
+                onChange={() => supplier.onToggle(option.value)}
+              />
+            ))}
+          </Group>
+        ) : null}
+
         <Group label={GROUP_LABELS.cat}>
           <Row
             radio
@@ -208,20 +222,6 @@ export function DesktopFilterSidebar({
                 count={ready.counts[option.value] ?? 0}
                 checked={search.ready.includes(option.value)}
                 onChange={() => ready.onToggle(option.value)}
-              />
-            ))}
-          </Group>
-        ) : null}
-
-        {supplier && supplier.options.length ? (
-          <Group label="Supplier">
-            {supplier.options.map((option) => (
-              <Row
-                key={option.value}
-                label={option.label}
-                count={option.count}
-                checked={search.sup.includes(option.value)}
-                onChange={() => supplier.onToggle(option.value)}
               />
             ))}
           </Group>
