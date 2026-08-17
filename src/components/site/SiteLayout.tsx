@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { QuoteBasketButton } from "@/components/site/QuoteBasketButton";
+import { QuoteDrawer } from "@/components/site/QuoteDrawer";
 import { AccountMenu } from "@/components/site/AccountMenu";
 import { AdminEditBar } from "@/components/site/AdminEditBar";
 import { useStaffSession } from "@/lib/staff-session";
@@ -212,6 +213,8 @@ export function SiteLayout({
       </main>
 
       <AdminEditBar workspace={viewMode} />
+
+      {supplier ? null : <QuoteDrawer />}
 
       <footer className="border-t border-navy-800 bg-navy-900 text-white">
         <div className="site-container grid gap-10 py-10 md:grid-cols-3 lg:py-16">
