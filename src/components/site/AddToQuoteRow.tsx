@@ -12,12 +12,14 @@ export function AddToQuoteRow({
   product,
   tone = "light",
   layout = "row",
+  variant = "outline",
   onQuantityChange,
 }: {
   product: Product;
   tone?: "light" | "dark";
-  /** "stacked" = stepper row above a full-width primary button (expanded card). */
-  layout?: "row" | "stacked";
+  layout?: "row";
+  /** "primary" = navy solid button (expanded card CTA). */
+  variant?: "outline" | "primary";
   onQuantityChange?: (quantity: number) => void;
 }) {
   const { addItem, items } = useQuoteList();
@@ -52,32 +54,26 @@ export function AddToQuoteRow({
     toast.success(`${product.name} added — quantity ${quantity}`);
   };
 
-  if (layout === "stacked") {
-    return (
-      <div className="flex flex-col items-stretch gap-2">
-        <QuantityStepper quantity={quantity} moq={product.moq} onChange={setQty} tone={tone} />
-        <button
-          type="button"
-          onClick={add}
-          className="card-value inline-flex h-10 min-h-10 w-full items-center justify-center gap-1.5 rounded-full bg-navy-700 px-3 !text-white shadow-card transition-colors duration-[150ms] ease-out hover:bg-navy-500"
-        >
-          <Plus className="size-3.5 shrink-0" /> Add to quote
-        </button>
-      </div>
-    );
-  }
+  const buttonClass =
+    variant === "primary"
+      ? "border-transparent bg-navy-700 !text-white shadow-card hover:bg-navy-500"
+      : tone === "dark"
+        ? "border-white/40 !text-white hover:border-navy-700 hover:bg-navy-700 active:bg-navy-700"
+        : "border-n-200 bg-white hover:border-navy-700 hover:bg-navy-700 hover:!text-white active:border-navy-700 active:bg-navy-700 active:!text-white";
 
   return (
-    <div className="flex flex-col items-stretch gap-2 [@container(min-width:340px)]:flex-row">
-      <QuantityStepper quantity={quantity} moq={product.moq} onChange={setQty} tone={tone} />
+    <div
+      className={`flex items-stretch gap-2 ${
+        variant === "primary" ? "flex-row" : "flex-col [@container(min-width:340px)]:flex-row"
+      }`}
+    >
+      <div className="shrink-0">
+        <QuantityStepper quantity={quantity} moq={product.moq} onChange={setQty} tone={tone} />
+      </div>
       <button
         type="button"
         onClick={add}
-        className={`card-value inline-flex h-10 min-h-10 w-full items-center justify-center gap-1.5 rounded-full border px-3 transition-colors duration-[150ms] ease-out [@container(min-width:340px)]:w-auto [@container(min-width:340px)]:flex-1 ${
-          tone === "dark"
-            ? "border-white/40 !text-white hover:border-navy-700 hover:bg-navy-700 active:bg-navy-700"
-            : "border-n-200 bg-white hover:border-navy-700 hover:bg-navy-700 hover:!text-white active:border-navy-700 active:bg-navy-700 active:!text-white"
-        }`}
+        className={`card-value inline-flex h-10 min-h-10 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 transition-colors duration-[150ms] ease-out ${buttonClass}`}
       >
         <Plus className="size-3.5 shrink-0" /> Add to quote
       </button>
