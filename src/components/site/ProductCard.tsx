@@ -46,7 +46,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Kv({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[104px_1fr] items-baseline gap-x-2">
+    <div className="grid grid-cols-[120px_1fr] items-baseline gap-x-2">
       <span className="sheet-kv-label">{label}</span>
       <span className="sheet-kv-value min-w-0">{children}</span>
     </div>
@@ -108,7 +108,7 @@ function PricingBubble({
   };
 
   return (
-    <div className="rounded-xl border border-n-200 bg-white p-3">
+    <div className="min-w-0 rounded-xl border border-n-200 bg-white p-3">
       <p className="card-value text-[13px]">{bubble.methodName}</p>
       <div className="-mx-1 mt-2 overflow-x-auto px-1">
         <table className="w-full min-w-max border-separate border-spacing-0 text-sm tabular-nums">
@@ -434,7 +434,7 @@ export function ProductCard({
     const showProduction = showAir || showSea || rush != null || product.moq != null;
 
     return (
-      <article className="@container group relative grid gap-4 overflow-hidden rounded-2xl border border-n-200 bg-white p-3 lg:grid-cols-[240px_minmax(280px,340px)_1fr] lg:gap-6 lg:p-4">
+      <article className="@container group relative grid gap-4 overflow-hidden rounded-2xl border border-n-200 bg-white p-3 lg:grid-cols-[300px_minmax(320px,380px)_1fr] lg:gap-6 lg:p-4">
         {editAffordance}
         <div className="min-w-0">
           <ExpandedImages images={images} alt={product.name} onOpen={setLightboxIndex} />
@@ -506,7 +506,7 @@ export function ProductCard({
           <p className="sheet-section-head">Pricing details</p>
           {priceBubbles.length ? (
             <>
-              <div className="mt-2 grid gap-3 [@container(min-width:1180px)]:grid-cols-2">
+              <div className="mt-2 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(560px,100%),1fr))]">
                 {priceBubbles.map((bubble) => (
                   <PricingBubble
                     key={bubble.methodName}

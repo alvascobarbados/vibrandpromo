@@ -27,6 +27,7 @@ import {
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
 import { warnInvisibleFilter } from "@/lib/filter-hygiene";
+import { useCatalogView } from "@/components/site/ViewToggle";
 
 export const Route = createFileRoute("/c/$slug")({
   validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> & {
@@ -195,7 +196,13 @@ function CategoryPage() {
   if (isDesktop) {
     return (
       <SiteLayout>
-        <div className="site-container xl:max-w-[1344px] py-8 pb-16">
+        <div
+          className={
+            catalogView === "expanded"
+              ? "mx-auto w-full max-w-[1920px] px-4 py-8 pb-16 lg:px-8"
+              : "site-container xl:max-w-[1344px] py-8 pb-16"
+          }
+        >
           <h1 className="sr-only">{category?.name ?? "Category"} promotional products</h1>
           <DesktopCatalog initialCategorySlug={slug} page={page} />
         </div>
