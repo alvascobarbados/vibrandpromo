@@ -276,7 +276,7 @@ function QuotePage() {
 
         <div className="mt-8 grid gap-7 lg:mt-10 lg:grid-cols-[1fr_430px]">
           {/* ITEMS */}
-          <section className={CARD}>
+          <section className={`${CARD} lg:self-start`}>
             <header className={`${BAND} border-n-200 bg-white`}>
               <h2 className="text-[15px] font-semibold text-n-900">Your items</h2>
               <span className={`${CHIP} bg-n-100 text-n-700`}>
