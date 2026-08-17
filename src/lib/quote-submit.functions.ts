@@ -10,6 +10,12 @@ const quoteSchema = z.object({
   phone: z.string().trim().max(40).optional().or(z.literal("")),
   territory: trimmed(120),
   message: z.string().trim().max(2000).optional().or(z.literal("")),
+  in_hand_date: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
   artwork_url: z
     .string()
     .trim()

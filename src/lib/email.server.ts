@@ -53,6 +53,14 @@ export type QuoteEmailPayload = {
 
 type Admin = SupabaseClient<Database>;
 
+/** "2026-09-12" -> "12 Sep 2026" (no timezone drift: parsed as parts). */
+export function formatEmailDate(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${d} ${months[m - 1]} ${y}`;
+}
+
 export async function loadEmailSettings(supabaseAdmin: Admin): Promise<EmailSettings> {
   const { data } = await supabaseAdmin
     .from("email_settings")
