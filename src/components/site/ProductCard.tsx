@@ -182,7 +182,7 @@ function ExpandedImages({
   const current = images[Math.min(active, images.length - 1)] ?? images[0]!;
   return (
     <div>
-      <div className="image-field overflow-hidden rounded-xl">
+      <div className="image-field image-field-bleed overflow-hidden rounded-xl">
         <img
           src={imageSrc(current, "card")}
           alt={alt}
@@ -430,6 +430,14 @@ export function ProductCard({
         ? [{ methodName: "Blank / undecorated", tables: pricing.tables }]
         : [];
     const priceBubbles = bubbles.length ? bubbles : fallbackBubble;
+    // One unified tier list across every method/table — computed at render only.
+    const unifiedQuantities = Array.from(
+      new Set(
+        priceBubbles.flatMap((bubble) =>
+          bubble.tables.flatMap((table) => table.rows.map((row) => row.qty)),
+        ),
+      ),
+    ).sort((a, b) => a - b);
     const showProduction = showAir || showSea || rush != null || product.moq != null;
 
     return (
@@ -510,6 +518,7 @@ export function ProductCard({
                   <PricingBubble
                     key={bubble.methodName}
                     bubble={bubble}
+                    quantities={unifiedQuantities}
                     showAir={showAir}
                     showSea={showSea}
                     air={air}
