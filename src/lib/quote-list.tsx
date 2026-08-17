@@ -15,6 +15,10 @@ type QuoteListContextValue = {
   items: QuoteItem[];
   count: number;
   bump: number;
+  drawerOpen: boolean;
+  justAddedId: string | null;
+  openDrawer: (justAddedId?: string) => void;
+  closeDrawer: () => void;
   addItem: (item: QuoteItem) => void;
   updateItem: (productId: string, patch: Partial<QuoteItem>) => void;
   removeItem: (productId: string) => void;
@@ -28,6 +32,18 @@ const QuoteListContext = createContext<QuoteListContextValue | null>(null);
 export function QuoteListProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [bump, setBump] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [justAddedId, setJustAddedId] = useState<string | null>(null);
+
+  const openDrawer = useCallback((id?: string) => {
+    setJustAddedId(id ?? null);
+    setDrawerOpen(true);
+  }, []);
+
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    setJustAddedId(null);
+  }, []);
 
   useEffect(() => {
     try {
@@ -74,12 +90,27 @@ export function QuoteListProvider({ children }: { children: React.ReactNode }) {
       items,
       count: items.length,
       bump,
+      drawerOpen,
+      justAddedId,
+      openDrawer,
+      closeDrawer,
       addItem,
       updateItem,
       removeItem,
       clear,
     }),
-    [items, bump, addItem, updateItem, removeItem, clear],
+    [
+      items,
+      bump,
+      drawerOpen,
+      justAddedId,
+      openDrawer,
+      closeDrawer,
+      addItem,
+      updateItem,
+      removeItem,
+      clear,
+    ],
   );
 
   return <QuoteListContext.Provider value={value}>{children}</QuoteListContext.Provider>;
