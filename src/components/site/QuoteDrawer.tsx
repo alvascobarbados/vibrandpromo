@@ -98,6 +98,7 @@ export function QuoteDrawer() {
         side="right"
         className="flex w-full flex-col gap-0 p-0 sm:max-w-[400px]"
         aria-describedby={undefined}
+        onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <div className="flex items-center justify-between border-b border-n-200 px-4 py-4">
           <div>
