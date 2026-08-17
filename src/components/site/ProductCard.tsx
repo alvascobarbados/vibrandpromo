@@ -861,7 +861,7 @@ export function ProductCard({
           qty={stepperQty}
         />
 
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-2.5">
           <AddToQuoteRow product={product} onQuantityChange={setStepperQty} />
         </div>
       </div>
