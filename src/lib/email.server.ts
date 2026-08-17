@@ -46,6 +46,8 @@ export type QuoteEmailPayload = {
   phone: string | null;
   territory: string;
   message: string | null;
+  /** Optional customer deadline (ISO yyyy-mm-dd). */
+  in_hand_date?: string | null;
   items: EmailItem[];
 };
 
@@ -319,6 +321,7 @@ export function renderEmail(
      ${field("Email", quote.email)}
      ${field("Phone", quote.phone)}
      ${field("Territory", quote.territory)}
+     ${quote.in_hand_date ? field("In-hand deadline", formatEmailDate(quote.in_hand_date)) : ""}
      ${field("Message", quote.message)}`
       : "";
 
@@ -351,6 +354,7 @@ Company: ${quote.company}
 Email: ${quote.email}
 Phone: ${quote.phone ?? "—"}
 Territory: ${quote.territory}
+${quote.in_hand_date ? `In-hand deadline: ${formatEmailDate(quote.in_hand_date)}\n` : ""}\
 Message: ${quote.message ?? "—"}
 `
     : ""
