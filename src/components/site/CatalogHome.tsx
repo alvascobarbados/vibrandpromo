@@ -17,6 +17,7 @@ import { useIsDesktop } from "@/hooks/use-desktop";
 import { filterProducts } from "@/lib/catalog-filters";
 import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
+import { useCatalogView } from "@/components/site/ViewToggle";
 
 /**
  * Shared catalog browsing experience. Rendered by the customer home route and
@@ -37,6 +38,7 @@ export function CatalogHome({
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const shipping = useShippingSettings();
+  const catalogView = useCatalogView();
   const navigate = useNavigate();
   const { search, toggle, clear, activeCount } = useCatalogFilters();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -104,7 +106,7 @@ export function CatalogHome({
       <SiteLayout viewMode={viewMode}>
         <div
           className={
-            viewMode === "supplier"
+            viewMode === "supplier" || catalogView === "expanded"
               ? "mx-auto w-full max-w-[1920px] px-4 py-8 pb-16 lg:px-8"
               : "site-container py-8 pb-16 xl:max-w-[1344px]"
           }
