@@ -45,6 +45,7 @@ export function AddToQuoteRow({
       productId: product.id,
       slug: product.slug,
       name: product.name,
+      sku: product.sku ?? null,
       image: productImage(product),
       quantity,
       notes: "",
