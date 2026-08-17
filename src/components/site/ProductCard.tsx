@@ -95,9 +95,9 @@ function PricingBubble({
     lead: string | null;
     from?: "air" | "sea";
   }[] = [];
-  if (showAir && airTable) rows.push({ label: "Air", icon: Plane, lead: air, from: "air" });
-  if (showSea && seaTable) rows.push({ label: "Sea", icon: Ship, lead: sea, from: "sea" });
-  if (rush && airTable) rows.push({ label: "Rush", chip: true, lead: rush, from: "air" });
+  if (showAir) rows.push({ label: "Air", icon: Plane, lead: air, from: "air" });
+  if (showSea) rows.push({ label: "Sea", icon: Ship, lead: sea, from: "sea" });
+  if (rush) rows.push({ label: "Rush", chip: true, lead: rush, from: "air" });
   if (!quantities.length || !rows.length) return null;
 
   const cell = (from: "air" | "sea", value: number) => {
