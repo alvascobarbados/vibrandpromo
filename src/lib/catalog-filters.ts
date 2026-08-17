@@ -49,6 +49,7 @@ export const EMPTY_SEARCH: CatalogSearch = {
   mat: [],
   ready: [],
 };
+  sup: [],
 
 export const SUPPLIER_LABEL = "Supplier";
 export const UNASSIGNED_SUPPLIER = "none";
