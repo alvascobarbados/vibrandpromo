@@ -46,9 +46,9 @@ export function QuantityStepper({
       : "text-n-700 hover:bg-n-200 disabled:text-n-400";
 
   return (
-    <div className="relative w-full shrink-0 [@container(min-width:340px)]:w-auto">
+    <div className="relative w-full shrink-0 [@container(min-width:280px)]:w-auto">
       <div
-        className={`flex h-10 w-full items-center justify-between rounded-full [@container(min-width:340px)]:inline-flex [@container(min-width:340px)]:w-auto [@container(min-width:340px)]:justify-start ${
+        className={`flex h-10 w-full items-center justify-between rounded-full [@container(min-width:280px)]:inline-flex [@container(min-width:280px)]:w-auto [@container(min-width:280px)]:justify-start ${
           tone === "dark" ? "border" : ""
         } ${shell}`}
       >
@@ -57,7 +57,7 @@ export function QuantityStepper({
           aria-label="Decrease quantity"
           disabled={quantity <= floor}
           onClick={() => onChange(stepQty(quantity, -1, moq))}
-          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors duration-[150ms] ease-out disabled:cursor-not-allowed disabled:hover:bg-transparent ${btn}`}
+          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-[150ms] ease-out focus-visible:ring-2 focus-visible:ring-lime-500 disabled:cursor-not-allowed disabled:hover:bg-transparent [@container(min-width:280px)]:size-9 ${btn}`}
         >
           <Minus className="size-3.5" />
         </button>
@@ -80,7 +80,7 @@ export function QuantityStepper({
           type="button"
           aria-label="Increase quantity"
           onClick={() => onChange(stepQty(quantity, 1, moq))}
-          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors duration-[150ms] ease-out ${btn}`}
+          className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full outline-none transition-colors duration-[150ms] ease-out focus-visible:ring-2 focus-visible:ring-lime-500 [@container(min-width:280px)]:size-9 ${btn}`}
         >
           <Plus className="size-3.5" />
         </button>
