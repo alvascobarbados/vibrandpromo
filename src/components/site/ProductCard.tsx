@@ -1,6 +1,8 @@
 import {
   Container,
   Droplet,
+  ChevronLeft,
+  ChevronRight,
   Info,
   Layers,
   Package,
@@ -112,6 +114,148 @@ function bandFor(quantities: number[], qty: number) {
   let hit: number | null = null;
   for (const value of quantities) if (qty >= value) hit = value;
   return hit;
+}
+
+/**
+ * Deterministic pick of at most 4 tier columns for the compact grid table:
+ * lowest, highest and the active band first, then the most "spread out"
+ * remaining tiers (ties resolve to the higher tier).
+ */
+function miniColumns(all: number[], qty: number) {
+  if (all.length <= 4) return all;
+  const chosen = new Set<number>([0, all.length - 1]);
+  const band = bandFor(all, qty);
+  const bandIndex = band != null ? all.indexOf(band) : 0;
+  if (bandIndex >= 0) chosen.add(bandIndex);
+  while (chosen.size < 4) {
+    let best = -1;
+    let bestDistance = -1;
+    for (let i = 0; i < all.length; i += 1) {
+      if (chosen.has(i)) continue;
+      let minDistance = Infinity;
+      for (const index of chosen) minDistance = Math.min(minDistance, Math.abs(i - index));
+      if (minDistance > bestDistance || (minDistance === bestDistance && i > best)) {
+        bestDistance = minDistance;
+        best = i;
+      }
+    }
+    if (best < 0) break;
+    chosen.add(best);
+  }
+  return [...chosen].sort((a, b) => a - b).map((index) => all[index]!);
+}
+
+/**
+ * Compact 4-column tier matrix for the customer grid card. One method at a
+ * time, cycled with ‹ ›. Unit prices only — no internals ever reach the DOM.
+ */
+function MiniPricing({
+  bubbles,
+  quantities,
+  showAir,
+  showSea,
+  moq,
+  qty,
+}: {
+  bubbles: PublicDecorationPricing[];
+  quantities: number[];
+  showAir: boolean;
+  showSea: boolean;
+  moq: number | null;
+  qty: number;
+}) {
+  const [index, setIndex] = useState(0);
+  const rows: { label: string; icon: typeof Plane; from: "air" | "sea" }[] = [];
+  if (showAir) rows.push({ label: "Air", icon: Plane, from: "air" });
+  if (showSea) rows.push({ label: "Sea", icon: Ship, from: "sea" });
+
+  if (!bubbles.length || !quantities.length || !rows.length) {
+    return (
+      <div className="mt-3 hidden rounded-xl border border-dashed border-n-200 px-3 py-3 text-center text-[13px] text-n-500 [@container(min-width:220px)]:block">
+        Pricing on request — add to your quote list
+      </div>
+    );
+  }
+
+  const bubble = bubbles[Math.min(index, bubbles.length - 1)]!;
+  const airTable = bubble.tables.find((table) => table.mode === "air");
+  const seaTable = bubble.tables.find((table) => table.mode === "sea");
+  const columns = miniColumns(quantities, qty);
+  const band = bandFor(quantities, qty);
+  const cell = (from: "air" | "sea", value: number) => {
+    const table = from === "air" ? airTable : seaTable;
+    const row = table?.rows.find((entry) => entry.qty === value);
+    return row ? row.unitUsd.toFixed(2) : "—";
+  };
+
+  return (
+    <div className="mt-3 hidden rounded-xl border border-n-200 p-2 [@container(min-width:220px)]:block">
+      <div className="flex items-center gap-1.5">
+        <p className="card-value min-w-0 flex-1 truncate text-[13px]">{bubble.methodName}</p>
+        <span className="sheet-kv-label shrink-0">CIF US$</span>
+        {bubbles.length > 1 ? (
+          <span className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              aria-label="Previous method"
+              onClick={() => setIndex((current) => (current - 1 + bubbles.length) % bubbles.length)}
+              className="inline-flex size-[18px] items-center justify-center rounded-full border border-n-200 text-n-600 hover:bg-n-100"
+            >
+              <ChevronLeft className="size-3" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next method"
+              onClick={() => setIndex((current) => (current + 1) % bubbles.length)}
+              className="inline-flex size-[18px] items-center justify-center rounded-full border border-n-200 text-n-600 hover:bg-n-100"
+            >
+              <ChevronRight className="size-3" />
+            </button>
+          </span>
+        ) : null}
+      </div>
+      <table className="mt-1.5 w-full table-fixed border-separate border-spacing-0 tabular-nums">
+        <thead>
+          <tr>
+            <th className="w-[34px] py-1" />
+            {columns.map((value) => (
+              <th
+                key={value}
+                className={`sheet-kv-label rounded-t-md px-1 py-1 text-right font-semibold ${
+                  band === value ? "bg-lime-50 !text-navy-700" : ""
+                }`}
+              >
+                {value}
+                {moq != null && value === moq ? (
+                  <span className="ml-0.5 text-[9px] normal-case tracking-normal">MOQ</span>
+                ) : null}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr key={row.label}>
+              <td className="border-t border-n-200 py-1 pr-1" title={row.label}>
+                <row.icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+                <span className="sr-only">{row.label}</span>
+              </td>
+              {columns.map((value) => (
+                <td
+                  key={value}
+                  className={`border-t border-n-200 px-1 py-1 text-right text-[13px] ${
+                    band === value ? "bg-lime-50" : ""
+                  } ${band === value && rowIndex === rows.length - 1 ? "rounded-b-md" : ""}`}
+                >
+                  {cell(row.from, value)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 /**
