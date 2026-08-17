@@ -120,9 +120,10 @@ export function DesktopCatalog({
 
   /** Expanded layout is a shop-only, desktop-only presentation choice. */
   const expanded = !team && useCatalogView() === "expanded";
+  /** Both customer views price the visible page (20 ids ≤ the 60 server cap). */
   const pricingById = useCustomerPricing(
     visible.map((product) => product.id),
-    expanded,
+    !team,
   );
 
   const chips = CHIP_GROUPS.flatMap((group) =>
@@ -277,7 +278,11 @@ export function DesktopCatalog({
         ) : (
           <div className={team ? "mt-4 flex flex-col gap-3" : "product-grid mt-4"}>
             {visible.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                pricing={pricingById.get(product.id)}
+              />
             ))}
           </div>
         )}
