@@ -29,7 +29,7 @@ import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
 import { useViewMode } from "@/lib/view-mode";
 import { READY_FILTER_OPTIONS, matchesReadyFilter } from "@/lib/costing-gate";
-import { sourcingRowsQuery } from "@/lib/sourcing";
+import { sourcingRowsQuery, suppliersQuery } from "@/lib/sourcing";
 import { useCustomerPricing } from "@/lib/customer-pricing";
 
 const PAGE_SIZE = 20;
@@ -61,6 +61,21 @@ export function DesktopCatalog({
     () => new Map((sourcing.data ?? []).map((row) => [row.product_id, row] as const)),
     [sourcing.data],
   );
+  /** Staff-only supplier list; never fetched in the customer shop. */
+  const suppliers = useQuery({ ...suppliersQuery, enabled: team });
+
+  /** Supplier CODE for a product ("none" when unassigned). */
+  const supplierCodeOf = useMemo(() => {
+    const byId = new Map((suppliers.data ?? []).map((s) => [s.id, s.code] as const));
+    return (productId: string) => {
+      const row = sourcingByProduct.get(productId);
+      const code = row?.supplier_id ? byId.get(row.supplier_id) : null;
+      return code ?? "none";
+    };
+  }, [suppliers.data, sourcingByProduct]);
+
+  const matchesSupplier = (productId: string, values: string[]) =>
+    values.length === 0 || values.includes(supplierCodeOf(productId));
 
   const allProducts = products.data ?? [];
   const allCategories = categories.data ?? [];
@@ -90,11 +105,21 @@ export function DesktopCatalog({
     /** The costing gate is a /team filter only — the shop list is untouched. */
     const gated = team
       ? base.filter((product) =>
-          matchesReadyFilter(search.ready, product, sourcingByProduct.get(product.id) ?? null),
+          matchesReadyFilter(search.ready, product, sourcingByProduct.get(product.id) ?? null) &&
+          matchesSupplier(product.id, search.sup),
         )
       : base;
     return sortProducts(gated, search.sort);
-  }, [allProducts, allCategories, allSubcategories, search, shipping, team, sourcingByProduct]);
+  }, [
+    allProducts,
+    allCategories,
+    allSubcategories,
+    search,
+    shipping,
+    team,
+    sourcingByProduct,
+    supplierCodeOf,
+  ]);
 
   const readyCounts = useMemo(() => {
     const counts: Record<string, number> = { ready: 0, incomplete: 0 };
@@ -111,6 +136,58 @@ export function DesktopCatalog({
     }
     return counts;
   }, [team, allProducts, allCategories, allSubcategories, search, shipping, sourcingByProduct]);
+
+  /** Supplier rail options: counted on the list minus the supplier group itself. */
+  const supplierOptions = useMemo(() => {
+    if (!team) return [];
+    const base = filterProducts(allProducts, search, {
+      categories: allCategories,
+      subcategories: allSubcategories,
+      shipping,
+    }).filter((product) =>
+      matchesReadyFilter(search.ready, product, sourcingByProduct.get(product.id) ?? null),
+    );
+    const counts = new Map<string, number>();
+    for (const product of base) {
+      const code = supplierCodeOf(product.id);
+      counts.set(code, (counts.get(code) ?? 0) + 1);
+    }
+    const named = (suppliers.data ?? [])
+      .map((s) => ({ value: s.code, label: s.name, count: counts.get(s.code) ?? 0 }))
+      .filter((option) => option.count > 0 || search.sup.includes(option.value))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    const unassignedCount = counts.get("none") ?? 0;
+    return unassignedCount > 0 || search.sup.includes("none")
+      ? [...named, { value: "none", label: "Unassigned", count: unassignedCount }]
+      : named;
+  }, [
+    team,
+    allProducts,
+    allCategories,
+    allSubcategories,
+    search,
+    shipping,
+    sourcingByProduct,
+    suppliers.data,
+    supplierCodeOf,
+  ]);
+
+  const toggleSupplier = (value: string) =>
+    update({
+      sup: search.sup.includes(value)
+        ? search.sup.filter((item) => item !== value)
+        : [...search.sup, value],
+    });
+
+  const supplierChips = team
+    ? search.sup.map((value) => ({
+        value,
+        label:
+          value === "none"
+            ? "Unassigned"
+            : ((suppliers.data ?? []).find((s) => s.code === value)?.name ?? value),
+      }))
+    : [];
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -170,6 +247,7 @@ export function DesktopCatalog({
             onClear={clear}
             activeCount={activeCount}
             ready={team ? { counts: readyCounts, onToggle: toggleReady } : undefined}
+            supplier={team ? { options: supplierOptions, onToggle: toggleSupplier } : undefined}
           />
         </div>
       </aside>
@@ -198,8 +276,20 @@ export function DesktopCatalog({
           </div>
         </div>
 
-        {chips.length || readyChips.length ? (
+        {chips.length || readyChips.length || supplierChips.length ? (
           <div className="mt-3 flex flex-wrap items-center gap-2">
+            {supplierChips.map((chip) => (
+              <button
+                key={`sup-${chip.value}`}
+                type="button"
+                onClick={() => toggleSupplier(chip.value)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-lime-500 px-3 py-1.5 text-xs font-medium text-n-700 hover:bg-lime-300"
+              >
+                <span className="text-n-700/70">Supplier:</span>
+                {chip.label}
+                <X className="size-3" />
+              </button>
+            ))}
             {readyChips.map((chip) => (
               <button
                 key={`ready-${chip.value}`}

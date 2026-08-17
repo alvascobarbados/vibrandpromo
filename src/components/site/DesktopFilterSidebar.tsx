@@ -31,6 +31,13 @@ type Props = {
   activeCount: number;
   /** /team only: the costing-gate group (staff data never reaches the shop). */
   ready?: { counts: Record<string, number>; onToggle: (value: string) => void } | undefined;
+  /** /team only: supplier group (supplier names never reach the shop). */
+  supplier?:
+    | {
+        options: { value: string; label: string; count: number }[];
+        onToggle: (value: string) => void;
+      }
+    | undefined;
 };
 
 function Row({
@@ -93,6 +100,7 @@ export function DesktopFilterSidebar({
   onClear,
   activeCount,
   ready,
+  supplier,
 }: Props) {
   const options = useFilterOptions(products, categories, subcategories);
   const shipping = useShippingSettings();
@@ -200,6 +208,20 @@ export function DesktopFilterSidebar({
                 count={ready.counts[option.value] ?? 0}
                 checked={search.ready.includes(option.value)}
                 onChange={() => ready.onToggle(option.value)}
+              />
+            ))}
+          </Group>
+        ) : null}
+
+        {supplier && supplier.options.length ? (
+          <Group label="Supplier">
+            {supplier.options.map((option) => (
+              <Row
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                checked={search.sup.includes(option.value)}
+                onChange={() => supplier.onToggle(option.value)}
               />
             ))}
           </Group>
