@@ -66,6 +66,7 @@ function bandFor(quantities: number[], qty: number) {
  */
 function PricingBubble({
   bubble,
+  quantities,
   showAir,
   showSea,
   air,
@@ -75,6 +76,7 @@ function PricingBubble({
   qty,
 }: {
   bubble: PublicDecorationPricing;
+  quantities: number[];
   showAir: boolean;
   showSea: boolean;
   air: string | null;
@@ -85,9 +87,6 @@ function PricingBubble({
 }) {
   const airTable = bubble.tables.find((table) => table.mode === "air");
   const seaTable = bubble.tables.find((table) => table.mode === "sea");
-  const quantities = Array.from(
-    new Set([...(airTable?.rows ?? []), ...(seaTable?.rows ?? [])].map((row) => row.qty)),
-  ).sort((a, b) => a - b);
   const band = bandFor(quantities, qty);
   const rows: {
     label: string;
@@ -111,10 +110,10 @@ function PricingBubble({
     <div className="min-w-0 rounded-xl border border-n-200 bg-white p-3">
       <p className="card-value text-[13px]">{bubble.methodName}</p>
       <div className="-mx-1 mt-2 overflow-x-auto px-1">
-        <table className="w-full min-w-max border-separate border-spacing-0 text-sm tabular-nums">
+        <table className="w-full min-w-[560px] table-fixed border-separate border-spacing-0 text-sm tabular-nums">
           <thead>
             <tr>
-              <th className="sheet-kv-label py-1 text-left font-semibold" />
+              <th className="sheet-kv-label w-[176px] py-1 text-left font-semibold" />
               {quantities.map((value) => (
                 <th
                   key={value}
