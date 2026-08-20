@@ -1018,7 +1018,23 @@ export function ProductCard({
         />
 
         <div className="mt-auto pt-2.5">
-          <AddToQuoteRow product={product} onQuantityChange={setStepperQty} />
+          {picker ? (
+            <button
+              type="button"
+              disabled={picker.busy}
+              onClick={picker.onToggle}
+              aria-pressed={picker.selected}
+              className={`h-10 w-full rounded-full text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500 disabled:opacity-60 ${
+                picker.selected
+                  ? "bg-lime-500 text-n-700 hover:bg-lime-300"
+                  : "bg-navy-900 text-white hover:bg-navy-700"
+              }`}
+            >
+              {picker.selected ? "On proposal ✓" : "Add to proposal"}
+            </button>
+          ) : (
+            <AddToQuoteRow product={product} onQuantityChange={setStepperQty} />
+          )}
         </div>
       </div>
 
