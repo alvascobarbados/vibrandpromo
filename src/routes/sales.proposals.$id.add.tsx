@@ -93,18 +93,14 @@ function PickerRoute() {
       {/* Navy picker bar — only ever rendered on this staff route. */}
       <div className="sticky top-16 z-30 bg-navy-900 text-white">
         <div className="site-container flex flex-wrap items-center justify-between gap-3 py-3">
-          <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/70">
-              Adding to {proposal.data?.client_name ?? "…"} ·{" "}
-              {proposal.data?.project_name ?? ""} · {incoterm} (locked)
-            </p>
-            <Link
-              to="/sales/proposals/$id"
-              params={{ id }}
-              className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
-            >
-              <ArrowLeft className="size-4" /> Back to proposal
-            </Link>
+          <div className="flex min-w-0 flex-wrap items-baseline gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-lime-500">
+              Adding to
+            </span>
+            <span className="min-w-0 text-[13px] text-white/90">
+              {proposal.data?.client_name ?? "…"} · {proposal.data?.project_name ?? ""} ·{" "}
+              {incoterm} (locked)
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-white/80">
