@@ -49,6 +49,7 @@ import { Route as AuthenticatedAdminSettingsShippingRouteImport } from './routes
 import { Route as AuthenticatedAdminSettingsStaffRouteImport } from './routes/_authenticated/admin.settings.staff'
 import { Route as ApiPublicProductImageSplatRouteImport } from './routes/api/public/product-image.$'
 import { Route as SalesProposalsIdIndexRouteImport } from './routes/sales.proposals.$id.index'
+import { Route as SalesProposalsIdAddRouteImport } from './routes/sales.proposals.$id.add'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -272,6 +273,11 @@ const SalesProposalsIdIndexRoute = SalesProposalsIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SalesProposalsIdRoute,
 } as any)
+const SalesProposalsIdAddRoute = SalesProposalsIdAddRouteImport.update({
+  id: '/add',
+  path: '/add',
+  getParentRoute: () => SalesProposalsIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -310,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings/shipping': typeof AuthenticatedAdminSettingsShippingRoute
   '/admin/settings/staff': typeof AuthenticatedAdminSettingsStaffRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
+  '/sales/proposals/$id/add': typeof SalesProposalsIdAddRoute
   '/admin/costing/': typeof AuthenticatedAdminCostingIndexRoute
   '/admin/settings/': typeof AuthenticatedAdminSettingsIndexRoute
   '/sales/proposals/$id/': typeof SalesProposalsIdIndexRoute
@@ -347,6 +354,7 @@ export interface FileRoutesByTo {
   '/admin/settings/shipping': typeof AuthenticatedAdminSettingsShippingRoute
   '/admin/settings/staff': typeof AuthenticatedAdminSettingsStaffRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
+  '/sales/proposals/$id/add': typeof SalesProposalsIdAddRoute
   '/admin/costing': typeof AuthenticatedAdminCostingIndexRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsIndexRoute
   '/sales/proposals/$id': typeof SalesProposalsIdIndexRoute
@@ -390,6 +398,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings/shipping': typeof AuthenticatedAdminSettingsShippingRoute
   '/_authenticated/admin/settings/staff': typeof AuthenticatedAdminSettingsStaffRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
+  '/sales/proposals/$id/add': typeof SalesProposalsIdAddRoute
   '/_authenticated/admin/costing/': typeof AuthenticatedAdminCostingIndexRoute
   '/_authenticated/admin/settings/': typeof AuthenticatedAdminSettingsIndexRoute
   '/sales/proposals/$id/': typeof SalesProposalsIdIndexRoute
@@ -433,6 +442,7 @@ export interface FileRouteTypes {
     | '/admin/settings/shipping'
     | '/admin/settings/staff'
     | '/api/public/product-image/$'
+    | '/sales/proposals/$id/add'
     | '/admin/costing/'
     | '/admin/settings/'
     | '/sales/proposals/$id/'
@@ -470,6 +480,7 @@ export interface FileRouteTypes {
     | '/admin/settings/shipping'
     | '/admin/settings/staff'
     | '/api/public/product-image/$'
+    | '/sales/proposals/$id/add'
     | '/admin/costing'
     | '/admin/settings'
     | '/sales/proposals/$id'
@@ -512,6 +523,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings/shipping'
     | '/_authenticated/admin/settings/staff'
     | '/api/public/product-image/$'
+    | '/sales/proposals/$id/add'
     | '/_authenticated/admin/costing/'
     | '/_authenticated/admin/settings/'
     | '/sales/proposals/$id/'
@@ -813,6 +825,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesProposalsIdIndexRouteImport
       parentRoute: typeof SalesProposalsIdRoute
     }
+    '/sales/proposals/$id/add': {
+      id: '/sales/proposals/$id/add'
+      path: '/add'
+      fullPath: '/sales/proposals/$id/add'
+      preLoaderRoute: typeof SalesProposalsIdAddRouteImport
+      parentRoute: typeof SalesProposalsIdRoute
+    }
   }
 }
 
@@ -903,10 +922,12 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface SalesProposalsIdRouteChildren {
+  SalesProposalsIdAddRoute: typeof SalesProposalsIdAddRoute
   SalesProposalsIdIndexRoute: typeof SalesProposalsIdIndexRoute
 }
 
 const SalesProposalsIdRouteChildren: SalesProposalsIdRouteChildren = {
+  SalesProposalsIdAddRoute: SalesProposalsIdAddRoute,
   SalesProposalsIdIndexRoute: SalesProposalsIdIndexRoute,
 }
 
