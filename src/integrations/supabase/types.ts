@@ -71,6 +71,44 @@ export type Database = {
         }
         Relationships: []
       }
+      buyers: {
+        Row: {
+          client_id: string
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -892,6 +930,7 @@ export type Database = {
       }
       proposals: {
         Row: {
+          buyer_id: string | null
           client_id: string
           created_at: string
           created_by: string | null
@@ -906,6 +945,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          buyer_id?: string | null
           client_id: string
           created_at?: string
           created_by?: string | null
@@ -920,6 +960,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          buyer_id?: string | null
           client_id?: string
           created_at?: string
           created_by?: string | null
@@ -934,6 +975,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "proposals_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "proposals_client_id_fkey"
             columns: ["client_id"]

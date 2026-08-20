@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { buyersQuery, type BuyerRow } from "@/lib/buyers";
 import { clientsFullQuery, type ClientRow } from "@/lib/clients";
 import { useStaffSession } from "@/lib/staff-session";
 import { PROPOSAL_INCOTERMS } from "@/lib/proposals";
@@ -46,6 +47,7 @@ export function NewProposalDialog({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const clients = useQuery({ ...clientsFullQuery, enabled: open });
+  const buyers = useQuery({ ...buyersQuery, enabled: open });
   const { access } = useStaffSession();
 
   const [clientId, setClientId] = useState("");
@@ -54,16 +56,22 @@ export function NewProposalDialog({
   const [showNewClient, setShowNewClient] = useState(false);
   const [project, setProject] = useState("");
   const [incoterm, setIncoterm] = useState<Incoterm>("CIF");
+  const [buyerId, setBuyerId] = useState<string>("");
 
   const options = useMemo(
     () => [...(clients.data ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
     [clients.data],
   );
   const selected = options.find((client) => client.id === clientId) ?? null;
+  const clientBuyers = useMemo<BuyerRow[]>(
+    () => (buyers.data ?? []).filter((buyer) => buyer.client_id === clientId),
+    [buyers.data, clientId],
+  );
 
   function chooseClient(client: ClientRow) {
     setClientId(client.id);
     setPickerOpen(false);
+    setBuyerId("");
     if (client.incoterm) setIncoterm(client.incoterm);
     else setIncoterm("CIF");
   }
@@ -81,6 +89,7 @@ export function NewProposalDialog({
     onSuccess: async (row) => {
       await queryClient.invalidateQueries({ queryKey: ["clients"] });
       setClientId(row.id);
+      setBuyerId("");
       setNewClient("");
       setShowNewClient(false);
       toast.success(`Client "${row.name}" added.`);
@@ -96,6 +105,7 @@ export function NewProposalDialog({
           client_id: clientId,
           project_name: project.trim(),
           incoterm,
+          buyer_id: buyerId || null,
           status: "draft",
           created_by: access?.userId ?? null,
           created_by_name: access?.displayName || access?.email || "Staff",
@@ -109,6 +119,7 @@ export function NewProposalDialog({
       await queryClient.invalidateQueries({ queryKey: ["proposals"] });
       onOpenChange(false);
       setProject("");
+      setBuyerId("");
       await navigate({ to: "/sales/proposals/$id", params: { id: row.id } });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -246,6 +257,37 @@ export function NewProposalDialog({
               )
             ) : null}
           </div>
+
+          {selected ? (
+            <div>
+              <Label className="text-xs font-semibold uppercase tracking-wide text-n-600">
+                Attention <span className="font-normal normal-case">(optional)</span>
+              </Label>
+              <Select
+                value={buyerId || "__none__"}
+                onValueChange={(value) => setBuyerId(value === "__none__" ? "" : value)}
+              >
+                <SelectTrigger className="mt-1.5 h-10" disabled={clientBuyers.length === 0}>
+                  <SelectValue placeholder="No one in particular" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">
+                    <span className="text-muted-foreground">No one in particular</span>
+                  </SelectItem>
+                  {clientBuyers.map((buyer) => (
+                    <SelectItem key={buyer.id} value={buyer.id}>
+                      {buyer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                {clientBuyers.length === 0
+                  ? `No buyers on file for ${selected.name} — add them on the Clients tab.`
+                  : "Names this proposal for one buyer at the client."}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <DialogFooter>
