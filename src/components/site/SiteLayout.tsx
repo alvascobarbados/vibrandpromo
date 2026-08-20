@@ -189,6 +189,13 @@ export function SiteLayout({
                     >
                       Admin
                     </Link>
+                    <Link
+                      to="/sales/proposals"
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-3 py-3 text-base font-semibold text-foreground hover:bg-muted"
+                    >
+                      Proposals
+                    </Link>
                   </>
                 ) : null}
               </nav>

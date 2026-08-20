@@ -680,11 +680,17 @@ export function ProductCard({
   coverOnly = false,
   viewMode = "grid",
   pricing,
+  picker,
 }: {
   product: Product;
   coverOnly?: boolean;
   viewMode?: ProductCardViewMode;
   pricing?: PublicPricing | undefined;
+  /**
+   * Proposal picker context. Absent everywhere in the shop, so the card's
+   * default behaviour (Add to quote) is untouched.
+   */
+  picker?: { selected: boolean; onToggle: () => void; busy?: boolean } | undefined;
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = product.images ?? [];
@@ -702,7 +708,8 @@ export function ProductCard({
   const hasMoq = product.moq != null;
   const showAir = airAvailable(product.shipping_methods);
   const showSea = seaAvailable(product.shipping_methods);
-  const team = workspace === "supplier" && isStaff;
+  /** In proposal-picker mode the card always uses its customer presentation. */
+  const team = workspace === "supplier" && isStaff && !picker;
 
   // ONE source of pricing derivation, shared by the grid and expanded branches.
   const bubbles = pricing?.decorations ?? [];
@@ -1012,7 +1019,23 @@ export function ProductCard({
         />
 
         <div className="mt-auto pt-2.5">
-          <AddToQuoteRow product={product} onQuantityChange={setStepperQty} />
+          {picker ? (
+            <button
+              type="button"
+              disabled={picker.busy}
+              onClick={picker.onToggle}
+              aria-pressed={picker.selected}
+              className={`h-10 w-full rounded-full text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500 disabled:opacity-60 ${
+                picker.selected
+                  ? "bg-lime-500 text-n-700 hover:bg-lime-300"
+                  : "bg-navy-900 text-white hover:bg-navy-700"
+              }`}
+            >
+              {picker.selected ? "On proposal ✓" : "Add to proposal"}
+            </button>
+          ) : (
+            <AddToQuoteRow product={product} onQuantityChange={setStepperQty} />
+          )}
         </div>
       </div>
 

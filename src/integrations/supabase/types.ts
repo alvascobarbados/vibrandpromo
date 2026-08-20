@@ -101,6 +101,24 @@ export type Database = {
         }
         Relationships: []
       }
+      clients: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           company: string
@@ -799,6 +817,101 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      proposal_items: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          product_id: string
+          proposal_id: string
+          snapshot: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position?: number
+          product_id: string
+          proposal_id: string
+          snapshot?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          product_id?: string
+          proposal_id?: string
+          snapshot?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_items_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposals: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string
+          edited_since_generated: boolean
+          generated_at: string | null
+          id: string
+          incoterm: string
+          project_name: string
+          share_token: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string
+          edited_since_generated?: boolean
+          generated_at?: string | null
+          id?: string
+          incoterm: string
+          project_name: string
+          share_token?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string
+          edited_since_generated?: boolean
+          generated_at?: string | null
+          id?: string
+          incoterm?: string
+          project_name?: string
+          share_token?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quote_request_items: {
         Row: {
