@@ -103,19 +103,49 @@ export type Database = {
       }
       clients: {
         Row: {
+          contact_name: string | null
+          country: string | null
           created_at: string
+          email: string | null
           id: string
+          incoterm: string | null
           name: string
+          notes: string | null
+          order_confirmation_config: Json | null
+          payment_terms: string
+          payment_terms_custom_days: number | null
+          phone: string | null
+          updated_at: string
         }
         Insert: {
+          contact_name?: string | null
+          country?: string | null
           created_at?: string
+          email?: string | null
           id?: string
+          incoterm?: string | null
           name: string
+          notes?: string | null
+          order_confirmation_config?: Json | null
+          payment_terms?: string
+          payment_terms_custom_days?: number | null
+          phone?: string | null
+          updated_at?: string
         }
         Update: {
+          contact_name?: string | null
+          country?: string | null
           created_at?: string
+          email?: string | null
           id?: string
+          incoterm?: string | null
           name?: string
+          notes?: string | null
+          order_confirmation_config?: Json | null
+          payment_terms?: string
+          payment_terms_custom_days?: number | null
+          phone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
