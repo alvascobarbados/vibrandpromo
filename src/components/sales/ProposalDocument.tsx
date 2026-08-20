@@ -166,45 +166,74 @@ function ItemRow({
   readOnly,
   onRemove,
   dragProps,
+  dragging = false,
+  dropSide,
 }: {
   item: ProposalDisplayItem;
   readOnly: boolean;
   onRemove?: (id: string) => void;
   dragProps?: React.HTMLAttributes<HTMLDivElement> & { draggable?: boolean };
+  dragging?: boolean;
+  dropSide?: "before" | "after" | null;
 }) {
   const snapshot = item.snapshot;
-  const specLine = [
-    ...snapshot.specs.map((spec) => spec.value),
-    snapshot.moq != null ? `MOQ ${snapshot.moq}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  // "{SKU} · {Category} › {Subcategory}" — the dot splits SKU from taxonomy.
+  const taxonomy = [snapshot.category, snapshot.subcategory].filter(Boolean).join(" › ");
+  const skuLine = [snapshot.sku, taxonomy].filter(Boolean).join(" · ");
 
   return (
-    <div
-      {...(dragProps ?? {})}
-      className="proposal-item grid items-start gap-3 border-b border-n-200 py-4"
-      style={{
-        gridTemplateColumns: readOnly
-          ? "116px minmax(0,1fr) 300px"
-          : "26px 116px minmax(0,1fr) 300px 30px",
-      }}
-    >
-      {readOnly ? null : (
+    <div className="relative">
+      {dropSide === "before" ? (
         <span
           aria-hidden="true"
-          className="proposal-handle mt-1 flex cursor-grab items-center justify-center text-n-400"
-        >
-          <GripVertical className="size-4" />
-        </span>
-      )}
-      <ItemImage snapshot={snapshot} />
-      <div className="min-w-0">
-        <p className="card-label">
-          {[snapshot.sku, snapshot.category, snapshot.subcategory].filter(Boolean).join(" › ")}
-        </p>
-        <p className="mt-0.5 text-[15px] font-semibold text-navy-900">{snapshot.name}</p>
-        {specLine ? <p className="mt-1 text-[12px] text-n-600">{specLine}</p> : null}
+          className="pointer-events-none absolute inset-x-0 -top-[2px] h-[3px] rounded-full bg-lime-500"
+        />
+      ) : null}
+      {dropSide === "after" ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -bottom-[2px] h-[3px] rounded-full bg-lime-500"
+        />
+      ) : null}
+      <div
+        {...(dragProps ?? {})}
+        className={`proposal-item grid items-start gap-3 border-b border-n-200 py-4 transition-transform ${
+          dragging ? "scale-[1.01] rounded-xl bg-white shadow-lg ring-1 ring-n-200" : ""
+        }`}
+        style={{
+          gridTemplateColumns: readOnly
+            ? "116px minmax(0,1fr) 300px"
+            : "26px 116px minmax(0,1fr) 300px 30px",
+        }}
+      >
+        {readOnly ? null : (
+          <span
+            aria-hidden="true"
+            className="proposal-handle mt-1 flex cursor-grab items-center justify-center text-n-400"
+          >
+            <GripVertical className="size-4" />
+          </span>
+        )}
+        <ItemImage snapshot={snapshot} />
+        <div className="min-w-0">
+          <p className="card-label">{skuLine}</p>
+          <p className="mt-0.5 text-[15px] font-semibold text-navy-900">{snapshot.name}</p>
+          {snapshot.specs.length || snapshot.moq != null ? (
+            <p className="mt-1 text-[12px] text-n-600">
+              {snapshot.specs.map((spec, index) => (
+                <span key={`${spec.label}-${index}`}>
+                  {index > 0 ? " · " : null}
+                  <span className="font-semibold text-navy-900">{spec.label}</span> {spec.value}
+                </span>
+              ))}
+              {snapshot.moq != null ? (
+                <span>
+                  {snapshot.specs.length ? " · " : null}
+                  <span className="font-semibold text-navy-900">MOQ</span> {snapshot.moq}
+                </span>
+              ) : null}
+            </p>
+          ) : null}
         {snapshot.leadLabels.length ? (
           <p className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-n-600">
             {snapshot.leadLabels.map((lead) => (
