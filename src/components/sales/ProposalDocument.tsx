@@ -17,8 +17,9 @@ export const PROPOSAL_FOOTER: Record<Incoterm, string> = {
   FOB: "Prices are in US$ at the origin port — freight, insurance & duties not included.",
 };
 
-function money(value: number, currency: PricingCurrency) {
-  return `${CURRENCY_TAG[currency]}${value.toFixed(2)}`;
+/** Bubble cells are bare numbers — the currency lives once in the bubble tag. */
+function bare(value: number) {
+  return value.toFixed(2);
 }
 
 export type ProposalDisplayItem = { id: string; snapshot: ProposalSnapshot };
@@ -72,7 +73,7 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
         if (!rows.length) return null;
         const cell = (from: PricingTableMode, qty: number) => {
           const row = tableFor(from)?.rows.find((entry) => entry.qty === qty);
-          return row ? money(row.unit, snapshot.currency) : "—";
+          return row ? bare(row.unit) : "—";
         };
         return (
           <div
@@ -84,18 +85,18 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
               {snapshot.incoterm} {CURRENCY_TAG[snapshot.currency]} · unit price
             </p>
             <div className="mt-1.5 overflow-x-auto">
-              <table className="w-full border-separate border-spacing-0 text-[12px] tabular-nums">
+              <table className="w-full border-separate border-spacing-0 text-[11px] tabular-nums">
                 <thead>
                   <tr>
                     <th className="sheet-kv-label py-1 text-left font-semibold" />
                     {tiers.map((qty) => (
                       <th
                         key={qty}
-                        className="sheet-kv-label px-1.5 py-1 text-right font-semibold whitespace-nowrap"
+                        className="sheet-kv-label px-1 py-1 text-right font-semibold whitespace-nowrap"
                       >
                         {qty}
                         {snapshot.moq != null && qty === snapshot.moq ? (
-                          <span className="ml-1 text-[10px] normal-case tracking-normal">MOQ</span>
+                          <span className="ml-0.5 text-[9px] normal-case tracking-normal">MOQ</span>
                         ) : null}
                       </th>
                     ))}
@@ -104,25 +105,25 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row.label}>
-                      <td className="border-t border-n-200 py-1 pr-2 align-middle">
+                      <td className="border-t border-n-200 py-1 pr-1.5 align-middle">
                         <span className="flex items-center gap-1 whitespace-nowrap">
                           {row.chip ? <RushChip /> : null}
                           {row.icon ? (
                             <row.icon
-                              className="size-[12px] shrink-0 text-n-500"
+                              className="size-[11px] shrink-0 text-n-500"
                               strokeWidth={1.75}
                             />
                           ) : null}
                           <span>{row.label}</span>
-                          {row.lead ? (
-                            <span className="text-[10px] text-n-500">· {row.lead}</span>
+                          {row.lead && tiers.length <= 4 ? (
+                            <span className="text-[9px] text-n-500">· {row.lead}</span>
                           ) : null}
                         </span>
                       </td>
                       {tiers.map((qty) => (
                         <td
                           key={qty}
-                          className="border-t border-n-200 px-1.5 py-1 text-right whitespace-nowrap"
+                          className="border-t border-n-200 px-1 py-1 text-right whitespace-nowrap"
                         >
                           {cell(row.from, qty)}
                         </td>
@@ -165,45 +166,74 @@ function ItemRow({
   readOnly,
   onRemove,
   dragProps,
+  dragging = false,
+  dropSide,
 }: {
   item: ProposalDisplayItem;
   readOnly: boolean;
   onRemove?: (id: string) => void;
   dragProps?: React.HTMLAttributes<HTMLDivElement> & { draggable?: boolean };
+  dragging?: boolean;
+  dropSide?: "before" | "after" | null;
 }) {
   const snapshot = item.snapshot;
-  const specLine = [
-    ...snapshot.specs.map((spec) => spec.value),
-    snapshot.moq != null ? `MOQ ${snapshot.moq}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  // "{SKU} · {Category} › {Subcategory}" — the dot splits SKU from taxonomy.
+  const taxonomy = [snapshot.category, snapshot.subcategory].filter(Boolean).join(" › ");
+  const skuLine = [snapshot.sku, taxonomy].filter(Boolean).join(" · ");
 
   return (
-    <div
-      {...(dragProps ?? {})}
-      className="proposal-item grid items-start gap-3 border-b border-n-200 py-4"
-      style={{
-        gridTemplateColumns: readOnly
-          ? "116px minmax(0,1fr) 300px"
-          : "26px 116px minmax(0,1fr) 300px 30px",
-      }}
-    >
-      {readOnly ? null : (
+    <div className="relative">
+      {dropSide === "before" ? (
         <span
           aria-hidden="true"
-          className="proposal-handle mt-1 flex cursor-grab items-center justify-center text-n-400"
-        >
-          <GripVertical className="size-4" />
-        </span>
-      )}
-      <ItemImage snapshot={snapshot} />
-      <div className="min-w-0">
-        <p className="card-label">
-          {[snapshot.sku, snapshot.category, snapshot.subcategory].filter(Boolean).join(" › ")}
-        </p>
-        <p className="mt-0.5 text-[15px] font-semibold text-navy-900">{snapshot.name}</p>
-        {specLine ? <p className="mt-1 text-[12px] text-n-600">{specLine}</p> : null}
+          className="pointer-events-none absolute inset-x-0 -top-[2px] h-[3px] rounded-full bg-lime-500"
+        />
+      ) : null}
+      {dropSide === "after" ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -bottom-[2px] h-[3px] rounded-full bg-lime-500"
+        />
+      ) : null}
+      <div
+        {...(dragProps ?? {})}
+        className={`proposal-item grid items-start gap-3 border-b border-n-200 py-4 transition-transform ${
+          dragging ? "scale-[1.01] rounded-xl bg-white shadow-lg ring-1 ring-n-200" : ""
+        }`}
+        style={{
+          gridTemplateColumns: readOnly
+            ? "116px minmax(0,1fr) 300px"
+            : "26px 116px minmax(0,1fr) 300px 30px",
+        }}
+      >
+        {readOnly ? null : (
+          <span
+            aria-hidden="true"
+            className="proposal-handle mt-1 flex cursor-grab items-center justify-center text-n-400"
+          >
+            <GripVertical className="size-4" />
+          </span>
+        )}
+        <ItemImage snapshot={snapshot} />
+        <div className="min-w-0">
+          <p className="card-label">{skuLine}</p>
+          <p className="mt-0.5 text-[15px] font-semibold text-navy-900">{snapshot.name}</p>
+          {snapshot.specs.length || snapshot.moq != null ? (
+            <p className="mt-1 text-[12px] text-n-600">
+              {snapshot.specs.map((spec, index) => (
+                <span key={`${spec.label}-${index}`}>
+                  {index > 0 ? " · " : null}
+                  <span className="font-semibold text-navy-900">{spec.label}</span> {spec.value}
+                </span>
+              ))}
+              {snapshot.moq != null ? (
+                <span>
+                  {snapshot.specs.length ? " · " : null}
+                  <span className="font-semibold text-navy-900">MOQ</span> {snapshot.moq}
+                </span>
+              ) : null}
+            </p>
+          ) : null}
         {snapshot.leadLabels.length ? (
           <p className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-n-600">
             {snapshot.leadLabels.map((lead) => (
@@ -220,18 +250,19 @@ function ItemRow({
             ))}
           </p>
         ) : null}
+        </div>
+        <ProposalPricing snapshot={snapshot} />
+        {readOnly ? null : (
+          <button
+            type="button"
+            aria-label={`Remove ${snapshot.name} from this proposal`}
+            onClick={() => onRemove?.(item.id)}
+            className="mt-1 inline-flex size-7 items-center justify-center rounded-full text-n-500 hover:bg-n-100 hover:text-navy-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
+          >
+            <X className="size-4" />
+          </button>
+        )}
       </div>
-      <ProposalPricing snapshot={snapshot} />
-      {readOnly ? null : (
-        <button
-          type="button"
-          aria-label={`Remove ${snapshot.name} from this proposal`}
-          onClick={() => onRemove?.(item.id)}
-          className="mt-1 inline-flex size-7 items-center justify-center rounded-full text-n-500 hover:bg-n-100 hover:text-navy-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
-        >
-          <X className="size-4" />
-        </button>
-      )}
     </div>
   );
 }
@@ -261,17 +292,34 @@ export function ProposalDocument({
   footer?: React.ReactNode;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dropAt, setDropAt] = useState<{ id: string; side: "before" | "after" } | null>(null);
+
+  function clearDrag() {
+    setDragId(null);
+    setDropAt(null);
+  }
 
   function dropOn(targetId: string) {
-    if (!dragId || dragId === targetId || !onReorder) return;
+    if (!dragId || dragId === targetId || !onReorder) {
+      clearDrag();
+      return;
+    }
     const ids = items.map((item) => item.id);
     const from = ids.indexOf(dragId);
     const to = ids.indexOf(targetId);
-    if (from < 0 || to < 0) return;
-    ids.splice(to, 0, ...ids.splice(from, 1));
+    if (from < 0 || to < 0) {
+      clearDrag();
+      return;
+    }
+    const [moved] = ids.splice(from, 1);
+    const targetIndex = ids.indexOf(targetId);
+    const insertAt = dropAt?.side === "after" ? targetIndex + 1 : targetIndex;
+    ids.splice(insertAt, 0, moved as string);
     onReorder(ids);
-    setDragId(null);
+    clearDrag();
   }
+
+  const chip = "rounded-full border border-n-200 px-2.5 py-0.5 text-[11px] text-n-600";
 
   return (
     <div className="proposal-doc">
@@ -281,19 +329,20 @@ export function ProposalDocument({
             Proposal · {header.status === "generated" ? "Generated" : "Draft"}
           </p>
           <h2 className="mt-1 text-xl font-bold text-navy-900">
-            {header.clientName} — {header.projectName}
+            {header.clientName}{" "}
+            <span className="font-medium text-n-500">— {header.projectName}</span>
           </h2>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-            <span className="rounded-full bg-navy-900 px-2 py-0.5 font-bold uppercase tracking-[0.1em] text-white">
+            <span className="rounded-full bg-navy-900 px-2.5 py-0.5 font-bold uppercase tracking-[0.1em] text-white">
               {header.incoterm} {CURRENCY_TAG[header.currency]}
             </span>
-            <span className="text-n-600">{INCOTERM_SCOPE[header.incoterm]}</span>
-            <span className="text-n-600">· {formatProposalDate(header.dateISO)}</span>
+            <span className={chip}>{INCOTERM_SCOPE[header.incoterm]}</span>
+            <span className={chip}>{formatProposalDate(header.dateISO)}</span>
             {header.preparedBy ? (
-              <span className="text-n-600">· Prepared by {header.preparedBy}</span>
+              <span className={chip}>Prepared by {header.preparedBy}</span>
             ) : null}
-            <span className="text-n-600">
-              · {header.itemCount} item{header.itemCount === 1 ? "" : "s"}
+            <span className={chip}>
+              {header.itemCount} item{header.itemCount === 1 ? "" : "s"}
             </span>
           </div>
         </div>
@@ -311,6 +360,12 @@ export function ProposalDocument({
               key={item.id}
               item={item}
               readOnly={readOnly}
+              dragging={dragId === item.id}
+              dropSide={
+                dropAt && dropAt.id === item.id && dragId && dragId !== item.id
+                  ? dropAt.side
+                  : null
+              }
               {...(onRemove ? { onRemove } : {})}
               {...(readOnly
                 ? {}
@@ -318,7 +373,21 @@ export function ProposalDocument({
                     dragProps: {
                       draggable: true,
                       onDragStart: () => setDragId(item.id),
-                      onDragOver: (event: React.DragEvent) => event.preventDefault(),
+                      onDragEnd: () => clearDrag(),
+                      onDragOver: (event: React.DragEvent) => {
+                        event.preventDefault();
+                        if (!dragId || dragId === item.id) return;
+                        const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
+                        const side =
+                          event.clientY > box.top + box.height / 2 ? "after" : "before";
+                        setDropAt((prev) =>
+                          prev?.id === item.id && prev.side === side
+                            ? prev
+                            : { id: item.id, side },
+                        );
+                      },
+                      onDragLeave: () =>
+                        setDropAt((prev) => (prev?.id === item.id ? null : prev)),
                       onDrop: () => dropOn(item.id),
                     } as React.HTMLAttributes<HTMLDivElement> & { draggable?: boolean },
                   })}
