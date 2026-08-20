@@ -83,6 +83,12 @@ export function ProposalsListPage() {
               aria-label="Search proposals by client or project"
               className="h-10 w-56 rounded-full"
             />
+            <Link
+              to="/sales/clients"
+              className="inline-flex h-10 items-center rounded-full border border-n-200 px-4 text-[12px] font-semibold text-navy-700 hover:bg-navy-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
+            >
+              Clients
+            </Link>
             <Button
               className="h-10 rounded-full bg-navy-900 text-white hover:bg-navy-800"
               onClick={() => setDialogOpen(true)}
