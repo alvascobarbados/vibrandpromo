@@ -708,7 +708,8 @@ export function ProductCard({
   const hasMoq = product.moq != null;
   const showAir = airAvailable(product.shipping_methods);
   const showSea = seaAvailable(product.shipping_methods);
-  const team = workspace === "supplier" && isStaff;
+  /** In proposal-picker mode the card always uses its customer presentation. */
+  const team = workspace === "supplier" && isStaff && !picker;
 
   // ONE source of pricing derivation, shared by the grid and expanded branches.
   const bubbles = pricing?.decorations ?? [];
