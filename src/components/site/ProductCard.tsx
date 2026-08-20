@@ -131,38 +131,13 @@ function bandFor(quantities: number[], qty: number) {
   return hit;
 }
 
-/**
- * Deterministic pick of at most 4 tier columns for the compact grid table:
- * lowest, highest and the active band first, then the most "spread out"
- * remaining tiers (ties resolve to the higher tier).
- */
-function miniColumns(all: number[], qty: number, max = 4) {
-  if (all.length <= max) return all;
-  const chosen = new Set<number>([0, all.length - 1]);
-  const band = bandFor(all, qty);
-  const bandIndex = band != null ? all.indexOf(band) : 0;
-  if (bandIndex >= 0) chosen.add(bandIndex);
-  while (chosen.size < max) {
-    let best = -1;
-    let bestDistance = -1;
-    for (let i = 0; i < all.length; i += 1) {
-      if (chosen.has(i)) continue;
-      let minDistance = Infinity;
-      for (const index of chosen) minDistance = Math.min(minDistance, Math.abs(i - index));
-      if (minDistance > bestDistance || (minDistance === bestDistance && i > best)) {
-        bestDistance = minDistance;
-        best = i;
-      }
-    }
-    if (best < 0) break;
-    chosen.add(best);
-  }
-  return [...chosen].sort((a, b) => a - b).map((index) => all[index]!);
-}
+/** Width of the sticky mode-label column in the mini strip. */
+const MINI_LABEL_W = 26;
 
 /**
- * Compact 4-column tier matrix for the customer grid card. One method at a
- * time, cycled with ‹ ›. Unit prices only — no internals ever reach the DOM.
+ * Compact tier matrix for the customer grid card. Every unified tier is a
+ * column; the strip scrolls horizontally. One method at a time, cycled with
+ * the › beside its name. Unit prices only — no internals reach the DOM.
  */
 function MiniPricing({
   bubbles,
@@ -184,7 +159,7 @@ function MiniPricing({
   currency: PricingCurrency;
 }) {
   const [index, setIndex] = useState(0);
-  /** Column count adapts to the real card width: ≥240px → 4, below → 3. */
+  /** Card width still decides whether the dashed placeholder is shown. */
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState<number | null>(null);
   useEffect(() => {
@@ -198,6 +173,28 @@ function MiniPricing({
     return () => observer.disconnect();
   }, []);
 
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+  const measure = () => {
+    const node = scrollRef.current;
+    if (!node) return;
+    const max = node.scrollWidth - node.clientWidth;
+    setEdges({ left: node.scrollLeft > 1, right: node.scrollLeft < max - 1 });
+  };
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+    measure();
+    node.addEventListener("scroll", measure, { passive: true });
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => measure());
+    observer?.observe(node);
+    return () => {
+      node.removeEventListener("scroll", measure);
+      observer?.disconnect();
+    };
+  });
+
   const fob = bubbles.length
     ? bubbles[Math.min(index, bubbles.length - 1)]!.tables.some((t) => t.mode === "origin")
     : false;
@@ -209,6 +206,32 @@ function MiniPricing({
   }
 
   const wide = width == null || width >= 240;
+  const band = bandFor(quantities, qty);
+
+  /** Keep the active band visible as the stepper moves. */
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node || band == null) return;
+    const cell = node.querySelector<HTMLElement>(`[data-qty="${band}"]`);
+    if (!cell) return;
+    node.scrollTo({ left: Math.max(0, cell.offsetLeft - MINI_LABEL_W), behavior: "smooth" });
+  }, [band, quantities.length]);
+
+  /** Switching methods lands you back on the MOQ tier. */
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ left: 0, behavior: "smooth" });
+  }, [index]);
+
+  function cycle() {
+    setIndex((current) => (current + 1) % Math.max(bubbles.length, 1));
+  }
+
+  function page(direction: -1 | 1) {
+    const node = scrollRef.current;
+    if (!node) return;
+    const step = Math.max(52, node.clientWidth - MINI_LABEL_W);
+    node.scrollBy({ left: direction * step, behavior: "smooth" });
+  }
 
   if (!bubbles.length || !quantities.length || !rows.length) {
     /** Phone-width cards stay clean: no dashed placeholder below 240px. */
@@ -225,54 +248,90 @@ function MiniPricing({
 
   const bubble = bubbles[Math.min(index, bubbles.length - 1)]!;
   const tableFor = (mode: PricingTableMode) => bubble.tables.find((table) => table.mode === mode);
-  const columns = miniColumns(quantities, qty, wide ? 4 : 3);
-  const band = bandFor(quantities, qty);
+  const columns = quantities;
   const cell = (from: PricingTableMode, value: number) => {
     const row = tableFor(from)?.rows.find((entry) => entry.qty === value);
     return row ? row.unit.toFixed(2) : "—";
   };
+  const multi = bubbles.length > 1;
+  const overflows = edges.left || edges.right;
 
   return (
     <div ref={hostRef} className="mt-2.5 rounded-xl border border-n-200 p-2">
-      <p className="text-[13px] font-semibold leading-snug text-navy-700 line-clamp-2">
+      <div className="flex min-w-0 items-center gap-0.5">
+        {multi ? (
+          <button
+            type="button"
+            onClick={cycle}
+            aria-label="Next decoration method"
+            className="min-w-0 truncate text-left text-[13px] font-semibold leading-snug text-navy-700 outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
+          >
+            {bubble.methodName}
+          </button>
+        ) : (
+          <p className="min-w-0 truncate text-[13px] font-semibold leading-snug text-navy-700">
+            {bubble.methodName}
+          </p>
+        )}
+        {multi ? (
+          <button
+            type="button"
+            onClick={cycle}
+            aria-label="Next decoration method"
+            className="inline-flex size-[18px] shrink-0 items-center justify-center rounded-full text-n-600 outline-none transition-colors hover:text-navy-700 focus-visible:ring-2 focus-visible:ring-lime-500"
+          >
+            <ChevronRight className="size-3" />
+          </button>
+        ) : null}
+      </div>
+      <span aria-live="polite" className="sr-only">
         {bubble.methodName}
-      </p>
+      </span>
       <div className="mt-0.5 flex h-[18px] items-center">
         <span className="sheet-kv-label">
           {incoterm} {CURRENCY_TAG[currency]}
         </span>
-        {bubbles.length > 1 ? (
-          <span className="ml-auto flex shrink-0 items-center gap-1">
+        {overflows ? (
+          <span className="ml-auto flex shrink-0 items-center gap-1 [@media(hover:none)]:hidden">
             <button
               type="button"
-              aria-label="Previous method"
-              onClick={() => setIndex((current) => (current - 1 + bubbles.length) % bubbles.length)}
-              className="inline-flex size-[18px] items-center justify-center rounded-full text-n-600 outline-none transition-colors hover:text-navy-700 focus-visible:ring-2 focus-visible:ring-lime-500"
+              aria-label="Previous prices"
+              disabled={!edges.left}
+              onClick={() => page(-1)}
+              className="inline-flex size-[18px] items-center justify-center rounded-full text-n-600 outline-none transition-colors hover:text-navy-700 focus-visible:ring-2 focus-visible:ring-lime-500 disabled:pointer-events-none disabled:text-n-300"
             >
               <ChevronLeft className="size-3" />
             </button>
-            <span className="text-[11px] tabular-nums text-n-500">
-              {Math.min(index, bubbles.length - 1) + 1} / {bubbles.length}
-            </span>
             <button
               type="button"
-              aria-label="Next method"
-              onClick={() => setIndex((current) => (current + 1) % bubbles.length)}
-              className="inline-flex size-[18px] items-center justify-center rounded-full text-n-600 outline-none transition-colors hover:text-navy-700 focus-visible:ring-2 focus-visible:ring-lime-500"
+              aria-label="More prices"
+              disabled={!edges.right}
+              onClick={() => page(1)}
+              className="inline-flex size-[18px] items-center justify-center rounded-full text-n-600 outline-none transition-colors hover:text-navy-700 focus-visible:ring-2 focus-visible:ring-lime-500 disabled:pointer-events-none disabled:text-n-300"
             >
               <ChevronRight className="size-3" />
             </button>
           </span>
         ) : null}
       </div>
-      <table className="mt-1.5 w-full table-fixed border-separate border-spacing-0 tabular-nums">
+      <div className="relative mt-1.5">
+        <div
+          ref={scrollRef}
+          className="overflow-x-auto scroll-smooth [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none", touchAction: "pan-x pan-y" }}
+        >
+          <table className="w-max min-w-full border-separate border-spacing-0 tabular-nums">
         <thead>
           <tr>
-            <th className="w-[34px] py-1" />
+            <th
+              className="sticky left-0 z-10 bg-white py-1 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]"
+              style={{ width: MINI_LABEL_W, minWidth: MINI_LABEL_W }}
+            />
             {columns.map((value) => (
               <th
                 key={value}
-                className={`sheet-kv-label rounded-t-md px-1 py-1 text-right font-semibold ${
+                data-qty={value}
+                className={`sheet-kv-label min-w-[52px] rounded-t-md px-1 py-1 text-right font-semibold ${
                   band === value ? "bg-lime-50 !text-navy-700" : ""
                 }`}
               >
@@ -287,7 +346,11 @@ function MiniPricing({
         <tbody>
           {rows.map((row, rowIndex) => (
             <tr key={row.label}>
-              <td className="border-t border-n-200 py-1 pr-1" title={row.label}>
+              <td
+                className="sticky left-0 z-10 border-t border-n-200 bg-white py-1 pr-1 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]"
+                style={{ width: MINI_LABEL_W, minWidth: MINI_LABEL_W }}
+                title={row.label}
+              >
                 {row.icon ? (
                   <>
                     <row.icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
@@ -300,7 +363,7 @@ function MiniPricing({
               {columns.map((value) => (
                 <td
                   key={value}
-                  className={`border-t border-n-200 px-1 py-1 text-right text-[13px] ${
+                  className={`min-w-[52px] border-t border-n-200 px-1 py-1 text-right text-[13px] ${
                     band === value ? "bg-lime-50" : ""
                   } ${band === value && rowIndex === rows.length - 1 ? "rounded-b-md" : ""}`}
                 >
@@ -310,7 +373,15 @@ function MiniPricing({
             </tr>
           ))}
         </tbody>
-      </table>
+          </table>
+        </div>
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-y-0 right-0 w-[26px] bg-gradient-to-l from-white to-transparent transition-opacity duration-150 ${
+            edges.right ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </div>
     </div>
   );
 }
