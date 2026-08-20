@@ -233,6 +233,18 @@ export function NewProposalDialog({
                 ))}
               </SelectContent>
             </Select>
+            {selected ? (
+              selected.incoterm ? (
+                <p className="mt-1.5 text-[11px] text-n-600">
+                  Default for {selected.name}: <strong>{selected.incoterm}</strong> — change it here
+                  if this project differs.
+                </p>
+              ) : (
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  No default incoterm on file for this client.
+                </p>
+              )
+            ) : null}
           </div>
         </div>
 
