@@ -151,7 +151,7 @@ function ItemImage({ snapshot }: { snapshot: ProposalSnapshot }) {
     <div className="aspect-square w-full overflow-hidden rounded-lg border border-n-200 bg-white">
       <img
         src={imageSrc(snapshot.image, "card")}
-        onError={fallbackToOriginal(snapshot.image)}
+        onError={(event) => fallbackToOriginal(event, imageSrc(snapshot.image as string))}
         alt={snapshot.name}
         loading="lazy"
         className="size-full object-contain"
