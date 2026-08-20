@@ -1031,7 +1031,7 @@ export function ProductCard({
                   : "bg-navy-900 text-white hover:bg-navy-700"
               }`}
             >
-              {picker.selected ? "On proposal ✓" : "Add to proposal"}
+              {picker.selected ? "✓ In proposal — Remove" : "+ Add to proposal"}
             </button>
           ) : (
             <AddToQuoteRow product={product} onQuantityChange={setStepperQty} />

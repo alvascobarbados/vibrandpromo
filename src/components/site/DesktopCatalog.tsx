@@ -57,6 +57,8 @@ export function DesktopCatalog({
     selectedIds: Set<string>;
     onToggle: (productId: string) => void;
     busyId?: string | null;
+    /** Locked project incoterm — replaces the staff incoterm toggle. */
+    incoterm?: Incoterm;
   };
 }) {
   const { search, toggle, clear, update, activeCount } = useCatalogFilters();
@@ -216,12 +218,15 @@ export function DesktopCatalog({
    * stays on the public CIF function no matter what the URL says.
    */
   const { isStaff } = useStaffSession();
-  const showIncoterm = isStaff && !team;
+  const showIncoterm = isStaff && !team && !picker;
   const rawInco = useRouterState({
     select: (state) => String((state.location.search as Record<string, unknown>)["inco"] ?? ""),
   }) as unknown as string;
-  const incoterm: Incoterm =
-    showIncoterm && INCOTERMS.includes(rawInco as Incoterm) ? (rawInco as Incoterm) : "CIF";
+  const incoterm: Incoterm = picker
+    ? (picker.incoterm ?? "CIF")
+    : showIncoterm && INCOTERMS.includes(rawInco as Incoterm)
+      ? (rawInco as Incoterm)
+      : "CIF";
   /** Both customer views price the visible page (20 ids ≤ the 60 server cap). */
   const pricingById = useCustomerPricing(
     visible.map((product) => product.id),

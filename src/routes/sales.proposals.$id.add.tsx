@@ -62,6 +62,7 @@ function PickerRoute() {
   const rows = items.data ?? [];
   const selectedIds = new Set(rows.map((item) => item.product_id));
   const status = proposal.data?.status ?? "draft";
+  const incoterm = proposal.data?.incoterm ?? "CIF";
 
   const toggle = useMutation({
     mutationFn: async (productId: string) => {
@@ -89,25 +90,37 @@ function PickerRoute() {
 
   return (
     <SiteLayout viewMode="supplier" headerSlot={<div />}>
-      <div className="site-container py-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-n-200 pb-4">
-          <div>
+      {/* Navy picker bar — only ever rendered on this staff route. */}
+      <div className="sticky top-16 z-30 bg-navy-900 text-white">
+        <div className="site-container flex flex-wrap items-center justify-between gap-3 py-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/70">
+              Adding to {proposal.data?.client_name ?? "…"} ·{" "}
+              {proposal.data?.project_name ?? ""} · {incoterm} (locked)
+            </p>
             <Link
               to="/sales/proposals/$id"
               params={{ id }}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-700 hover:underline"
+              className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
             >
               <ArrowLeft className="size-4" /> Back to proposal
             </Link>
-            <h1 className="mt-2 text-xl font-bold text-navy-900">
-              Add items — {proposal.data?.client_name ?? "…"} ·{" "}
-              {proposal.data?.project_name ?? ""}
-            </h1>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {selectedIds.size} item{selectedIds.size === 1 ? "" : "s"} on this proposal
-          </p>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-white/80">
+              {selectedIds.size} item{selectedIds.size === 1 ? "" : "s"} so far
+            </span>
+            <Link
+              to="/sales/proposals/$id"
+              params={{ id }}
+              className="rounded-full bg-lime-500 px-4 py-2 text-sm font-semibold text-n-700 hover:bg-lime-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
+            >
+              Done — back to draft →
+            </Link>
+          </div>
         </div>
+      </div>
+      <div className="site-container py-6">
         <div className="pt-6">
           <DesktopCatalog
             page={page}
@@ -115,6 +128,7 @@ function PickerRoute() {
               selectedIds,
               onToggle: (productId) => toggle.mutate(productId),
               busyId,
+              incoterm,
             }}
           />
         </div>
