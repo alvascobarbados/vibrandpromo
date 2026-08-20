@@ -250,18 +250,19 @@ function ItemRow({
             ))}
           </p>
         ) : null}
+        </div>
+        <ProposalPricing snapshot={snapshot} />
+        {readOnly ? null : (
+          <button
+            type="button"
+            aria-label={`Remove ${snapshot.name} from this proposal`}
+            onClick={() => onRemove?.(item.id)}
+            className="mt-1 inline-flex size-7 items-center justify-center rounded-full text-n-500 hover:bg-n-100 hover:text-navy-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
+          >
+            <X className="size-4" />
+          </button>
+        )}
       </div>
-      <ProposalPricing snapshot={snapshot} />
-      {readOnly ? null : (
-        <button
-          type="button"
-          aria-label={`Remove ${snapshot.name} from this proposal`}
-          onClick={() => onRemove?.(item.id)}
-          className="mt-1 inline-flex size-7 items-center justify-center rounded-full text-n-500 hover:bg-n-100 hover:text-navy-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
-        >
-          <X className="size-4" />
-        </button>
-      )}
     </div>
   );
 }
