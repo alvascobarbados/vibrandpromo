@@ -92,7 +92,7 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
                     {tiers.map((qty) => (
                       <th
                         key={qty}
-                        className="sheet-kv-label px-1.5 py-1 text-right font-semibold whitespace-nowrap"
+                        className="sheet-kv-label px-1 py-1 text-right font-semibold whitespace-nowrap"
                       >
                         {qty}
                         {snapshot.moq != null && qty === snapshot.moq ? (
@@ -123,7 +123,7 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
                       {tiers.map((qty) => (
                         <td
                           key={qty}
-                          className="border-t border-n-200 px-1.5 py-1 text-right whitespace-nowrap"
+                          className="border-t border-n-200 px-1 py-1 text-right whitespace-nowrap"
                         >
                           {cell(row.from, qty)}
                         </td>
