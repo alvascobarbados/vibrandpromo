@@ -680,11 +680,17 @@ export function ProductCard({
   coverOnly = false,
   viewMode = "grid",
   pricing,
+  picker,
 }: {
   product: Product;
   coverOnly?: boolean;
   viewMode?: ProductCardViewMode;
   pricing?: PublicPricing | undefined;
+  /**
+   * Proposal picker context. Absent everywhere in the shop, so the card's
+   * default behaviour (Add to quote) is untouched.
+   */
+  picker?: { selected: boolean; onToggle: () => void; busy?: boolean } | undefined;
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = product.images ?? [];
