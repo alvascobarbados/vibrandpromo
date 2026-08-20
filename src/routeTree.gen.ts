@@ -48,6 +48,7 @@ import { Route as AuthenticatedAdminSettingsEmailRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminSettingsShippingRouteImport } from './routes/_authenticated/admin.settings.shipping'
 import { Route as AuthenticatedAdminSettingsStaffRouteImport } from './routes/_authenticated/admin.settings.staff'
 import { Route as ApiPublicProductImageSplatRouteImport } from './routes/api/public/product-image.$'
+import { Route as SalesProposalsIdIndexRouteImport } from './routes/sales.proposals.$id.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -266,6 +267,11 @@ const ApiPublicProductImageSplatRoute =
     path: '/api/public/product-image/$',
     getParentRoute: () => rootRouteImport,
   } as any)
+const SalesProposalsIdIndexRoute = SalesProposalsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SalesProposalsIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -292,7 +298,7 @@ export interface FileRoutesByFullPath {
   '/admin/shipping': typeof AuthenticatedAdminShippingRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/suppliers': typeof AuthenticatedAdminSuppliersRoute
-  '/sales/proposals/$id': typeof SalesProposalsIdRoute
+  '/sales/proposals/$id': typeof SalesProposalsIdRouteWithChildren
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/sales/proposals/': typeof SalesProposalsIndexRoute
   '/admin/costing/destinations': typeof AuthenticatedAdminCostingDestinationsRoute
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
   '/admin/costing/': typeof AuthenticatedAdminCostingIndexRoute
   '/admin/settings/': typeof AuthenticatedAdminSettingsIndexRoute
+  '/sales/proposals/$id/': typeof SalesProposalsIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -329,7 +336,6 @@ export interface FileRoutesByTo {
   '/admin/shipping': typeof AuthenticatedAdminShippingRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/suppliers': typeof AuthenticatedAdminSuppliersRoute
-  '/sales/proposals/$id': typeof SalesProposalsIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/sales/proposals': typeof SalesProposalsIndexRoute
   '/admin/costing/destinations': typeof AuthenticatedAdminCostingDestinationsRoute
@@ -343,6 +349,7 @@ export interface FileRoutesByTo {
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
   '/admin/costing': typeof AuthenticatedAdminCostingIndexRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsIndexRoute
+  '/sales/proposals/$id': typeof SalesProposalsIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -371,7 +378,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/shipping': typeof AuthenticatedAdminShippingRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/_authenticated/admin/suppliers': typeof AuthenticatedAdminSuppliersRoute
-  '/sales/proposals/$id': typeof SalesProposalsIdRoute
+  '/sales/proposals/$id': typeof SalesProposalsIdRouteWithChildren
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/sales/proposals/': typeof SalesProposalsIndexRoute
   '/_authenticated/admin/costing/destinations': typeof AuthenticatedAdminCostingDestinationsRoute
@@ -385,6 +392,7 @@ export interface FileRoutesById {
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
   '/_authenticated/admin/costing/': typeof AuthenticatedAdminCostingIndexRoute
   '/_authenticated/admin/settings/': typeof AuthenticatedAdminSettingsIndexRoute
+  '/sales/proposals/$id/': typeof SalesProposalsIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -427,6 +435,7 @@ export interface FileRouteTypes {
     | '/api/public/product-image/$'
     | '/admin/costing/'
     | '/admin/settings/'
+    | '/sales/proposals/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -450,7 +459,6 @@ export interface FileRouteTypes {
     | '/admin/shipping'
     | '/admin/staff'
     | '/admin/suppliers'
-    | '/sales/proposals/$id'
     | '/admin'
     | '/sales/proposals'
     | '/admin/costing/destinations'
@@ -464,6 +472,7 @@ export interface FileRouteTypes {
     | '/api/public/product-image/$'
     | '/admin/costing'
     | '/admin/settings'
+    | '/sales/proposals/$id'
   id:
     | '__root__'
     | '/'
@@ -505,6 +514,7 @@ export interface FileRouteTypes {
     | '/api/public/product-image/$'
     | '/_authenticated/admin/costing/'
     | '/_authenticated/admin/settings/'
+    | '/sales/proposals/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -796,6 +806,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicProductImageSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sales/proposals/$id/': {
+      id: '/sales/proposals/$id/'
+      path: '/'
+      fullPath: '/sales/proposals/$id/'
+      preLoaderRoute: typeof SalesProposalsIdIndexRouteImport
+      parentRoute: typeof SalesProposalsIdRoute
+    }
   }
 }
 
@@ -885,13 +902,24 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface SalesProposalsIdRouteChildren {
+  SalesProposalsIdIndexRoute: typeof SalesProposalsIdIndexRoute
+}
+
+const SalesProposalsIdRouteChildren: SalesProposalsIdRouteChildren = {
+  SalesProposalsIdIndexRoute: SalesProposalsIdIndexRoute,
+}
+
+const SalesProposalsIdRouteWithChildren =
+  SalesProposalsIdRoute._addFileChildren(SalesProposalsIdRouteChildren)
+
 interface SalesProposalsRouteChildren {
-  SalesProposalsIdRoute: typeof SalesProposalsIdRoute
+  SalesProposalsIdRoute: typeof SalesProposalsIdRouteWithChildren
   SalesProposalsIndexRoute: typeof SalesProposalsIndexRoute
 }
 
 const SalesProposalsRouteChildren: SalesProposalsRouteChildren = {
-  SalesProposalsIdRoute: SalesProposalsIdRoute,
+  SalesProposalsIdRoute: SalesProposalsIdRouteWithChildren,
   SalesProposalsIndexRoute: SalesProposalsIndexRoute,
 }
 
