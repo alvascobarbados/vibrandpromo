@@ -35,6 +35,8 @@ export const KNOWN_SEARCH_PARAMS = new Set<string>([
   "sup",
   /** Desktop catalogue layout toggle (grid | expanded) — never narrows the list. */
   "view",
+  /** Staff-only incoterm basis for displayed prices; ignored for non-staff. */
+  "inco",
 ]);
 
 export function purgeLegacyFilterStorage() {

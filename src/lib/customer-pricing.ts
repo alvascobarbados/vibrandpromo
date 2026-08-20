@@ -2,18 +2,27 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo } from "react";
 
-import { getCustomerPricing } from "@/lib/pricing.functions";
-import type { PublicPricing } from "@/lib/pricing-types";
+import { getCustomerPricing, getStaffPricing } from "@/lib/pricing.functions";
+import type { Incoterm, PublicPricing } from "@/lib/pricing-types";
 
 /**
- * Customer-safe unit prices (CIF USD) for the products currently on screen.
- * Only fetched for the visible page, and only when the expanded layout is on.
+ * Unit prices for the products currently on screen. CIF always goes through
+ * the public function; any other incoterm is staff-only and goes through the
+ * authenticated one.
  */
-export function useCustomerPricing(productIds: string[], enabled: boolean) {
-  const fetchPricing = useServerFn(getCustomerPricing);
+export function useCustomerPricing(
+  productIds: string[],
+  enabled: boolean,
+  incoterm: Incoterm = "CIF",
+) {
+  const fetchPublic = useServerFn(getCustomerPricing);
+  const fetchStaff = useServerFn(getStaffPricing);
   const query = useQuery({
-    queryKey: ["customer-pricing", productIds],
-    queryFn: () => fetchPricing({ data: { productIds } }),
+    queryKey: ["customer-pricing", incoterm, productIds],
+    queryFn: () =>
+      incoterm === "CIF"
+        ? fetchPublic({ data: { productIds } })
+        : fetchStaff({ data: { productIds, incoterm } }),
     enabled: enabled && productIds.length > 0,
     staleTime: 5 * 60 * 1000,
   });

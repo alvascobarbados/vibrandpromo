@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouterState } from "@tanstack/react-router";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import { ViewToggle, useCatalogView } from "@/components/site/ViewToggle";
 import { Pricelist } from "@/components/team/Pricelist";
 import { DesktopFilterSidebar } from "@/components/site/DesktopFilterSidebar";
 import { categoriesQuery, subcategoriesQuery } from "@/lib/catalog";
-import { useCatalogProducts } from "@/lib/staff-session";
+import { useCatalogProducts, useStaffSession } from "@/lib/staff-session";
 import {
   GROUP_LABELS,
   SORT_OPTIONS,
@@ -31,9 +32,11 @@ import { useViewMode } from "@/lib/view-mode";
 import { READY_FILTER_OPTIONS, matchesReadyFilter } from "@/lib/costing-gate";
 import { sourcingRowsQuery, suppliersQuery } from "@/lib/sourcing";
 import { useCustomerPricing } from "@/lib/customer-pricing";
+import type { Incoterm } from "@/lib/pricing-types";
 
 const PAGE_SIZE = 20;
 const CHIP_GROUPS: FilterGroupId[] = ["cat", "sub", "moq", "prod", "colour", "deco", "src", "mat"];
+const INCOTERMS: Incoterm[] = ["CIF", "FOB", "LDF", "LDP"];
 
 /**
  * Desktop-only (>=1024px) sidebar catalog. Shared by the home route and
@@ -197,10 +200,23 @@ export function DesktopCatalog({
 
   /** Expanded layout is a shop-only, desktop-only presentation choice. */
   const expanded = !team && useCatalogView() === "expanded";
+  /**
+   * Incoterm basis is a staff-only cost view on the shop surface. Non-staff
+   * never see the control and the URL param is ignored for them, so the fetch
+   * stays on the public CIF function no matter what the URL says.
+   */
+  const { isStaff } = useStaffSession();
+  const showIncoterm = isStaff && !team;
+  const rawInco = useRouterState({
+    select: (state) => String((state.location.search as Record<string, unknown>)["inco"] ?? ""),
+  }) as unknown as string;
+  const incoterm: Incoterm =
+    showIncoterm && INCOTERMS.includes(rawInco as Incoterm) ? (rawInco as Incoterm) : "CIF";
   /** Both customer views price the visible page (20 ids ≤ the 60 server cap). */
   const pricingById = useCustomerPricing(
     visible.map((product) => product.id),
     !team,
+    incoterm,
   );
 
   const chips = CHIP_GROUPS.flatMap((group) =>
@@ -261,6 +277,25 @@ export function DesktopCatalog({
           </p>
           <div className="flex items-center gap-2">
             {team ? null : <ViewToggle />}
+            {showIncoterm ? (
+              <Select
+                value={incoterm}
+                onValueChange={(value) =>
+                  update({ inco: value === "CIF" ? undefined : value } as never)
+                }
+              >
+                <SelectTrigger className="h-10 w-40 rounded-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INCOTERMS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      Incoterm: {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
             <Select value={search.sort} onValueChange={(value) => update({ sort: value })}>
             <SelectTrigger className="h-10 w-44 rounded-full">
               <SelectValue />
