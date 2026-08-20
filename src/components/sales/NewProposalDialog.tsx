@@ -129,18 +129,51 @@ export function NewProposalDialog({
               Client
             </Label>
             <div className="mt-1.5 flex items-center gap-2">
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger className="h-10 flex-1">
-                  <SelectValue placeholder="Choose a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(clients.data ?? []).map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={pickerOpen}
+                    className="h-10 flex-1 justify-between font-normal"
+                  >
+                    <span className={selected ? "truncate" : "truncate text-muted-foreground"}>
+                      {selected ? selected.name : "Choose a client"}
+                    </span>
+                    <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[320px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search clients…" />
+                    <CommandList>
+                      <CommandEmpty>No client found.</CommandEmpty>
+                      <CommandGroup>
+                        {options.map((client) => (
+                          <CommandItem
+                            key={client.id}
+                            value={client.name}
+                            onSelect={() => chooseClient(client)}
+                          >
+                            <Check
+                              className={`mr-2 size-4 ${
+                                client.id === clientId ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+                            <span className="truncate">{client.name}</span>
+                            {client.incoterm ? (
+                              <span className="ml-auto rounded-full bg-navy-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white">
+                                {client.incoterm}
+                              </span>
+                            ) : null}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <Button
                 type="button"
                 variant="ghost"
