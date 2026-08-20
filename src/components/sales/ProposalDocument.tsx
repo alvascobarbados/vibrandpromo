@@ -292,17 +292,34 @@ export function ProposalDocument({
   footer?: React.ReactNode;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dropAt, setDropAt] = useState<{ id: string; side: "before" | "after" } | null>(null);
+
+  function clearDrag() {
+    setDragId(null);
+    setDropAt(null);
+  }
 
   function dropOn(targetId: string) {
-    if (!dragId || dragId === targetId || !onReorder) return;
+    if (!dragId || dragId === targetId || !onReorder) {
+      clearDrag();
+      return;
+    }
     const ids = items.map((item) => item.id);
     const from = ids.indexOf(dragId);
     const to = ids.indexOf(targetId);
-    if (from < 0 || to < 0) return;
-    ids.splice(to, 0, ...ids.splice(from, 1));
+    if (from < 0 || to < 0) {
+      clearDrag();
+      return;
+    }
+    const [moved] = ids.splice(from, 1);
+    const targetIndex = ids.indexOf(targetId);
+    const insertAt = dropAt?.side === "after" ? targetIndex + 1 : targetIndex;
+    ids.splice(insertAt, 0, moved as string);
     onReorder(ids);
-    setDragId(null);
+    clearDrag();
   }
+
+  const chip = "rounded-full border border-n-200 px-2.5 py-0.5 text-[11px] text-n-600";
 
   return (
     <div className="proposal-doc">
@@ -312,19 +329,20 @@ export function ProposalDocument({
             Proposal · {header.status === "generated" ? "Generated" : "Draft"}
           </p>
           <h2 className="mt-1 text-xl font-bold text-navy-900">
-            {header.clientName} — {header.projectName}
+            {header.clientName}{" "}
+            <span className="font-medium text-n-500">— {header.projectName}</span>
           </h2>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-            <span className="rounded-full bg-navy-900 px-2 py-0.5 font-bold uppercase tracking-[0.1em] text-white">
+            <span className="rounded-full bg-navy-900 px-2.5 py-0.5 font-bold uppercase tracking-[0.1em] text-white">
               {header.incoterm} {CURRENCY_TAG[header.currency]}
             </span>
-            <span className="text-n-600">{INCOTERM_SCOPE[header.incoterm]}</span>
-            <span className="text-n-600">· {formatProposalDate(header.dateISO)}</span>
+            <span className={chip}>{INCOTERM_SCOPE[header.incoterm]}</span>
+            <span className={chip}>{formatProposalDate(header.dateISO)}</span>
             {header.preparedBy ? (
-              <span className="text-n-600">· Prepared by {header.preparedBy}</span>
+              <span className={chip}>Prepared by {header.preparedBy}</span>
             ) : null}
-            <span className="text-n-600">
-              · {header.itemCount} item{header.itemCount === 1 ? "" : "s"}
+            <span className={chip}>
+              {header.itemCount} item{header.itemCount === 1 ? "" : "s"}
             </span>
           </div>
         </div>
@@ -342,6 +360,12 @@ export function ProposalDocument({
               key={item.id}
               item={item}
               readOnly={readOnly}
+              dragging={dragId === item.id}
+              dropSide={
+                dropAt && dropAt.id === item.id && dragId && dragId !== item.id
+                  ? dropAt.side
+                  : null
+              }
               {...(onRemove ? { onRemove } : {})}
               {...(readOnly
                 ? {}
@@ -349,7 +373,21 @@ export function ProposalDocument({
                     dragProps: {
                       draggable: true,
                       onDragStart: () => setDragId(item.id),
-                      onDragOver: (event: React.DragEvent) => event.preventDefault(),
+                      onDragEnd: () => clearDrag(),
+                      onDragOver: (event: React.DragEvent) => {
+                        event.preventDefault();
+                        if (!dragId || dragId === item.id) return;
+                        const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
+                        const side =
+                          event.clientY > box.top + box.height / 2 ? "after" : "before";
+                        setDropAt((prev) =>
+                          prev?.id === item.id && prev.side === side
+                            ? prev
+                            : { id: item.id, side },
+                        );
+                      },
+                      onDragLeave: () =>
+                        setDropAt((prev) => (prev?.id === item.id ? null : prev)),
                       onDrop: () => dropOn(item.id),
                     } as React.HTMLAttributes<HTMLDivElement> & { draggable?: boolean },
                   })}
