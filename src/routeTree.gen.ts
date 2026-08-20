@@ -19,6 +19,7 @@ import { Route as QuoteRouteImport } from './routes/quote'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
+import { Route as SalesClientsRouteImport } from './routes/sales.clients'
 import { Route as SalesProposalsRouteImport } from './routes/sales.proposals'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAccountRouteImport } from './routes/_authenticated/admin.account'
@@ -99,6 +100,11 @@ const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
   path: '/c/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SalesClientsRoute = SalesClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => SalesRoute,
 } as any)
 const SalesProposalsRoute = SalesProposalsRouteImport.update({
   id: '/proposals',
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
+  '/sales/clients': typeof SalesClientsRoute
   '/sales/proposals': typeof SalesProposalsRouteWithChildren
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
@@ -331,6 +338,7 @@ export interface FileRoutesByTo {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
+  '/sales/clients': typeof SalesClientsRoute
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
   '/admin/calculations': typeof AuthenticatedAdminCalculationsRoute
@@ -371,6 +379,7 @@ export interface FileRoutesById {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
+  '/sales/clients': typeof SalesClientsRoute
   '/sales/proposals': typeof SalesProposalsRouteWithChildren
   '/_authenticated/admin/account': typeof AuthenticatedAdminAccountRoute
   '/_authenticated/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
@@ -415,6 +424,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
+    | '/sales/clients'
     | '/sales/proposals'
     | '/admin/account'
     | '/admin/bulk-images'
@@ -457,6 +467,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
+    | '/sales/clients'
     | '/admin/account'
     | '/admin/bulk-images'
     | '/admin/calculations'
@@ -496,6 +507,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
+    | '/sales/clients'
     | '/sales/proposals'
     | '/_authenticated/admin/account'
     | '/_authenticated/admin/bulk-images'
@@ -614,6 +626,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/c/$slug'
       preLoaderRoute: typeof CSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/sales/clients': {
+      id: '/sales/clients'
+      path: '/clients'
+      fullPath: '/sales/clients'
+      preLoaderRoute: typeof SalesClientsRouteImport
+      parentRoute: typeof SalesRoute
     }
     '/sales/proposals': {
       id: '/sales/proposals'
@@ -949,10 +968,12 @@ const SalesProposalsRouteWithChildren = SalesProposalsRoute._addFileChildren(
 )
 
 interface SalesRouteChildren {
+  SalesClientsRoute: typeof SalesClientsRoute
   SalesProposalsRoute: typeof SalesProposalsRouteWithChildren
 }
 
 const SalesRouteChildren: SalesRouteChildren = {
+  SalesClientsRoute: SalesClientsRoute,
   SalesProposalsRoute: SalesProposalsRouteWithChildren,
 }
 

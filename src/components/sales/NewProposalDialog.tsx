@@ -1,9 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -21,8 +31,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { clientsFullQuery, type ClientRow } from "@/lib/clients";
 import { useStaffSession } from "@/lib/staff-session";
-import { clientsQuery, PROPOSAL_INCOTERMS } from "@/lib/proposals";
+import { PROPOSAL_INCOTERMS } from "@/lib/proposals";
 import type { Incoterm } from "@/lib/pricing-types";
 
 export function NewProposalDialog({
@@ -34,14 +45,28 @@ export function NewProposalDialog({
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const clients = useQuery({ ...clientsQuery, enabled: open });
+  const clients = useQuery({ ...clientsFullQuery, enabled: open });
   const { access } = useStaffSession();
 
   const [clientId, setClientId] = useState("");
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [newClient, setNewClient] = useState("");
   const [showNewClient, setShowNewClient] = useState(false);
   const [project, setProject] = useState("");
   const [incoterm, setIncoterm] = useState<Incoterm>("CIF");
+
+  const options = useMemo(
+    () => [...(clients.data ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+    [clients.data],
+  );
+  const selected = options.find((client) => client.id === clientId) ?? null;
+
+  function chooseClient(client: ClientRow) {
+    setClientId(client.id);
+    setPickerOpen(false);
+    if (client.incoterm) setIncoterm(client.incoterm);
+    else setIncoterm("CIF");
+  }
 
   const createClient = useMutation({
     mutationFn: async (name: string) => {
@@ -104,18 +129,51 @@ export function NewProposalDialog({
               Client
             </Label>
             <div className="mt-1.5 flex items-center gap-2">
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger className="h-10 flex-1">
-                  <SelectValue placeholder="Choose a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(clients.data ?? []).map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={pickerOpen}
+                    className="h-10 flex-1 justify-between font-normal"
+                  >
+                    <span className={selected ? "truncate" : "truncate text-muted-foreground"}>
+                      {selected ? selected.name : "Choose a client"}
+                    </span>
+                    <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[320px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search clients…" />
+                    <CommandList>
+                      <CommandEmpty>No client found.</CommandEmpty>
+                      <CommandGroup>
+                        {options.map((client) => (
+                          <CommandItem
+                            key={client.id}
+                            value={client.name}
+                            onSelect={() => chooseClient(client)}
+                          >
+                            <Check
+                              className={`mr-2 size-4 ${
+                                client.id === clientId ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+                            <span className="truncate">{client.name}</span>
+                            {client.incoterm ? (
+                              <span className="ml-auto rounded-full bg-navy-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white">
+                                {client.incoterm}
+                              </span>
+                            ) : null}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <Button
                 type="button"
                 variant="ghost"
@@ -175,6 +233,18 @@ export function NewProposalDialog({
                 ))}
               </SelectContent>
             </Select>
+            {selected ? (
+              selected.incoterm ? (
+                <p className="mt-1.5 text-[11px] text-n-600">
+                  Default for {selected.name}: <strong>{selected.incoterm}</strong> — change it here
+                  if this project differs.
+                </p>
+              ) : (
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  No default incoterm on file for this client.
+                </p>
+              )
+            ) : null}
           </div>
         </div>
 
