@@ -28,6 +28,7 @@ import { useCatalogFilters } from "@/lib/use-catalog-filters";
 import { useShippingSettings } from "@/lib/shipping";
 import { warnInvisibleFilter } from "@/lib/filter-hygiene";
 import { useCatalogView } from "@/components/site/ViewToggle";
+import { useCustomerPricing } from "@/lib/customer-pricing";
 
 export const Route = createFileRoute("/c/$slug")({
   validateSearch: (search: Record<string, unknown>): Partial<CatalogSearch> & {
@@ -149,6 +150,16 @@ function CategoryPage() {
       }))
       .filter((section) => section.items.length > 0);
   }, [category, matching, subcategories.data]);
+
+  /**
+   * Mobile category pages price the products they list, exactly like the
+   * desktop catalogue does. A category page is well under the 60-id server cap.
+   */
+  const pricingIds = useMemo(
+    () => sections.flatMap((section) => section.items.map((product) => product.id)).slice(0, 60),
+    [sections],
+  );
+  const pricingById = useCustomerPricing(pricingIds, pricingIds.length > 0);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -335,7 +346,11 @@ function CategoryPage() {
                 </h2>
                 <div className="product-grid mt-4 lg:mt-5">
                   {section.items.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      pricing={pricingById.get(product.id)}
+                    />
                   ))}
                 </div>
               </section>

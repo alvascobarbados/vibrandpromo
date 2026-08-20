@@ -21,6 +21,8 @@ import type { ProductDecoration } from "@/lib/decorations";
 import type { SourcingRow, Supplier } from "@/lib/sourcing";
 import type { TransportMode } from "@/lib/costing";
 import type {
+  Incoterm,
+  PricingCurrency,
   PublicDecorationPricing,
   PublicPacking,
   PublicPriceRow,
@@ -29,12 +31,41 @@ import type {
 } from "@/lib/pricing-types";
 import { cartonCbm, chargeableWeightKg, constantsFrom, effectiveUnits } from "@/lib/units";
 
-/** Cheapest CIF unit price per quantity row, per transport mode. */
+export const CURRENCY_BY_INCOTERM: Record<Incoterm, PricingCurrency> = {
+  CIF: "USD",
+  FOB: "USD",
+  LDF: "BBD",
+  LDP: "BBD",
+};
+
+const round2 = (value: number) => Math.round(value * 100) / 100;
+
+/**
+ * Per-incoterm projection over the SAME engine result. Only the selector
+ * changes — never the engine, never the numbers.
+ *
+ * CIF: cheapest cifUnitUsd per transport mode (USD)
+ * FOB: one { mode: "origin" } table from row.spec.fobUnitUsd (USD)
+ * LDF/LDP: cheapest ldf/ldpUnitBbd per mode across BB-destination routes
+ *          (BBD). LDP skips null cells (dutyMissing) so the UI shows "—";
+ *          a 0 is never substituted.
+ */
 function tablesFrom(
   calc: ReturnType<typeof computeProductCalc>,
   routes: RouteInput[],
   modeByRouteId: Map<string, TransportMode>,
+  incoterm: Incoterm = "CIF",
 ): PublicPricingTable[] {
+  if (incoterm === "FOB") {
+    const rows: PublicPriceRow[] = [];
+    for (const row of calc.rows) {
+      const unit = row.spec.fobUnitUsd.amount;
+      if (!Number.isFinite(unit) || unit <= 0) continue;
+      rows.push({ qty: row.spec.qty, unit: round2(unit) });
+    }
+    return rows.length ? [{ mode: "origin", rows }] : [];
+  }
+
   const modes: TransportMode[] = ["air", "sea"];
   const tables: PublicPricingTable[] = [];
   for (const mode of modes) {
@@ -44,13 +75,23 @@ function tablesFrom(
     for (const row of calc.rows) {
       let best: number | null = null;
       for (const id of ids) {
-        const cell = row.transports[id];
-        if (!cell || !cell.active) continue;
-        const unit = cell.cifUnitUsd.amount;
-        if (!Number.isFinite(unit) || unit <= 0) continue;
+        let unit: number | null = null;
+        if (incoterm === "CIF") {
+          const cell = row.transports[id];
+          if (!cell || !cell.active) continue;
+          unit = cell.cifUnitUsd.amount;
+        } else {
+          const cell = row.bbOutputs[id];
+          if (!cell || !cell.active) continue;
+          const money = incoterm === "LDF" ? cell.ldfUnitBbd : cell.ldpUnitBbd;
+          // LDP is null when duty is not set — skip, never substitute 0.
+          if (money == null) continue;
+          unit = money.amount;
+        }
+        if (unit == null || !Number.isFinite(unit) || unit <= 0) continue;
         if (best == null || unit < best) best = unit;
       }
-      if (best != null) rows.push({ qty: row.spec.qty, unitUsd: Math.round(best * 100) / 100 });
+      if (best != null) rows.push({ qty: row.spec.qty, unit: round2(best) });
     }
     if (rows.length) tables.push({ mode, rows });
   }
@@ -132,7 +173,10 @@ function getStaticCostingTables(): Promise<StaticCostingTables> {
   return staticCache.value;
 }
 
-export async function getPublicPricingFor(productIds: string[]): Promise<PublicPricing[]> {
+export async function getPublicPricingFor(
+  productIds: string[],
+  incoterm: Incoterm = "CIF",
+): Promise<PublicPricing[]> {
   if (!productIds.length) return [];
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -237,7 +281,7 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
     });
     if (!input) continue;
     const calc = computeProductCalc(input, routes, settings);
-    const tables = tablesFrom(calc, routes, modeByRouteId);
+    const tables = tablesFrom(calc, routes, modeByRouteId, incoterm);
     if (!tables.length) continue;
 
     // One bubble per decoration that carries real quantity bands. Same engine,
@@ -271,6 +315,7 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
         computeProductCalc(decorationInput, routes, settings),
         routes,
         modeByRouteId,
+        incoterm,
       );
       if (!decorationTables.length) continue;
       const method = entry.label?.method ?? "Decoration";
@@ -313,6 +358,8 @@ export async function getPublicPricingFor(productIds: string[]): Promise<PublicP
 
     out.push({
       productId: product.id,
+      incoterm,
+      currency: CURRENCY_BY_INCOTERM[incoterm],
       tables,
       decorations: bubbles,
       ...(packing ? { packing } : {}),

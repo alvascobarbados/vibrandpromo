@@ -14,7 +14,7 @@ import {
   Ship,
   Weight,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { airAvailable, imageSrc, seaAvailable, specValue, type Product } from "@/lib/catalog";
 import { airLeadLabel, rushLeadLabel, seaLeadLabel, useShippingSettings } from "@/lib/shipping";
@@ -26,8 +26,13 @@ import { ProductQuickEdit } from "@/components/site/ProductQuickEdit";
 import { RushChip } from "@/components/site/RushChip";
 import { ProductSourcingFetch } from "@/components/site/ProductTeamDetails";
 import { useViewMode } from "@/lib/view-mode";
-import type { PublicPricing } from "@/lib/pricing-types";
-import type { PublicDecorationPricing } from "@/lib/pricing-types";
+import type {
+  Incoterm,
+  PricingCurrency,
+  PublicPricing,
+  PublicDecorationPricing,
+  PricingTableMode,
+} from "@/lib/pricing-types";
 import { fallbackToOriginal } from "@/lib/image-variants";
 import { qtyFloor } from "@/lib/quantity";
 import { ProductPlaceholder } from "@/components/site/ProductPlaceholder";
@@ -52,9 +57,19 @@ const EXPANDED_SPECS: {
 ];
 
 /** Customer-side money: always explicit about the currency. */
-function usd(value: number) {
-  return `US$${value.toFixed(2)}`;
+function money(value: number, currency: PricingCurrency) {
+  return `${currency === "BBD" ? "BBD$" : "US$"}${value.toFixed(2)}`;
 }
+
+const CURRENCY_TAG: Record<PricingCurrency, string> = { USD: "US$", BBD: "BBD$" };
+
+/** The ⓘ footer states exactly what the shown basis includes. */
+const INCOTERM_FOOTER: Record<Incoterm, string> = {
+  CIF: "Price is in US$ and includes Cost, Insurance & Freight to any Caribbean island.",
+  LDP: "Price is Landed & Duty-Paid in Barbados Dollars and excludes VAT.",
+  LDF: "Price is Landed & Duty-Free in Barbados Dollars and not subject to VAT.",
+  FOB: "Price is in US$ at the origin port — freight, insurance & duties not included.",
+};
 
 /** Display-only: "15.000 kg" → "15 kg", "15.500 kg" → "15.5 kg". */
 function trimZeros(value: string | null | undefined) {
@@ -121,13 +136,13 @@ function bandFor(quantities: number[], qty: number) {
  * lowest, highest and the active band first, then the most "spread out"
  * remaining tiers (ties resolve to the higher tier).
  */
-function miniColumns(all: number[], qty: number) {
-  if (all.length <= 4) return all;
+function miniColumns(all: number[], qty: number, max = 4) {
+  if (all.length <= max) return all;
   const chosen = new Set<number>([0, all.length - 1]);
   const band = bandFor(all, qty);
   const bandIndex = band != null ? all.indexOf(band) : 0;
   if (bandIndex >= 0) chosen.add(bandIndex);
-  while (chosen.size < 4) {
+  while (chosen.size < max) {
     let best = -1;
     let bestDistance = -1;
     for (let i = 0; i < all.length; i += 1) {
@@ -156,6 +171,8 @@ function MiniPricing({
   showSea,
   moq,
   qty,
+  incoterm,
+  currency,
 }: {
   bubbles: PublicDecorationPricing[];
   quantities: number[];
@@ -163,38 +180,67 @@ function MiniPricing({
   showSea: boolean;
   moq: number | null;
   qty: number;
+  incoterm: Incoterm;
+  currency: PricingCurrency;
 }) {
   const [index, setIndex] = useState(0);
-  const rows: { label: string; icon: typeof Plane; from: "air" | "sea" }[] = [];
-  if (showAir) rows.push({ label: "Air", icon: Plane, from: "air" });
-  if (showSea) rows.push({ label: "Sea", icon: Ship, from: "sea" });
+  /** Column count adapts to the real card width: ≥240px → 4, below → 3. */
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const node = hostRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => {
+      const next = entries[0]?.contentRect.width;
+      if (next != null) setWidth(next);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const fob = bubbles.length
+    ? bubbles[Math.min(index, bubbles.length - 1)]!.tables.some((t) => t.mode === "origin")
+    : false;
+  const rows: { label: string; icon?: typeof Plane; from: PricingTableMode }[] = [];
+  if (fob) rows.push({ label: "FOB", from: "origin" });
+  else {
+    if (showAir) rows.push({ label: "Air", icon: Plane, from: "air" });
+    if (showSea) rows.push({ label: "Sea", icon: Ship, from: "sea" });
+  }
+
+  const wide = width == null || width >= 240;
 
   if (!bubbles.length || !quantities.length || !rows.length) {
+    /** Phone-width cards stay clean: no dashed placeholder below 240px. */
     return (
-      <div className="mt-3 hidden rounded-xl border border-dashed border-n-200 px-3 py-3 text-center text-[13px] text-n-500 [@container(min-width:220px)]:block">
-        Pricing on request — add to your quote list
+      <div ref={hostRef} className="mt-3">
+        {wide ? (
+          <div className="rounded-xl border border-dashed border-n-200 px-3 py-3 text-center text-[13px] text-n-500">
+            Pricing on request — add to your quote list
+          </div>
+        ) : null}
       </div>
     );
   }
 
   const bubble = bubbles[Math.min(index, bubbles.length - 1)]!;
-  const airTable = bubble.tables.find((table) => table.mode === "air");
-  const seaTable = bubble.tables.find((table) => table.mode === "sea");
-  const columns = miniColumns(quantities, qty);
+  const tableFor = (mode: PricingTableMode) => bubble.tables.find((table) => table.mode === mode);
+  const columns = miniColumns(quantities, qty, wide ? 4 : 3);
   const band = bandFor(quantities, qty);
-  const cell = (from: "air" | "sea", value: number) => {
-    const table = from === "air" ? airTable : seaTable;
-    const row = table?.rows.find((entry) => entry.qty === value);
-    return row ? row.unitUsd.toFixed(2) : "—";
+  const cell = (from: PricingTableMode, value: number) => {
+    const row = tableFor(from)?.rows.find((entry) => entry.qty === value);
+    return row ? row.unit.toFixed(2) : "—";
   };
 
   return (
-    <div className="mt-2.5 hidden rounded-xl border border-n-200 p-2 [@container(min-width:220px)]:block">
+    <div ref={hostRef} className="mt-2.5 rounded-xl border border-n-200 p-2">
       <p className="text-[13px] font-semibold leading-snug text-navy-700 line-clamp-2">
         {bubble.methodName}
       </p>
       <div className="mt-0.5 flex h-[18px] items-center">
-        <span className="sheet-kv-label">CIF US$</span>
+        <span className="sheet-kv-label">
+          {incoterm} {CURRENCY_TAG[currency]}
+        </span>
         {bubbles.length > 1 ? (
           <span className="ml-auto flex shrink-0 items-center gap-1">
             <button
@@ -242,8 +288,14 @@ function MiniPricing({
           {rows.map((row, rowIndex) => (
             <tr key={row.label}>
               <td className="border-t border-n-200 py-1 pr-1" title={row.label}>
-                <row.icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
-                <span className="sr-only">{row.label}</span>
+                {row.icon ? (
+                  <>
+                    <row.icon className="size-[13px] shrink-0 text-n-500" strokeWidth={1.75} />
+                    <span className="sr-only">{row.label}</span>
+                  </>
+                ) : (
+                  <span className="sheet-kv-label">{row.label}</span>
+                )}
               </td>
               {columns.map((value) => (
                 <td
@@ -277,6 +329,8 @@ function PricingBubble({
   rush,
   moq,
   qty,
+  incoterm,
+  currency,
 }: {
   bubble: PublicDecorationPricing;
   quantities: number[];
@@ -287,31 +341,40 @@ function PricingBubble({
   rush: string | null;
   moq: number | null;
   qty: number;
+  incoterm: Incoterm;
+  currency: PricingCurrency;
 }) {
-  const airTable = bubble.tables.find((table) => table.mode === "air");
-  const seaTable = bubble.tables.find((table) => table.mode === "sea");
+  const tableFor = (mode: PricingTableMode) => bubble.tables.find((table) => table.mode === mode);
+  const fob = bubble.tables.some((table) => table.mode === "origin");
   const band = bandFor(quantities, qty);
   const rows: {
     label: string;
     icon?: typeof Plane;
     chip?: boolean;
     lead: string | null;
-    from?: "air" | "sea";
+    from?: PricingTableMode;
   }[] = [];
-  if (showAir) rows.push({ label: "Air", icon: Plane, lead: air, from: "air" });
-  if (showSea) rows.push({ label: "Sea", icon: Ship, lead: sea, from: "sea" });
-  if (rush) rows.push({ label: "Rush", chip: true, lead: rush, from: "air" });
+  if (fob) {
+    // FOB is a single ex-origin price: no transport icon, no lead time.
+    rows.push({ label: "FOB", lead: null, from: "origin" });
+  } else {
+    if (showAir) rows.push({ label: "Air", icon: Plane, lead: air, from: "air" });
+    if (showSea) rows.push({ label: "Sea", icon: Ship, lead: sea, from: "sea" });
+    if (rush) rows.push({ label: "Rush", chip: true, lead: rush, from: "air" });
+  }
   if (!quantities.length || !rows.length) return null;
 
-  const cell = (from: "air" | "sea", value: number) => {
-    const table = from === "air" ? airTable : seaTable;
-    const row = table?.rows.find((entry) => entry.qty === value);
-    return row ? usd(row.unitUsd) : "—";
+  const cell = (from: PricingTableMode, value: number) => {
+    const row = tableFor(from)?.rows.find((entry) => entry.qty === value);
+    return row ? money(row.unit, currency) : "—";
   };
 
   return (
     <div className="min-w-0 rounded-xl border border-n-200 bg-white p-3">
       <p className="card-value text-[13px]">{bubble.methodName}</p>
+      <p className="sheet-kv-label mt-0.5">
+        {incoterm} {CURRENCY_TAG[currency]}
+      </p>
       <div className="-mx-1 mt-2 overflow-x-auto px-1">
         <table className="w-full min-w-[560px] table-fixed border-separate border-spacing-0 text-sm tabular-nums">
           <thead>
@@ -568,6 +631,8 @@ export function ProductCard({
 
   // ONE source of pricing derivation, shared by the grid and expanded branches.
   const bubbles = pricing?.decorations ?? [];
+  const incoterm: Incoterm = pricing?.incoterm ?? "CIF";
+  const priceCurrency: PricingCurrency = pricing?.currency ?? "USD";
   const priceBubbles = bubbles.length
     ? bubbles
     : pricing?.tables.length
@@ -771,15 +836,14 @@ export function ProductCard({
                     rush={rush}
                     moq={product.moq}
                     qty={stepperQty}
+                    incoterm={incoterm}
+                    currency={priceCurrency}
                   />
                 ))}
               </div>
               <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-4 text-n-500">
                 <Info className="mt-px size-3 shrink-0" strokeWidth={2} />
-                <span>
-                  Price is in US$ and includes Cost, Insurance &amp; Freight to any Caribbean
-                  island.
-                </span>
+                <span>{INCOTERM_FOOTER[incoterm]}</span>
               </p>
             </>
           ) : (
@@ -868,6 +932,8 @@ export function ProductCard({
           showSea={showSea}
           moq={product.moq}
           qty={stepperQty}
+          incoterm={incoterm}
+          currency={priceCurrency}
         />
 
         <div className="mt-auto pt-2.5">
