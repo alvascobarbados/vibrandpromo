@@ -85,7 +85,7 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
               {snapshot.incoterm} {CURRENCY_TAG[snapshot.currency]} · unit price
             </p>
             <div className="mt-1.5 overflow-x-auto">
-              <table className="w-full border-separate border-spacing-0 text-[12px] tabular-nums">
+              <table className="w-full border-separate border-spacing-0 text-[11px] tabular-nums">
                 <thead>
                   <tr>
                     <th className="sheet-kv-label py-1 text-left font-semibold" />
@@ -96,7 +96,7 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
                       >
                         {qty}
                         {snapshot.moq != null && qty === snapshot.moq ? (
-                          <span className="ml-1 text-[10px] normal-case tracking-normal">MOQ</span>
+                          <span className="ml-0.5 text-[9px] normal-case tracking-normal">MOQ</span>
                         ) : null}
                       </th>
                     ))}
@@ -105,18 +105,18 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row.label}>
-                      <td className="border-t border-n-200 py-1 pr-2 align-middle">
+                      <td className="border-t border-n-200 py-1 pr-1.5 align-middle">
                         <span className="flex items-center gap-1 whitespace-nowrap">
                           {row.chip ? <RushChip /> : null}
                           {row.icon ? (
                             <row.icon
-                              className="size-[12px] shrink-0 text-n-500"
+                              className="size-[11px] shrink-0 text-n-500"
                               strokeWidth={1.75}
                             />
                           ) : null}
                           <span>{row.label}</span>
                           {row.lead ? (
-                            <span className="text-[10px] text-n-500">· {row.lead}</span>
+                            <span className="text-[9px] text-n-500">· {row.lead}</span>
                           ) : null}
                         </span>
                       </td>
