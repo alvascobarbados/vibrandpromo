@@ -115,7 +115,7 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
                             />
                           ) : null}
                           <span>{row.label}</span>
-                          {row.lead ? (
+                          {row.lead && tiers.length <= 4 ? (
                             <span className="text-[9px] text-n-500">· {row.lead}</span>
                           ) : null}
                         </span>
