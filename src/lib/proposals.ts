@@ -9,7 +9,10 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
-import type { Incoterm, PricingCurrency, PublicPricingTable } from "@/lib/pricing-types";
+import type { Incoterm, PricingCurrency } from "@/lib/pricing-types";
+import type { ProposalSnapshot } from "@/lib/proposal-snapshot";
+
+export type { ProposalSnapshot } from "@/lib/proposal-snapshot";
 
 export const PROPOSAL_INCOTERMS: Incoterm[] = ["CIF", "FOB", "LDF", "LDP"];
 
@@ -30,25 +33,6 @@ export type Proposal = {
   created_by_name: string;
   created_at: string;
   updated_at: string;
-};
-
-/**
- * Customer-safe frozen snapshot. This is the ONLY proposal payload an
- * anonymous visitor ever receives, so it deliberately carries no supplier
- * identity, no item numbers, no bands, no route internals and no costs.
- */
-export type ProposalSnapshot = {
-  name: string;
-  sku: string | null;
-  image: string | null;
-  category: string | null;
-  subcategory: string | null;
-  specs: Array<{ label: string; value: string }>;
-  moq: number | null;
-  leadLabels: Array<{ mode: "air" | "sea"; label: string }>;
-  incoterm: Incoterm;
-  currency: PricingCurrency;
-  decorations: Array<{ methodName: string; tables: PublicPricingTable[] }>;
 };
 
 export type ProposalItem = {
