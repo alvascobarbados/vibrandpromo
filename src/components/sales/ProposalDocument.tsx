@@ -17,8 +17,9 @@ export const PROPOSAL_FOOTER: Record<Incoterm, string> = {
   FOB: "Prices are in US$ at the origin port — freight, insurance & duties not included.",
 };
 
-function money(value: number, currency: PricingCurrency) {
-  return `${CURRENCY_TAG[currency]}${value.toFixed(2)}`;
+/** Bubble cells are bare numbers — the currency lives once in the bubble tag. */
+function bare(value: number) {
+  return value.toFixed(2);
 }
 
 export type ProposalDisplayItem = { id: string; snapshot: ProposalSnapshot };
