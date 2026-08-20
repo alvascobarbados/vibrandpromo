@@ -179,7 +179,10 @@ function MiniPricing({
     const node = scrollRef.current;
     if (!node) return;
     const max = node.scrollWidth - node.clientWidth;
-    setEdges({ left: node.scrollLeft > 1, right: node.scrollLeft < max - 1 });
+    const next = { left: node.scrollLeft > 1, right: node.scrollLeft < max - 1 };
+    setEdges((current) =>
+      current.left === next.left && current.right === next.right ? current : next,
+    );
   };
   useEffect(() => {
     const node = scrollRef.current;
@@ -193,7 +196,8 @@ function MiniPricing({
       node.removeEventListener("scroll", measure);
       observer?.disconnect();
     };
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bubbles.length, quantities.length, index]);
 
   const fob = bubbles.length
     ? bubbles[Math.min(index, bubbles.length - 1)]!.tables.some((t) => t.mode === "origin")
