@@ -277,7 +277,7 @@ function MiniPricing({
                 }`}
               >
                 {value}
-                {moq != null && value === moq ? (
+                {wide && moq != null && value === moq ? (
                   <span className="ml-0.5 text-[9px] normal-case tracking-normal">MOQ</span>
                 ) : null}
               </th>
