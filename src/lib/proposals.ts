@@ -23,6 +23,7 @@ export type Client = { id: string; name: string; created_at: string };
 export type Proposal = {
   id: string;
   client_id: string;
+  buyer_id: string | null;
   project_name: string;
   incoterm: Incoterm;
   status: ProposalStatus;
@@ -84,17 +85,26 @@ export const proposalsQuery = queryOptions({
 export function proposalQuery(id: string) {
   return queryOptions({
     queryKey: ["proposal", id],
-    queryFn: async (): Promise<(Proposal & { client_name: string }) | null> => {
+    queryFn: async (): Promise<
+      (Proposal & { client_name: string; buyer_name: string | null }) | null
+    > => {
       const { data, error } = await supabase
         .from("proposals")
-        .select("*, clients(name)")
+        .select("*, clients(name), buyers(name)")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const raw = data as unknown as Proposal & { clients: { name: string } | null };
-      const { clients, ...rest } = raw;
-      return { ...(rest as Proposal), client_name: clients?.name ?? "—" };
+      const raw = data as unknown as Proposal & {
+        clients: { name: string } | null;
+        buyers: { name: string } | null;
+      };
+      const { clients, buyers, ...rest } = raw;
+      return {
+        ...(rest as Proposal),
+        client_name: clients?.name ?? "—",
+        buyer_name: buyers?.name ?? null,
+      };
     },
   });
 }

@@ -199,6 +199,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
       <ProposalDocument
         header={{
           clientName: row.client_name,
+          buyerName: row.buyer_name,
           projectName: row.project_name,
           status: row.status,
           incoterm,

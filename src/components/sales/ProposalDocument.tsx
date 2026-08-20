@@ -26,6 +26,8 @@ export type ProposalDisplayItem = { id: string; snapshot: ProposalSnapshot };
 
 export type ProposalHeader = {
   clientName: string;
+  /** Optional named buyer at the client — the "Attention" line. */
+  buyerName?: string | null;
   projectName: string;
   status: "draft" | "generated";
   incoterm: Incoterm;
@@ -328,6 +330,11 @@ export function ProposalDocument({
           <p className="card-label">
             Proposal · {header.status === "generated" ? "Generated" : "Draft"}
           </p>
+          {header.buyerName ? (
+            <p className="mt-1 text-[12px] font-semibold text-n-600">
+              Prepared for {header.buyerName}
+            </p>
+          ) : null}
           <h2 className="mt-1 text-xl font-bold text-navy-900">
             {header.clientName}{" "}
             <span className="font-medium text-n-500">— {header.projectName}</span>
@@ -338,6 +345,9 @@ export function ProposalDocument({
             </span>
             <span className={chip}>{INCOTERM_SCOPE[header.incoterm]}</span>
             <span className={chip}>{formatProposalDate(header.dateISO)}</span>
+            {header.buyerName ? (
+              <span className={`${chip} proposal-no-print`}>Attn: {header.buyerName}</span>
+            ) : null}
             {header.preparedBy ? (
               <span className={chip}>Prepared by {header.preparedBy}</span>
             ) : null}
