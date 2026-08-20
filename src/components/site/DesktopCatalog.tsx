@@ -45,15 +45,25 @@ const INCOTERMS: Incoterm[] = ["CIF", "FOB", "LDF", "LDP"];
 export function DesktopCatalog({
   initialCategorySlug,
   page: rawPage = 1,
+  picker,
 }: {
   initialCategorySlug?: string;
   page?: number;
+  /**
+   * Proposal picker context. When absent (every shop surface) the catalog
+   * behaves exactly as before.
+   */
+  picker?: {
+    selectedIds: Set<string>;
+    onToggle: (productId: string) => void;
+    busyId?: string | null;
+  };
 }) {
   const { search, toggle, clear, update, activeCount } = useCatalogFilters();
   /** /team lists one landscape row per product; the shop keeps its portrait grid. */
-  const team = useViewMode() === "supplier";
+  const team = useViewMode() === "supplier" && !picker;
   /** /team is the staff work surface — it always reads draft + live. */
-  const products = useCatalogProducts({ includeDrafts: team });
+  const products = useCatalogProducts({ includeDrafts: team || Boolean(picker) });
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
   const shipping = useShippingSettings();
@@ -407,6 +417,15 @@ export function DesktopCatalog({
                 key={product.id}
                 product={product}
                 pricing={pricingById.get(product.id)}
+                {...(picker
+                  ? {
+                      picker: {
+                        selected: picker.selectedIds.has(product.id),
+                        onToggle: () => picker.onToggle(product.id),
+                        busy: picker.busyId === product.id,
+                      },
+                    }
+                  : {})}
               />
             ))}
           </div>
