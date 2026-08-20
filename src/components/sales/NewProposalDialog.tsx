@@ -1,9 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -21,8 +31,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { clientsFullQuery, type ClientRow } from "@/lib/clients";
 import { useStaffSession } from "@/lib/staff-session";
-import { clientsQuery, PROPOSAL_INCOTERMS } from "@/lib/proposals";
+import { PROPOSAL_INCOTERMS } from "@/lib/proposals";
 import type { Incoterm } from "@/lib/pricing-types";
 
 export function NewProposalDialog({
@@ -34,14 +45,28 @@ export function NewProposalDialog({
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const clients = useQuery({ ...clientsQuery, enabled: open });
+  const clients = useQuery({ ...clientsFullQuery, enabled: open });
   const { access } = useStaffSession();
 
   const [clientId, setClientId] = useState("");
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [newClient, setNewClient] = useState("");
   const [showNewClient, setShowNewClient] = useState(false);
   const [project, setProject] = useState("");
   const [incoterm, setIncoterm] = useState<Incoterm>("CIF");
+
+  const options = useMemo(
+    () => [...(clients.data ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+    [clients.data],
+  );
+  const selected = options.find((client) => client.id === clientId) ?? null;
+
+  function chooseClient(client: ClientRow) {
+    setClientId(client.id);
+    setPickerOpen(false);
+    if (client.incoterm) setIncoterm(client.incoterm);
+    else setIncoterm("CIF");
+  }
 
   const createClient = useMutation({
     mutationFn: async (name: string) => {
