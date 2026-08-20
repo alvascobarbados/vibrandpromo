@@ -35,6 +35,7 @@ import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminShippingRouteImport } from './routes/_authenticated/admin.shipping'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin.staff'
 import { Route as AuthenticatedAdminSuppliersRouteImport } from './routes/_authenticated/admin.suppliers'
+import { Route as SalesProposalsIndexRouteImport } from './routes/sales.proposals.index'
 import { Route as SalesProposalsIdRouteImport } from './routes/sales.proposals.$id'
 import { Route as AuthenticatedAdminCostingIndexRouteImport } from './routes/_authenticated/admin.costing.index'
 import { Route as AuthenticatedAdminCostingDestinationsRouteImport } from './routes/_authenticated/admin.costing.destinations'
@@ -189,6 +190,11 @@ const AuthenticatedAdminSuppliersRoute =
     path: '/admin/suppliers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const SalesProposalsIndexRoute = SalesProposalsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SalesProposalsRoute,
+} as any)
 const SalesProposalsIdRoute = SalesProposalsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -288,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/admin/suppliers': typeof AuthenticatedAdminSuppliersRoute
   '/sales/proposals/$id': typeof SalesProposalsIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/sales/proposals/': typeof SalesProposalsIndexRoute
   '/admin/costing/destinations': typeof AuthenticatedAdminCostingDestinationsRoute
   '/admin/costing/labels': typeof AuthenticatedAdminCostingLabelsRoute
   '/admin/costing/rates': typeof AuthenticatedAdminCostingRatesRoute
@@ -310,7 +317,6 @@ export interface FileRoutesByTo {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
-  '/sales/proposals': typeof SalesProposalsRouteWithChildren
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
   '/admin/calculations': typeof AuthenticatedAdminCalculationsRoute
@@ -325,6 +331,7 @@ export interface FileRoutesByTo {
   '/admin/suppliers': typeof AuthenticatedAdminSuppliersRoute
   '/sales/proposals/$id': typeof SalesProposalsIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/sales/proposals': typeof SalesProposalsIndexRoute
   '/admin/costing/destinations': typeof AuthenticatedAdminCostingDestinationsRoute
   '/admin/costing/labels': typeof AuthenticatedAdminCostingLabelsRoute
   '/admin/costing/rates': typeof AuthenticatedAdminCostingRatesRoute
@@ -366,6 +373,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/suppliers': typeof AuthenticatedAdminSuppliersRoute
   '/sales/proposals/$id': typeof SalesProposalsIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/sales/proposals/': typeof SalesProposalsIndexRoute
   '/_authenticated/admin/costing/destinations': typeof AuthenticatedAdminCostingDestinationsRoute
   '/_authenticated/admin/costing/labels': typeof AuthenticatedAdminCostingLabelsRoute
   '/_authenticated/admin/costing/rates': typeof AuthenticatedAdminCostingRatesRoute
@@ -407,6 +415,7 @@ export interface FileRouteTypes {
     | '/admin/suppliers'
     | '/sales/proposals/$id'
     | '/admin/'
+    | '/sales/proposals/'
     | '/admin/costing/destinations'
     | '/admin/costing/labels'
     | '/admin/costing/rates'
@@ -429,7 +438,6 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
-    | '/sales/proposals'
     | '/admin/account'
     | '/admin/bulk-images'
     | '/admin/calculations'
@@ -444,6 +452,7 @@ export interface FileRouteTypes {
     | '/admin/suppliers'
     | '/sales/proposals/$id'
     | '/admin'
+    | '/sales/proposals'
     | '/admin/costing/destinations'
     | '/admin/costing/labels'
     | '/admin/costing/rates'
@@ -484,6 +493,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/suppliers'
     | '/sales/proposals/$id'
     | '/_authenticated/admin/'
+    | '/sales/proposals/'
     | '/_authenticated/admin/costing/destinations'
     | '/_authenticated/admin/costing/labels'
     | '/_authenticated/admin/costing/rates'
@@ -695,6 +705,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSuppliersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/sales/proposals/': {
+      id: '/sales/proposals/'
+      path: '/'
+      fullPath: '/sales/proposals/'
+      preLoaderRoute: typeof SalesProposalsIndexRouteImport
+      parentRoute: typeof SalesProposalsRoute
+    }
     '/sales/proposals/$id': {
       id: '/sales/proposals/$id'
       path: '/$id'
@@ -870,10 +887,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface SalesProposalsRouteChildren {
   SalesProposalsIdRoute: typeof SalesProposalsIdRoute
+  SalesProposalsIndexRoute: typeof SalesProposalsIndexRoute
 }
 
 const SalesProposalsRouteChildren: SalesProposalsRouteChildren = {
   SalesProposalsIdRoute: SalesProposalsIdRoute,
+  SalesProposalsIndexRoute: SalesProposalsIndexRoute,
 }
 
 const SalesProposalsRouteWithChildren = SalesProposalsRoute._addFileChildren(
