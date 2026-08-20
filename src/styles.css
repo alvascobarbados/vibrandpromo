@@ -484,3 +484,21 @@
 @utility animate-badge-bounce {
   animation: badge-bounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* Proposals: the document body is the same markup on screen and in print, so
+   printing only has to drop the editing chrome. */
+@media print {
+  .proposal-no-print,
+  .proposal-handle {
+    display: none !important;
+  }
+  .proposal-doc {
+    font-size: 12px;
+  }
+  .proposal-item {
+    break-inside: avoid;
+  }
+  .proposal-print-header {
+    break-after: avoid;
+  }
+}
