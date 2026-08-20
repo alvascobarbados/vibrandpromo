@@ -73,7 +73,7 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
         if (!rows.length) return null;
         const cell = (from: PricingTableMode, qty: number) => {
           const row = tableFor(from)?.rows.find((entry) => entry.qty === qty);
-          return row ? money(row.unit, snapshot.currency) : "—";
+          return row ? bare(row.unit) : "—";
         };
         return (
           <div
