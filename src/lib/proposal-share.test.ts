@@ -20,6 +20,9 @@ describe("proposalShareUrl", () => {
     expect(proposalShareUrl("abc", "https://vibrand.com/")).toBe("https://vibrand.com/p/abc");
   });
   it("falls back to the current origin when empty", () => {
-    expect(proposalShareUrl("abc", null)).toBe(`${window.location.origin}/p/abc`);
+    const origin = "https://preview.example";
+    (globalThis as { window?: unknown }).window = { location: { origin } };
+    expect(proposalShareUrl("abc", null)).toBe(`${origin}/p/abc`);
+    delete (globalThis as { window?: unknown }).window;
   });
 });
