@@ -1,0 +1,2 @@
+UPDATE public.proposal_items SET snapshot = NULL WHERE proposal_id = '56751a99-c243-40df-a7f1-0cd95509aa3d';
+UPDATE public.proposals SET status = 'draft', share_token = NULL, generated_at = NULL, edited_since_generated = false WHERE id = '56751a99-c243-40df-a7f1-0cd95509aa3d';
