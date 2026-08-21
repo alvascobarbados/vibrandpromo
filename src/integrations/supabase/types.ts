@@ -928,6 +928,39 @@ export type Database = {
           },
         ]
       }
+      proposal_settings: {
+        Row: {
+          client_can_export: boolean
+          created_at: string
+          filename_template: string
+          footer_text: string
+          id: string
+          items_per_page: number
+          updated_at: string
+          validity_days: number
+        }
+        Insert: {
+          client_can_export?: boolean
+          created_at?: string
+          filename_template?: string
+          footer_text?: string
+          id?: string
+          items_per_page?: number
+          updated_at?: string
+          validity_days?: number
+        }
+        Update: {
+          client_can_export?: boolean
+          created_at?: string
+          filename_template?: string
+          footer_text?: string
+          id?: string
+          items_per_page?: number
+          updated_at?: string
+          validity_days?: number
+        }
+        Relationships: []
+      }
       proposals: {
         Row: {
           buyer_id: string | null
