@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,7 +18,10 @@ import { ProposalDocument, type ProposalDisplayItem } from "@/components/sales/P
 import { categoriesQuery, subcategoriesQuery, allProductsQuery } from "@/lib/catalog";
 import { getStaffPricing } from "@/lib/pricing.functions";
 import { CURRENCY_BY_INCOTERM } from "@/lib/proposal-currency";
+import { printProposal } from "@/lib/proposal-print";
+import { PROPOSAL_SETTINGS_FALLBACK, proposalSettingsQuery } from "@/lib/proposal-settings";
 import { buildProposalSnapshot } from "@/lib/proposal-snapshot";
+import { generateProposal } from "@/lib/proposals.functions";
 import {
   removeProposalItem,
   saveProposalOrder,
@@ -36,9 +40,13 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
   const products = useQuery(allProductsQuery);
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
+  const settingsQuery = useQuery(proposalSettingsQuery);
+  const settings = settingsQuery.data ?? PROPOSAL_SETTINGS_FALLBACK;
   const shipping = useShippingSettings();
   const fetchStaffPricing = useServerFn(getStaffPricing);
+  const runGenerate = useServerFn(generateProposal);
   const [order, setOrder] = useState<OrderMode>("custom");
+
 
   const row = proposal.data ?? null;
   const incoterm = row?.incoterm ?? "CIF";
