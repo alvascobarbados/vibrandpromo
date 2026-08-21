@@ -1,0 +1,1 @@
+ALTER TABLE public.proposal_settings ADD COLUMN IF NOT EXISTS public_base_url text;

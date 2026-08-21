@@ -952,6 +952,7 @@ export type Database = {
           id: string
           items_per_page: number
           number_prefix: string
+          public_base_url: string | null
           updated_at: string
           validity_days: number
         }
@@ -963,6 +964,7 @@ export type Database = {
           id?: string
           items_per_page?: number
           number_prefix?: string
+          public_base_url?: string | null
           updated_at?: string
           validity_days?: number
         }
@@ -974,6 +976,7 @@ export type Database = {
           id?: string
           items_per_page?: number
           number_prefix?: string
+          public_base_url?: string | null
           updated_at?: string
           validity_days?: number
         }
