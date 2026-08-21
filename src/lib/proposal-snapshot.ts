@@ -22,7 +22,8 @@ export type ProposalLeadLabel = { mode: "air" | "sea" | "rush"; label: string };
 export type ProposalSnapshot = {
   name: string;
   sku: string | null;
-  image: string | null;
+  /** Up to four customer-safe catalogue image paths — hero first. */
+  images: string[];
   category: string | null;
   subcategory: string | null;
   specs: Array<{ label: string; value: string }>;
