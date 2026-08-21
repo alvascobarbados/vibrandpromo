@@ -300,6 +300,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
             clientName: row.client_name,
             buyerName: row.buyer_name,
             projectName: row.project_name,
+            proposalNumber: row.proposal_number,
             status: row.status,
             incoterm,
             currency: CURRENCY_BY_INCOTERM[incoterm],
