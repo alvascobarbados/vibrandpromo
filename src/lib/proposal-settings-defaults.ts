@@ -13,6 +13,7 @@ export type ProposalSettingsRow = {
   validity_days: number;
   client_can_export: boolean;
   number_prefix: string;
+  public_base_url: string | null;
 };
 
 export const PROPOSAL_SETTINGS_FALLBACK: ProposalSettingsRow = {
@@ -22,6 +23,7 @@ export const PROPOSAL_SETTINGS_FALLBACK: ProposalSettingsRow = {
   validity_days: 30,
   client_can_export: true,
   number_prefix: "VP",
+  public_base_url: null,
 };
 
 export const ITEMS_PER_PAGE_CHOICES = [2, 3, 4] as const;

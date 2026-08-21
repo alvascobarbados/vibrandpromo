@@ -20,6 +20,7 @@ import { getStaffPricing } from "@/lib/pricing.functions";
 import { CURRENCY_BY_INCOTERM } from "@/lib/proposal-currency";
 import { printProposal } from "@/lib/proposal-print";
 import { PROPOSAL_SETTINGS_FALLBACK, proposalSettingsQuery } from "@/lib/proposal-settings";
+import { proposalShareUrl } from "@/lib/proposal-share";
 import { buildProposalSnapshot } from "@/lib/proposal-snapshot";
 import { generateProposal } from "@/lib/proposals.functions";
 import {
@@ -150,7 +151,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
 
   const shareLink =
     row?.share_token && typeof window !== "undefined"
-      ? `${window.location.origin}/p/${row.share_token}`
+      ? proposalShareUrl(row.share_token, settings.public_base_url)
       : null;
 
   async function copyShareLink() {

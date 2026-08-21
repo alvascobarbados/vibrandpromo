@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NewProposalDialog } from "@/components/sales/NewProposalDialog";
 import { proposalsQuery, relativeTime, type ProposalListRow } from "@/lib/proposals";
+import { proposalSettingsQuery } from "@/lib/proposal-settings";
+import { proposalShareUrl } from "@/lib/proposal-share";
 
 const STATUS_CHIPS = [
   { value: "all", label: "All" },
@@ -15,9 +17,7 @@ const STATUS_CHIPS = [
   { value: "generated", label: "Generated" },
 ] as const;
 
-export function shareUrl(token: string) {
-  return `${window.location.origin}/p/${token}`;
-}
+export { proposalShareUrl } from "@/lib/proposal-share";
 
 function StatusTag({ row }: { row: ProposalListRow }) {
   return (
@@ -42,6 +42,7 @@ function StatusTag({ row }: { row: ProposalListRow }) {
 
 export function ProposalsListPage() {
   const proposals = useQuery(proposalsQuery);
+  const settings = useQuery(proposalSettingsQuery);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "draft" | "generated">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -61,7 +62,9 @@ export function ProposalsListPage() {
 
   async function copyLink(token: string) {
     try {
-      await navigator.clipboard.writeText(shareUrl(token));
+      await navigator.clipboard.writeText(
+        proposalShareUrl(token, settings.data?.public_base_url ?? null),
+      );
       toast.success("Share link copied.");
     } catch {
       toast.error("Could not copy the link.");
