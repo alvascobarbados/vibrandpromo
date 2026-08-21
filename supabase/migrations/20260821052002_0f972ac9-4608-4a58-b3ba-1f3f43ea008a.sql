@@ -1,0 +1,1 @@
+UPDATE public.proposal_settings SET public_base_url = 'https://vibrand.com' WHERE id = 'default';
