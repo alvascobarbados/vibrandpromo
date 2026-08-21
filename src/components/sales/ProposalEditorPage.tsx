@@ -139,6 +139,28 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const generate = useMutation({
+    mutationFn: () => runGenerate({ data: { proposalId } }),
+    onSuccess: async (result) => {
+      await refresh();
+      toast.success(`Proposal generated — ${result.frozen} item prices frozen.`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const shareLink = row?.share_token ? `${window.location.origin}/p/${row.share_token}` : null;
+
+  async function copyShareLink() {
+    if (!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      toast.success("Share link copied.");
+    } catch {
+      toast.error("Could not copy the link.");
+    }
+  }
+
+
   /** Catalogue order: category sort_order, then subcategory sort_order, then name. */
   function sortByCatalogue() {
     const catOrder = new Map((categories.data ?? []).map((c, index) => [c.id, index]));
