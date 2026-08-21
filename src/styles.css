@@ -485,57 +485,124 @@
   animation: badge-bounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Proposals: the document body is the same markup on screen and in print, so
-   printing only has to drop the editing chrome.
+/* Proposals: the document is a STACK OF REAL LETTER PAGES. The same markup
+   renders on screen and in print, so printing only drops the editing chrome —
+   never reflows the layout.
 
-   PORTRAIT LOCK: @page is PORTRAIT Letter for every layout preset, current and
-   future (1-up / 2-up / 4-up are all portrait) so mixed proposals staple
-   together cleanly. Never landscape. */
+   PORTRAIT LOCK: @page is PORTRAIT Letter with a ZERO margin so the browser's
+   own header/footer margin boxes (date, URL, page numbers) are suppressed; all
+   whitespace comes from each page container's own 0.5in padding. */
 @page {
   size: letter portrait;
-  margin: 0.5in;
+  margin: 0;
 }
+
+.proposal-doc {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.proposal-page {
+  position: relative;
+  width: 8.5in;
+  min-height: 11in;
+  padding: 0.5in 0.55in;
+  box-sizing: border-box;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+/* SCREEN ONLY paper affordance. */
+@media screen {
+  .proposal-page {
+    border-radius: 14px;
+    box-shadow: 0 10px 30px -18px rgba(20, 30, 50, 0.35);
+    border: 1px solid var(--n-200);
+  }
+}
+
+/* Narrow screens scale the sheet instead of reflowing it, so what you see is
+   always page-true. */
+@media screen and (max-width: 900px) {
+  .proposal-doc {
+    align-items: flex-start;
+    overflow: hidden;
+  }
+  .proposal-page {
+    transform: scale(calc((100vw - 24px) / 816));
+    transform-origin: top center;
+    margin-bottom: calc((100vw - 24px) / 816 * -1056px + 24px);
+  }
+}
+
 @media print {
   .proposal-no-print,
   .proposal-handle {
     display: none !important;
   }
   .proposal-doc {
-    font-size: 12px;
+    display: block;
+    gap: 0;
   }
-  .proposal-item {
-    break-inside: avoid;
-  }
-  .proposal-print-header {
-    break-after: avoid;
-  }
-  /* N items per page — the marker element is emitted by ProposalDocument from
-     the proposal_settings items_per_page value. */
-  .proposal-page-break {
+  .proposal-page {
     break-after: page;
     page-break-after: always;
-    height: 0;
+    width: 100%;
+    /* 10.9in keeps the footer pinned to the sheet bottom without rounding into
+       a blank trailing page (11in exactly overflows in some engines). */
+    /* Chromium's paginated layout does not honour flex mt-auto reliably, so the
+       printed footer is pinned with absolute positioning instead. */
+    height: 10.9in;
+    min-height: 10.9in;
+    position: relative;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
   }
-  /* Compact repeated header: fixed elements paint on every printed page. */
-  .proposal-running-header {
-    display: flex !important;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    justify-content: space-between;
-    gap: 12px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 8.5px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #6b7280;
+  .proposal-page-last {
+    break-after: auto;
+    page-break-after: auto;
   }
-  .proposal-doc {
-    padding-top: 14px;
+  .proposal-page-footer {
+    position: absolute;
+    left: 0.55in;
+    right: 0.55in;
+    bottom: 0.5in;
+    margin-top: 0 !important;
+  }
+  .proposal-item,
+  .proposal-price-card,
+  .proposal-page-footer {
+    break-inside: avoid;
+  }
+  .proposal-masthead,
+  .proposal-slim-header {
+    break-after: avoid;
+  }
+  /* Site chrome must never print around a proposal sheet. */
+  body:has(.proposal-doc) header:not(.proposal-masthead):not(.proposal-slim-header),
+  body:has(.proposal-doc) footer:not(.proposal-page-footer),
+  body:has(.proposal-doc) .fixed {
+    display: none !important;
+  }
+  /* The grey canvas gutters are screen affordances only — a printed sheet is
+     the page container and nothing else, or its padding spills a blank page. */
+  .proposal-canvas {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .proposal-shell {
+    background: #fff !important;
+    min-height: 0 !important;
   }
 }
-.proposal-running-header {
-  display: none;
-}
+
