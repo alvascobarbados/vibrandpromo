@@ -509,4 +509,33 @@
   .proposal-print-header {
     break-after: avoid;
   }
+  /* N items per page — the marker element is emitted by ProposalDocument from
+     the proposal_settings items_per_page value. */
+  .proposal-page-break {
+    break-after: page;
+    page-break-after: always;
+    height: 0;
+  }
+  /* Compact repeated header: fixed elements paint on every printed page. */
+  .proposal-running-header {
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 8.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+  .proposal-doc {
+    padding-top: 14px;
+  }
+}
+.proposal-running-header {
+  display: none;
 }
