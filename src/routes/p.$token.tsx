@@ -13,7 +13,8 @@ import { useStaffSession } from "@/lib/staff-session";
  */
 export const Route = createFileRoute("/p/$token")({
   loader: async ({ params }) => {
-    const proposal = await getProposalByToken({ data: { token: params.token } });
+    // Bad/short tokens fail validation — a client sees the same "not found".
+    const proposal = await getProposalByToken({ data: { token: params.token } }).catch(() => null);
     if (!proposal) throw notFound();
     return proposal;
   },

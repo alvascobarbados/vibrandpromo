@@ -148,7 +148,10 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const shareLink = row?.share_token ? `${window.location.origin}/p/${row.share_token}` : null;
+  const shareLink =
+    row?.share_token && typeof window !== "undefined"
+      ? `${window.location.origin}/p/${row.share_token}`
+      : null;
 
   async function copyShareLink() {
     if (!shareLink) return;
