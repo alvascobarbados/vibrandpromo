@@ -69,15 +69,36 @@ export function ProposalSettingsPage() {
             className="mt-1.5"
           />
           <p className="mt-1.5 text-xs text-muted-foreground">
-            Use {"{client}"}, {"{project}"} and {"{date}"}. Preview:{" "}
+            Use {"{number}"}, {"{client}"}, {"{project}"} and {"{date}"}. Preview:{" "}
             <span className="font-semibold text-navy-900">
               {proposalFilename(draft.filename_template, {
+                number: `${draft.number_prefix || "VP"}-${new Date().getFullYear()}-0042`,
                 client: "Abeds",
                 project: "Independence T-Shirts",
                 dateISO: null,
               })}
               .pdf
             </span>
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="prefix">Proposal number prefix</Label>
+          <Input
+            id="prefix"
+            value={draft.number_prefix}
+            onChange={(event) =>
+              setDraft((prev) => ({ ...prev, number_prefix: event.target.value }))
+            }
+            className="mt-1.5"
+          />
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Applies to future proposals only — numbers already issued never change. Next number
+            looks like{" "}
+            <span className="font-semibold text-navy-900">
+              {(draft.number_prefix || "VP") + "-" + new Date().getFullYear() + "-0042"}
+            </span>
+            .
           </p>
         </div>
 

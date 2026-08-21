@@ -11,12 +11,14 @@ export function printProposal(parts: {
   client: string;
   project: string;
   dateISO: string | null;
+  number?: string | null;
 }) {
   const previous = document.title;
   document.title = proposalFilename(parts.template, {
     client: parts.client,
     project: parts.project,
     dateISO: parts.dateISO,
+    number: parts.number ?? null,
   });
   const restore = () => {
     document.title = previous;

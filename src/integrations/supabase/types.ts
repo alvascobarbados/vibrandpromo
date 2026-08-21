@@ -886,6 +886,21 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_counters: {
+        Row: {
+          last_number: number
+          year: number
+        }
+        Insert: {
+          last_number?: number
+          year: number
+        }
+        Update: {
+          last_number?: number
+          year?: number
+        }
+        Relationships: []
+      }
       proposal_items: {
         Row: {
           created_at: string
@@ -936,6 +951,7 @@ export type Database = {
           footer_text: string
           id: string
           items_per_page: number
+          number_prefix: string
           updated_at: string
           validity_days: number
         }
@@ -946,6 +962,7 @@ export type Database = {
           footer_text?: string
           id?: string
           items_per_page?: number
+          number_prefix?: string
           updated_at?: string
           validity_days?: number
         }
@@ -956,6 +973,7 @@ export type Database = {
           footer_text?: string
           id?: string
           items_per_page?: number
+          number_prefix?: string
           updated_at?: string
           validity_days?: number
         }
@@ -973,6 +991,7 @@ export type Database = {
           id: string
           incoterm: string
           project_name: string
+          proposal_number: string
           share_token: string | null
           status: string
           updated_at: string
@@ -988,6 +1007,7 @@ export type Database = {
           id?: string
           incoterm: string
           project_name: string
+          proposal_number: string
           share_token?: string | null
           status?: string
           updated_at?: string
@@ -1003,6 +1023,7 @@ export type Database = {
           id?: string
           incoterm?: string
           project_name?: string
+          proposal_number?: string
           share_token?: string | null
           status?: string
           updated_at?: string

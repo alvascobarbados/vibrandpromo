@@ -75,6 +75,7 @@ function SharedProposalPage() {
       client: data.clientName,
       project: data.projectName,
       dateISO: data.generatedAt,
+      number: data.proposalNumber,
     });
 
   // ?print=1 opens straight into the browser's print dialog (list-page PDF action).
@@ -125,6 +126,7 @@ function SharedProposalPage() {
               clientName: data.clientName,
               buyerName: data.buyerName,
               projectName: data.projectName,
+              proposalNumber: data.proposalNumber,
               status: "generated",
               incoterm: data.incoterm,
               currency: data.currency,

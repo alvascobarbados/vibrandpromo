@@ -50,6 +50,8 @@ export type ProposalHeader = {
   /** Optional named buyer at the client — the "Attention" line. */
   buyerName?: string | null;
   projectName: string;
+  /** Permanent human-readable proposal number, e.g. VP-2026-0042. */
+  proposalNumber?: string | null;
   status: "draft" | "generated";
   incoterm: Incoterm;
   currency: PricingCurrency;
@@ -488,6 +490,11 @@ export function ProposalDocument({
                     </p>
                   </div>
                   <div className="text-right text-[11.5px] text-n-600">
+                    {header.proposalNumber ? (
+                      <p className="text-[13px] font-semibold tabular-nums text-navy-900">
+                        {header.proposalNumber}
+                      </p>
+                    ) : null}
                     <p>{formatProposalDate(header.dateISO)}</p>
                     {header.preparedBy ? <p>Prepared by {header.preparedBy}</p> : null}
                     <p>
@@ -522,6 +529,7 @@ export function ProposalDocument({
                     {header.clientName} — {header.projectName}
                   </p>
                   <p className="shrink-0 text-[11px] text-n-500">
+                    {header.proposalNumber ? `${header.proposalNumber} · ` : ""}
                     {header.incoterm} {CURRENCY_TAG[header.currency]} ·{" "}
                     {formatProposalDate(header.dateISO)}
                   </p>

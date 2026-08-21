@@ -24,7 +24,7 @@ export const proposalSettingsQuery = queryOptions({
   queryFn: async (): Promise<ProposalSettingsRow> => {
     const { data, error } = await supabase
       .from("proposal_settings")
-      .select("filename_template, items_per_page, footer_text, validity_days, client_can_export")
+      .select("filename_template, items_per_page, footer_text, validity_days, client_can_export, number_prefix")
       .eq("id", "default")
       .maybeSingle();
     if (error) throw error;

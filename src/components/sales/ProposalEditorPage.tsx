@@ -254,6 +254,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
                       client: row.client_name,
                       project: row.project_name,
                       dateISO: row.generated_at ?? row.created_at,
+                      number: row.proposal_number,
                     })
                   }
                 >
@@ -300,6 +301,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
             clientName: row.client_name,
             buyerName: row.buyer_name,
             projectName: row.project_name,
+            proposalNumber: row.proposal_number,
             status: row.status,
             incoterm,
             currency: CURRENCY_BY_INCOTERM[incoterm],

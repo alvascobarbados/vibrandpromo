@@ -53,7 +53,8 @@ export function ProposalsListPage() {
       if (!needle) return true;
       return (
         row.client_name.toLowerCase().includes(needle) ||
-        row.project_name.toLowerCase().includes(needle)
+        row.project_name.toLowerCase().includes(needle) ||
+        (row.proposal_number ?? "").toLowerCase().includes(needle)
       );
     });
   }, [proposals.data, search, status]);
@@ -79,8 +80,8 @@ export function ProposalsListPage() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search client or project"
-              aria-label="Search proposals by client or project"
+              placeholder="Search number, client or project"
+              aria-label="Search proposals by number, client or project"
               className="h-10 w-56 rounded-full"
             />
             <Link
@@ -130,6 +131,9 @@ export function ProposalsListPage() {
             {rows.map((row) => (
               <li key={row.id} className="flex flex-wrap items-center gap-4 px-4 py-4">
                 <div className="min-w-0 flex-1">
+                  <p className="text-[12px] font-semibold tabular-nums text-n-500">
+                    {row.proposal_number ?? "—"}
+                  </p>
                   <p className="truncate text-sm font-bold text-navy-900">{row.client_name}</p>
                   <p className="truncate text-sm text-n-700">{row.project_name}</p>
                   <p className="mt-1 text-[11px] text-n-600">
