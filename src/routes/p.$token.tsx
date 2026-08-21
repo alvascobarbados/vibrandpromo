@@ -89,7 +89,7 @@ function SharedProposalPage() {
   return (
     <div className="min-h-screen bg-n-50">
       <div className="proposal-no-print sticky top-0 z-30 border-b border-n-200 bg-white/85 backdrop-blur">
-        <div className="mx-auto flex max-w-[860px] flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-[848px] flex-wrap items-center justify-between gap-3 px-4 py-3">
           <p className="font-display text-[18px] font-extrabold tracking-tight text-navy-900">
             vibrand<span className="text-lime-500">.</span>
           </p>
@@ -116,7 +116,7 @@ function SharedProposalPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[860px] px-4 py-8">
+      <div className="mx-auto max-w-[848px] px-4 py-8">
         <div className="overflow-hidden rounded-[20px] border border-n-200 bg-white shadow-[0_10px_30px_-18px_rgba(20,30,50,0.25)]">
           <ProposalDocument
             readOnly
