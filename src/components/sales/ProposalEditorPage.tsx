@@ -254,6 +254,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
                       client: row.client_name,
                       project: row.project_name,
                       dateISO: row.generated_at ?? row.created_at,
+                      number: row.proposal_number,
                     })
                   }
                 >
