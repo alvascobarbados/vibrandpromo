@@ -22,6 +22,7 @@ import {
   proposalSettingsQuery,
   type ProposalSettingsRow,
 } from "@/lib/proposal-settings";
+import { normalizePublicBaseUrl } from "@/lib/proposal-share";
 
 /**
  * Admin-only editor for the five proposal presentation settings. The share
@@ -39,7 +40,16 @@ export function ProposalSettingsPage() {
 
   const save = useMutation({
     mutationFn: async (row: ProposalSettingsRow) => {
-      const { error } = await supabase.from("proposal_settings").update(row).eq("id", "default");
+      const raw = (row.public_base_url ?? "").trim();
+      const base = raw ? normalizePublicBaseUrl(raw) : null;
+      if (raw && !base) {
+        throw new Error("Public site address must be a full http(s) URL, e.g. https://vibrand.com");
+      }
+      const payload = { ...row, public_base_url: base };
+      const { error } = await supabase
+        .from("proposal_settings")
+        .update(payload)
+        .eq("id", "default");
       if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
