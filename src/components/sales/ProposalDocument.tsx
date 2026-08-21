@@ -152,7 +152,7 @@ function ItemGallery({ snapshot }: { snapshot: ProposalSnapshot }) {
   const hero = snapshot.images[0] ?? null;
   const secondaries = snapshot.images.slice(1, 4);
   return (
-    <div className="w-full max-w-full md:w-[340px]">
+    <div className="w-full max-w-full md:w-[280px]">
       <div className="aspect-square w-full overflow-hidden rounded-[16px] border border-n-200 bg-white">
         {hero ? (
           <img
@@ -171,7 +171,7 @@ function ItemGallery({ snapshot }: { snapshot: ProposalSnapshot }) {
           {secondaries.map((path, index) => (
             <div
               key={`${path}-${index}`}
-              className="size-[76px] overflow-hidden rounded-[10px] border border-n-200 bg-white"
+              className="size-[64px] overflow-hidden rounded-[10px] border border-n-200 bg-white"
             >
               <img
                 src={imageSrc(path, "thumb")}
@@ -228,7 +228,7 @@ function ItemBlock({
       ) : null}
       <div
         {...(dragProps ?? {})}
-        className={`proposal-item group relative grid grid-cols-1 items-stretch gap-6 border-b border-n-100 px-5 py-7 transition-colors md:px-[34px] md:py-8 md:grid-cols-[340px_minmax(0,1fr)] md:gap-[34px] ${
+        className={`proposal-item group relative grid grid-cols-1 items-stretch gap-6 border-b border-n-100 px-5 py-7 transition-colors md:px-[34px] md:py-[30px] md:grid-cols-[280px_minmax(0,1fr)] md:gap-[26px] ${
           dragging ? "rounded-xl bg-white shadow-lg ring-1 ring-n-200" : "hover:bg-n-50/40"
         }`}
       >
@@ -254,7 +254,7 @@ function ItemBlock({
               {taxonomy}
             </p>
           ) : null}
-          <h3 className="mt-1 text-[24px] font-[750] leading-tight text-navy-900">
+          <h3 className="mt-1 text-[22px] font-[750] leading-tight text-navy-900">
             {snapshot.name}
           </h3>
           {snapshot.sku ? (
