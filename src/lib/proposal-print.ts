@@ -4,7 +4,7 @@
  * Safari seed the PDF filename from document.title, so we swap it for the
  * settings template during the print call and restore it afterwards.
  */
-import { proposalFilename } from "@/lib/proposal-settings";
+import { proposalFilename } from "@/lib/proposal-settings-defaults";
 
 export function printProposal(parts: {
   template: string;
