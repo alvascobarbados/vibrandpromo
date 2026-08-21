@@ -266,11 +266,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
               {generate.isPending ? (
                 <Loader2 className="mr-1.5 size-4 animate-spin" />
               ) : null}
-              {row.status === "generated"
-                ? row.edited_since_generated
-                  ? "Regenerate →"
-                  : "Regenerate →"
-                : "Generate proposal →"}
+              {row.status === "generated" ? "Regenerate →" : "Generate proposal →"}
             </Button>
           </div>
         </div>
@@ -310,6 +306,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
               itemCount: displayItems.length,
             }}
             items={displayItems}
+            itemsPerPage={settings.items_per_page}
             onRemove={(id) => remove.mutate(id)}
             onReorder={(ids) => {
               setOrder("custom");
