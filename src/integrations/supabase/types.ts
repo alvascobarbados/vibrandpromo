@@ -459,6 +459,27 @@ export type Database = {
           },
         ]
       }
+      numtest_log: {
+        Row: {
+          at: string | null
+          id: string | null
+          note: string | null
+          proposal_number: string | null
+        }
+        Insert: {
+          at?: string | null
+          id?: string | null
+          note?: string | null
+          proposal_number?: string | null
+        }
+        Update: {
+          at?: string | null
+          id?: string | null
+          note?: string | null
+          proposal_number?: string | null
+        }
+        Relationships: []
+      }
       origins: {
         Row: {
           code: string
