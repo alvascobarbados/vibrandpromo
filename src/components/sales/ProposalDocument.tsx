@@ -232,7 +232,7 @@ function ItemBlock({
       ) : null}
       <div
         {...(dragProps ?? {})}
-        className={`proposal-item group relative grid grid-cols-1 items-stretch gap-6 border-b border-n-100 px-5 py-7 transition-colors md:px-12 md:py-[30px] md:grid-cols-[280px_minmax(0,1fr)] md:gap-[26px] ${
+        className={`proposal-item group relative grid grid-cols-1 items-stretch gap-6 border-b border-n-100 px-5 py-7 transition-colors md:px-12 md:py-[22px] md:grid-cols-[280px_minmax(0,1fr)] md:gap-[26px] ${
           dragging ? "rounded-xl bg-white shadow-lg ring-1 ring-n-200" : "hover:bg-n-50/40"
         }`}
       >
