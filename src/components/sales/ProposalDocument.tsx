@@ -497,10 +497,6 @@ export function ProposalDocument({
                     ) : null}
                     <p>{formatProposalDate(header.dateISO)}</p>
                     {header.preparedBy ? <p>Prepared by {header.preparedBy}</p> : null}
-                    <p>
-                      {header.itemCount} item{header.itemCount === 1 ? "" : "s"} ·{" "}
-                      {header.status === "generated" ? "Generated" : "Draft"}
-                    </p>
                   </div>
                 </div>
                 <div className="mt-2.5 h-[2.5px] w-full rounded-full bg-lime-500" />
