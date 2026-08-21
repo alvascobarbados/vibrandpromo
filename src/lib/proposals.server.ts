@@ -33,7 +33,7 @@ export async function loadProposalSettings(): Promise<ProposalSettingsRow> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data } = await supabaseAdmin
     .from("proposal_settings")
-    .select("filename_template, items_per_page, footer_text, validity_days, client_can_export")
+    .select("filename_template, items_per_page, footer_text, validity_days, client_can_export, number_prefix")
     .eq("id", "default")
     .maybeSingle();
   return (data as ProposalSettingsRow | null) ?? PROPOSAL_SETTINGS_FALLBACK;
@@ -129,6 +129,7 @@ export type SharedProposal = {
   /** NAME ONLY — a buyer's email and phone never cross this boundary. */
   buyerName: string | null;
   projectName: string;
+  proposalNumber: string | null;
   incoterm: Incoterm;
   currency: "USD" | "BBD";
   generatedAt: string | null;
@@ -151,7 +152,7 @@ export async function readProposalByToken(token: string): Promise<SharedProposal
   const { data: proposal } = await supabaseAdmin
     .from("proposals")
     .select(
-      "id, project_name, incoterm, status, generated_at, created_by_name, clients(name), buyers(name)",
+      "id, project_name, proposal_number, incoterm, status, generated_at, created_by_name, clients(name), buyers(name)",
     )
     .eq("share_token", token)
     .eq("status", "generated")
@@ -176,6 +177,7 @@ export async function readProposalByToken(token: string): Promise<SharedProposal
     clientName: raw.clients?.name ?? "—",
     buyerName: raw.buyers?.name ?? null,
     projectName: proposal.project_name,
+    proposalNumber: (proposal as { proposal_number?: string | null }).proposal_number ?? null,
     incoterm,
     currency: CURRENCY_BY_INCOTERM[incoterm],
     generatedAt: proposal.generated_at,

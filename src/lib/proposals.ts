@@ -25,6 +25,7 @@ export type Proposal = {
   client_id: string;
   buyer_id: string | null;
   project_name: string;
+  proposal_number: string | null;
   incoterm: Incoterm;
   status: ProposalStatus;
   share_token: string | null;
