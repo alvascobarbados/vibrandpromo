@@ -233,16 +233,67 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
             >
               + Add items
             </Button>
+            {shareLink ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="h-10 rounded-full"
+                  onClick={() => void copyShareLink()}
+                >
+                  Copy share link
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-10 rounded-full"
+                  onClick={() =>
+                    printProposal({
+                      template: settings.filename_template,
+                      client: row.client_name,
+                      project: row.project_name,
+                      dateISO: row.generated_at ?? row.created_at,
+                    })
+                  }
+                >
+                  Export as PDF
+                </Button>
+              </>
+            ) : null}
             <Button
-              disabled
-              title="Generation arrives with the next part"
-              className="h-10 rounded-full bg-lime-500 font-semibold text-navy-900 hover:bg-lime-500"
+              disabled={generate.isPending || displayItems.length === 0}
+              onClick={() => generate.mutate()}
+              className="h-10 rounded-full bg-lime-500 font-semibold text-navy-900 hover:bg-lime-400"
             >
-              Generate proposal →
+              {generate.isPending ? (
+                <Loader2 className="mr-1.5 size-4 animate-spin" />
+              ) : null}
+              {row.status === "generated"
+                ? row.edited_since_generated
+                  ? "Regenerate →"
+                  : "Regenerate →"
+                : "Generate proposal →"}
             </Button>
           </div>
         </div>
+        {shareLink ? (
+          <div className="mx-auto max-w-[860px] px-4 pb-3 text-[11.5px] text-n-600">
+            Share link:{" "}
+            <a
+              href={shareLink}
+              target="_blank"
+              rel="noopener"
+              className="font-semibold text-navy-700 underline decoration-lime-500 decoration-2 underline-offset-2"
+            >
+              {shareLink}
+            </a>
+            {row.edited_since_generated ? (
+              <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700 ring-1 ring-amber-400">
+                Edited since generated
+              </span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
+
 
       <div className="mx-auto max-w-[860px] px-4 py-8">
         <div className="overflow-hidden rounded-[20px] border border-n-200 bg-white shadow-[0_10px_30px_-18px_rgba(20,30,50,0.25)]">
