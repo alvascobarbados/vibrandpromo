@@ -5,6 +5,7 @@ import { ProposalDocument } from "@/components/sales/ProposalDocument";
 import { printProposal } from "@/lib/proposal-print";
 import { validUntilLabel } from "@/lib/proposal-settings-defaults";
 import { getProposalByToken } from "@/lib/proposals.functions";
+import { useStaffSession } from "@/lib/staff-session";
 
 /**
  * The customer-facing static proposal. No auth, no pricing engine — every
@@ -64,6 +65,7 @@ function SharedNotFound() {
 
 function SharedProposalPage() {
   const data = Route.useLoaderData();
+  const { isStaff } = useStaffSession();
   const validity = validUntilLabel(data.generatedAt, data.settings.validityDays);
 
   const print = () =>
@@ -91,13 +93,15 @@ function SharedProposalPage() {
             vibrand<span className="text-lime-500">.</span>
           </p>
           <div className="flex items-center gap-3">
-            <Link
-              to="/sales/proposals/$id"
-              params={{ id: data.proposalId }}
-              className="text-[11.5px] font-semibold text-n-500 hover:text-navy-900"
-            >
-              Open in editor
-            </Link>
+            {isStaff ? (
+              <Link
+                to="/sales/proposals/$id"
+                params={{ id: data.proposalId }}
+                className="text-[11.5px] font-semibold text-n-500 hover:text-navy-900"
+              >
+                Open in editor
+              </Link>
+            ) : null}
             {data.settings.clientCanExport ? (
               <button
                 type="button"
