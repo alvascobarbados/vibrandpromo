@@ -116,7 +116,7 @@ export function buildProposalSnapshot({
   return {
     name: product.name,
     sku: product.sku ?? null,
-    image: product.images?.[0] ?? null,
+    images: (product.images ?? []).filter(Boolean).slice(0, 4),
     category,
     subcategory,
     specs,
