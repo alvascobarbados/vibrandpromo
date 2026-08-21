@@ -15,9 +15,7 @@ const STATUS_CHIPS = [
   { value: "generated", label: "Generated" },
 ] as const;
 
-export function shareUrl(token: string) {
-  return `${window.location.origin}/p/${token}`;
-}
+export { proposalShareUrl } from "@/lib/proposal-share";
 
 function StatusTag({ row }: { row: ProposalListRow }) {
   return (
