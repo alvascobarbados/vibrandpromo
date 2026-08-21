@@ -167,65 +167,90 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
     );
   }
 
-  const toolbar = (
-    <div className="flex flex-wrap items-center gap-2">
-      <Select
-        value={order}
-        onValueChange={(value) => {
-          setOrder(value as OrderMode);
-          if (value === "category") sortByCatalogue();
-        }}
-      >
-        <SelectTrigger className="h-10 w-56 rounded-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="custom">Order: Custom</SelectItem>
-          <SelectItem value="category">Order: Category → Subcategory</SelectItem>
-        </SelectContent>
-      </Select>
-      <Button
-        variant="ghost"
-        className="h-10 rounded-full text-navy-700 hover:bg-navy-50"
-        onClick={() => void navigate({ to: "/sales/proposals/$id/add", params: { id: proposalId } })}
-      >
-        + Add items
-      </Button>
-    </div>
-  );
-
   return (
-    <div className="site-container py-8">
-      <ProposalDocument
-        header={{
-          clientName: row.client_name,
-          buyerName: row.buyer_name,
-          projectName: row.project_name,
-          status: row.status,
-          incoterm,
-          currency: CURRENCY_BY_INCOTERM[incoterm],
-          dateISO: row.generated_at ?? row.created_at,
-          preparedBy: row.created_by_name,
-          itemCount: displayItems.length,
-        }}
-        items={displayItems}
-        toolbar={toolbar}
-        onRemove={(id) => remove.mutate(id)}
-        onReorder={(ids) => {
-          setOrder("custom");
-          reorder.mutate(ids);
-        }}
-        onAdd={() =>
-          void navigate({ to: "/sales/proposals/$id/add", params: { id: proposalId } })
-        }
-        footer={
-          <p className="proposal-no-print mt-2 text-[11px] text-n-600">
-            {isDraft
-              ? `Draft — prices live at ${incoterm} until you Generate.`
-              : `Generated ${formatProposalDate(row.generated_at)} — prices frozen.`}
-          </p>
-        }
-      />
+    <div className="min-h-screen bg-n-50">
+      <div className="proposal-no-print sticky top-0 z-30 border-b border-n-200 bg-white/85 backdrop-blur">
+        <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <button
+            type="button"
+            onClick={() => void navigate({ to: "/sales/proposals" })}
+            className="rounded-full px-2 py-1 text-sm font-semibold text-navy-700 hover:bg-navy-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
+          >
+            ← Proposals
+          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={order}
+              onValueChange={(value) => {
+                setOrder(value as OrderMode);
+                if (value === "category") sortByCatalogue();
+              }}
+            >
+              <SelectTrigger className="h-10 w-56 rounded-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="custom">Order: Custom</SelectItem>
+                <SelectItem value="category">Order: Category → Subcategory</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              className="h-10 rounded-full"
+              onClick={() =>
+                void navigate({ to: "/sales/proposals/$id/add", params: { id: proposalId } })
+              }
+            >
+              + Add items
+            </Button>
+            <Button
+              disabled
+              title="Generation arrives with the next part"
+              className="h-10 rounded-full bg-lime-500 font-semibold text-navy-900 hover:bg-lime-500"
+            >
+              Generate proposal →
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-[1120px] px-4 py-8">
+        <div className="overflow-hidden rounded-[20px] border border-n-200 bg-white shadow-[0_10px_30px_-18px_rgba(20,30,50,0.25)]">
+          <ProposalDocument
+            header={{
+              clientName: row.client_name,
+              buyerName: row.buyer_name,
+              projectName: row.project_name,
+              status: row.status,
+              incoterm,
+              currency: CURRENCY_BY_INCOTERM[incoterm],
+              dateISO: row.generated_at ?? row.created_at,
+              preparedBy: row.created_by_name,
+              itemCount: displayItems.length,
+            }}
+            items={displayItems}
+            onRemove={(id) => remove.mutate(id)}
+            onReorder={(ids) => {
+              setOrder("custom");
+              reorder.mutate(ids);
+            }}
+            onAdd={() =>
+              void navigate({ to: "/sales/proposals/$id/add", params: { id: proposalId } })
+            }
+            footer={
+              isDraft ? (
+                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800">
+                  Draft — prices live at {incoterm}
+                </span>
+              ) : (
+                <span className="rounded-full bg-lime-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-navy-900">
+                  Generated {formatProposalDate(row.generated_at)}
+                </span>
+              )
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 }
