@@ -203,7 +203,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
   return (
     <div className="min-h-screen bg-n-50">
       <div className="proposal-no-print sticky top-0 z-30 border-b border-n-200 bg-white/85 backdrop-blur">
-        <div className="mx-auto flex max-w-[860px] flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-[848px] flex-wrap items-center justify-between gap-3 px-4 py-3">
           <button
             type="button"
             onClick={() => void navigate({ to: "/sales/proposals" })}
@@ -274,7 +274,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
           </div>
         </div>
         {shareLink ? (
-          <div className="mx-auto max-w-[860px] px-4 pb-3 text-[11.5px] text-n-600">
+          <div className="mx-auto max-w-[848px] px-4 pb-3 text-[11.5px] text-n-600">
             Share link:{" "}
             <a
               href={shareLink}
@@ -294,7 +294,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
       </div>
 
 
-      <div className="mx-auto max-w-[860px] px-4 py-8">
+      <div className="mx-auto max-w-[848px] px-4 py-8">
         <div className="overflow-hidden rounded-[20px] border border-n-200 bg-white shadow-[0_10px_30px_-18px_rgba(20,30,50,0.25)]">
           <ProposalDocument
             header={{
