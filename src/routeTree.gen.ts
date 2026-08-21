@@ -19,6 +19,7 @@ import { Route as QuoteRouteImport } from './routes/quote'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
+import { Route as PTokenRouteImport } from './routes/p.$token'
 import { Route as SalesClientsRouteImport } from './routes/sales.clients'
 import { Route as SalesProposalsRouteImport } from './routes/sales.proposals'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -46,6 +47,7 @@ import { Route as AuthenticatedAdminCostingRoundingRouteImport } from './routes/
 import { Route as AuthenticatedAdminCostingRoutesRouteImport } from './routes/_authenticated/admin.costing.routes'
 import { Route as AuthenticatedAdminSettingsIndexRouteImport } from './routes/_authenticated/admin.settings.index'
 import { Route as AuthenticatedAdminSettingsEmailRouteImport } from './routes/_authenticated/admin.settings.email'
+import { Route as AuthenticatedAdminSettingsProposalsRouteImport } from './routes/_authenticated/admin.settings.proposals'
 import { Route as AuthenticatedAdminSettingsShippingRouteImport } from './routes/_authenticated/admin.settings.shipping'
 import { Route as AuthenticatedAdminSettingsStaffRouteImport } from './routes/_authenticated/admin.settings.staff'
 import { Route as ApiPublicProductImageSplatRouteImport } from './routes/api/public/product-image.$'
@@ -99,6 +101,11 @@ const TeamRoute = TeamRouteImport.update({
 const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
   path: '/c/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PTokenRoute = PTokenRouteImport.update({
+  id: '/p/$token',
+  path: '/p/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SalesClientsRoute = SalesClientsRouteImport.update({
@@ -256,6 +263,12 @@ const AuthenticatedAdminSettingsEmailRoute =
     path: '/email',
     getParentRoute: () => AuthenticatedAdminSettingsRoute,
   } as any)
+const AuthenticatedAdminSettingsProposalsRoute =
+  AuthenticatedAdminSettingsProposalsRouteImport.update({
+    id: '/proposals',
+    path: '/proposals',
+    getParentRoute: () => AuthenticatedAdminSettingsRoute,
+  } as any)
 const AuthenticatedAdminSettingsShippingRoute =
   AuthenticatedAdminSettingsShippingRouteImport.update({
     id: '/shipping',
@@ -295,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
+  '/p/$token': typeof PTokenRoute
   '/sales/clients': typeof SalesClientsRoute
   '/sales/proposals': typeof SalesProposalsRouteWithChildren
   '/admin/account': typeof AuthenticatedAdminAccountRoute
@@ -320,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/admin/costing/rounding': typeof AuthenticatedAdminCostingRoundingRoute
   '/admin/costing/routes': typeof AuthenticatedAdminCostingRoutesRoute
   '/admin/settings/email': typeof AuthenticatedAdminSettingsEmailRoute
+  '/admin/settings/proposals': typeof AuthenticatedAdminSettingsProposalsRoute
   '/admin/settings/shipping': typeof AuthenticatedAdminSettingsShippingRoute
   '/admin/settings/staff': typeof AuthenticatedAdminSettingsStaffRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
@@ -338,6 +353,7 @@ export interface FileRoutesByTo {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
+  '/p/$token': typeof PTokenRoute
   '/sales/clients': typeof SalesClientsRoute
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
@@ -359,6 +375,7 @@ export interface FileRoutesByTo {
   '/admin/costing/rounding': typeof AuthenticatedAdminCostingRoundingRoute
   '/admin/costing/routes': typeof AuthenticatedAdminCostingRoutesRoute
   '/admin/settings/email': typeof AuthenticatedAdminSettingsEmailRoute
+  '/admin/settings/proposals': typeof AuthenticatedAdminSettingsProposalsRoute
   '/admin/settings/shipping': typeof AuthenticatedAdminSettingsShippingRoute
   '/admin/settings/staff': typeof AuthenticatedAdminSettingsStaffRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
@@ -379,6 +396,7 @@ export interface FileRoutesById {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
+  '/p/$token': typeof PTokenRoute
   '/sales/clients': typeof SalesClientsRoute
   '/sales/proposals': typeof SalesProposalsRouteWithChildren
   '/_authenticated/admin/account': typeof AuthenticatedAdminAccountRoute
@@ -404,6 +422,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/costing/rounding': typeof AuthenticatedAdminCostingRoundingRoute
   '/_authenticated/admin/costing/routes': typeof AuthenticatedAdminCostingRoutesRoute
   '/_authenticated/admin/settings/email': typeof AuthenticatedAdminSettingsEmailRoute
+  '/_authenticated/admin/settings/proposals': typeof AuthenticatedAdminSettingsProposalsRoute
   '/_authenticated/admin/settings/shipping': typeof AuthenticatedAdminSettingsShippingRoute
   '/_authenticated/admin/settings/staff': typeof AuthenticatedAdminSettingsStaffRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
@@ -424,6 +443,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
+    | '/p/$token'
     | '/sales/clients'
     | '/sales/proposals'
     | '/admin/account'
@@ -449,6 +469,7 @@ export interface FileRouteTypes {
     | '/admin/costing/rounding'
     | '/admin/costing/routes'
     | '/admin/settings/email'
+    | '/admin/settings/proposals'
     | '/admin/settings/shipping'
     | '/admin/settings/staff'
     | '/api/public/product-image/$'
@@ -467,6 +488,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
+    | '/p/$token'
     | '/sales/clients'
     | '/admin/account'
     | '/admin/bulk-images'
@@ -488,6 +510,7 @@ export interface FileRouteTypes {
     | '/admin/costing/rounding'
     | '/admin/costing/routes'
     | '/admin/settings/email'
+    | '/admin/settings/proposals'
     | '/admin/settings/shipping'
     | '/admin/settings/staff'
     | '/api/public/product-image/$'
@@ -507,6 +530,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
+    | '/p/$token'
     | '/sales/clients'
     | '/sales/proposals'
     | '/_authenticated/admin/account'
@@ -532,6 +556,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/costing/rounding'
     | '/_authenticated/admin/costing/routes'
     | '/_authenticated/admin/settings/email'
+    | '/_authenticated/admin/settings/proposals'
     | '/_authenticated/admin/settings/shipping'
     | '/_authenticated/admin/settings/staff'
     | '/api/public/product-image/$'
@@ -552,6 +577,7 @@ export interface RootRouteChildren {
   SalesRoute: typeof SalesRouteWithChildren
   TeamRoute: typeof TeamRoute
   CSlugRoute: typeof CSlugRoute
+  PTokenRoute: typeof PTokenRoute
   ApiPublicProductImageSplatRoute: typeof ApiPublicProductImageSplatRoute
 }
 
@@ -625,6 +651,13 @@ declare module '@tanstack/react-router' {
       path: '/c/$slug'
       fullPath: '/c/$slug'
       preLoaderRoute: typeof CSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$token': {
+      id: '/p/$token'
+      path: '/p/$token'
+      fullPath: '/p/$token'
+      preLoaderRoute: typeof PTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sales/clients': {
@@ -816,6 +849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsEmailRouteImport
       parentRoute: typeof AuthenticatedAdminSettingsRoute
     }
+    '/_authenticated/admin/settings/proposals': {
+      id: '/_authenticated/admin/settings/proposals'
+      path: '/proposals'
+      fullPath: '/admin/settings/proposals'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsProposalsRouteImport
+      parentRoute: typeof AuthenticatedAdminSettingsRoute
+    }
     '/_authenticated/admin/settings/shipping': {
       id: '/_authenticated/admin/settings/shipping'
       path: '/shipping'
@@ -882,6 +922,7 @@ const AuthenticatedAdminCostingRouteWithChildren =
 
 interface AuthenticatedAdminSettingsRouteChildren {
   AuthenticatedAdminSettingsEmailRoute: typeof AuthenticatedAdminSettingsEmailRoute
+  AuthenticatedAdminSettingsProposalsRoute: typeof AuthenticatedAdminSettingsProposalsRoute
   AuthenticatedAdminSettingsShippingRoute: typeof AuthenticatedAdminSettingsShippingRoute
   AuthenticatedAdminSettingsStaffRoute: typeof AuthenticatedAdminSettingsStaffRoute
   AuthenticatedAdminSettingsIndexRoute: typeof AuthenticatedAdminSettingsIndexRoute
@@ -890,6 +931,8 @@ interface AuthenticatedAdminSettingsRouteChildren {
 const AuthenticatedAdminSettingsRouteChildren: AuthenticatedAdminSettingsRouteChildren =
   {
     AuthenticatedAdminSettingsEmailRoute: AuthenticatedAdminSettingsEmailRoute,
+    AuthenticatedAdminSettingsProposalsRoute:
+      AuthenticatedAdminSettingsProposalsRoute,
     AuthenticatedAdminSettingsShippingRoute:
       AuthenticatedAdminSettingsShippingRoute,
     AuthenticatedAdminSettingsStaffRoute: AuthenticatedAdminSettingsStaffRoute,
@@ -990,6 +1033,7 @@ const rootRouteChildren: RootRouteChildren = {
   SalesRoute: SalesRouteWithChildren,
   TeamRoute: TeamRoute,
   CSlugRoute: CSlugRoute,
+  PTokenRoute: PTokenRoute,
   ApiPublicProductImageSplatRoute: ApiPublicProductImageSplatRoute,
 }
 export const routeTree = rootRouteImport

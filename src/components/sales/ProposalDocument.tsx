@@ -17,7 +17,11 @@ export const PROPOSAL_FOOTER: Record<Incoterm, string> = {
   FOB: "Prices are in US$ at the origin port — freight, insurance & duties not included.",
 };
 
-/** Items per printed page. Part 4 reads this from proposal_settings. */
+/**
+ * Items per printed page. The default; proposal_settings overrides it per
+ * project through the `itemsPerPage` prop, which drives BOTH the editor page
+ * markers and the printed page breaks.
+ */
 export const ITEMS_PER_PAGE = 2;
 
 /** Matrix cells are bare numbers — the currency lives once in the card header. */
@@ -152,7 +156,7 @@ function ItemGallery({ snapshot }: { snapshot: ProposalSnapshot }) {
   const hero = snapshot.images[0] ?? null;
   const secondaries = snapshot.images.slice(1, 4);
   return (
-    <div className="w-full max-w-full md:w-[340px]">
+    <div className="w-full max-w-full md:w-[280px]">
       <div className="aspect-square w-full overflow-hidden rounded-[16px] border border-n-200 bg-white">
         {hero ? (
           <img
@@ -171,7 +175,7 @@ function ItemGallery({ snapshot }: { snapshot: ProposalSnapshot }) {
           {secondaries.map((path, index) => (
             <div
               key={`${path}-${index}`}
-              className="size-[76px] overflow-hidden rounded-[10px] border border-n-200 bg-white"
+              className="size-[64px] overflow-hidden rounded-[10px] border border-n-200 bg-white"
             >
               <img
                 src={imageSrc(path, "thumb")}
@@ -228,7 +232,7 @@ function ItemBlock({
       ) : null}
       <div
         {...(dragProps ?? {})}
-        className={`proposal-item group relative grid grid-cols-1 items-stretch gap-6 border-b border-n-100 px-5 py-7 transition-colors md:px-10 md:py-8 md:grid-cols-[340px_minmax(0,1fr)] md:gap-[34px] ${
+        className={`proposal-item group relative grid grid-cols-1 items-stretch gap-6 border-b border-n-100 px-5 py-7 transition-colors md:px-[34px] md:py-[30px] md:grid-cols-[280px_minmax(0,1fr)] md:gap-[26px] ${
           dragging ? "rounded-xl bg-white shadow-lg ring-1 ring-n-200" : "hover:bg-n-50/40"
         }`}
       >
@@ -254,7 +258,7 @@ function ItemBlock({
               {taxonomy}
             </p>
           ) : null}
-          <h3 className="mt-1 text-[24px] font-[750] leading-tight text-navy-900">
+          <h3 className="mt-1 text-[22px] font-[750] leading-tight text-navy-900">
             {snapshot.name}
           </h3>
           {snapshot.sku ? (
@@ -320,7 +324,7 @@ function ItemBlock({
 /** Editor-only rhythm marker showing where the printed page breaks. */
 function PageMarker({ page }: { page: number }) {
   return (
-    <div className="proposal-no-print flex items-center gap-3 px-5 py-2 md:px-10">
+    <div className="proposal-no-print flex items-center gap-3 px-5 py-2 md:px-[34px]">
       <span className="h-0 flex-1 border-t border-dashed border-n-300" />
       <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-n-400">
         Page {page} begins
@@ -343,6 +347,8 @@ export function ProposalDocument({
   onReorder,
   onAdd,
   footer,
+  footerNote,
+  itemsPerPage = ITEMS_PER_PAGE,
 }: {
   header: ProposalHeader;
   items: ProposalDisplayItem[];
@@ -351,6 +357,8 @@ export function ProposalDocument({
   onReorder?: (ids: string[]) => void;
   onAdd?: () => void;
   footer?: React.ReactNode;
+  footerNote?: React.ReactNode;
+  itemsPerPage?: number;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropAt, setDropAt] = useState<{ id: string; side: "before" | "after" } | null>(null);
@@ -384,7 +392,16 @@ export function ProposalDocument({
 
   return (
     <div className="proposal-doc">
-      <header className="proposal-print-header px-5 pt-7 md:px-10 md:pt-8">
+      {/* Compact header repeated on every printed page (screen-hidden). */}
+      <div aria-hidden="true" className="proposal-running-header">
+        <span>
+          {header.clientName} · {header.projectName}
+        </span>
+        <span>
+          {header.incoterm} {CURRENCY_TAG[header.currency]} · {formatProposalDate(header.dateISO)}
+        </span>
+      </div>
+      <header className="proposal-print-header px-5 pt-7 md:px-[34px] md:pt-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-display text-[22px] font-extrabold leading-none tracking-tight text-navy-900">
@@ -466,10 +483,11 @@ export function ProposalDocument({
                       } as React.HTMLAttributes<HTMLDivElement> & { draggable?: boolean },
                     })}
               />
-              {!readOnly &&
-              (index + 1) % ITEMS_PER_PAGE === 0 &&
-              index + 1 < items.length ? (
-                <PageMarker page={(index + 1) / ITEMS_PER_PAGE + 1} />
+              {(index + 1) % itemsPerPage === 0 && index + 1 < items.length ? (
+                <>
+                  {readOnly ? null : <PageMarker page={(index + 1) / itemsPerPage + 1} />}
+                  <div aria-hidden="true" className="proposal-page-break" />
+                </>
               ) : null}
             </div>
           ))
@@ -477,7 +495,7 @@ export function ProposalDocument({
       </div>
 
       {readOnly ? null : (
-        <div className="px-5 pt-6 md:px-10">
+        <div className="px-5 pt-6 md:px-[34px]">
           <button
             type="button"
             onClick={onAdd}
@@ -488,10 +506,13 @@ export function ProposalDocument({
         </div>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-n-200 px-5 py-5 md:px-10">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-n-200 px-5 py-5 md:px-[34px]">
         <p className="flex max-w-[70%] items-start gap-2 text-[11px] text-n-600">
           <Info className="mt-[1px] size-3.5 shrink-0 text-n-500" />
-          <span>{PROPOSAL_FOOTER[header.incoterm]}</span>
+          <span>
+            {PROPOSAL_FOOTER[header.incoterm]}
+            {footerNote ? <span className="mt-1 block text-n-500">{footerNote}</span> : null}
+          </span>
         </p>
         {footer}
       </div>

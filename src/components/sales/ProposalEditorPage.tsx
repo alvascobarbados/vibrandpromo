@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,7 +18,10 @@ import { ProposalDocument, type ProposalDisplayItem } from "@/components/sales/P
 import { categoriesQuery, subcategoriesQuery, allProductsQuery } from "@/lib/catalog";
 import { getStaffPricing } from "@/lib/pricing.functions";
 import { CURRENCY_BY_INCOTERM } from "@/lib/proposal-currency";
+import { printProposal } from "@/lib/proposal-print";
+import { PROPOSAL_SETTINGS_FALLBACK, proposalSettingsQuery } from "@/lib/proposal-settings";
 import { buildProposalSnapshot } from "@/lib/proposal-snapshot";
+import { generateProposal } from "@/lib/proposals.functions";
 import {
   removeProposalItem,
   saveProposalOrder,
@@ -36,9 +40,13 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
   const products = useQuery(allProductsQuery);
   const categories = useQuery(categoriesQuery);
   const subcategories = useQuery(subcategoriesQuery);
+  const settingsQuery = useQuery(proposalSettingsQuery);
+  const settings = settingsQuery.data ?? PROPOSAL_SETTINGS_FALLBACK;
   const shipping = useShippingSettings();
   const fetchStaffPricing = useServerFn(getStaffPricing);
+  const runGenerate = useServerFn(generateProposal);
   const [order, setOrder] = useState<OrderMode>("custom");
+
 
   const row = proposal.data ?? null;
   const incoterm = row?.incoterm ?? "CIF";
@@ -131,6 +139,31 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const generate = useMutation({
+    mutationFn: () => runGenerate({ data: { proposalId } }),
+    onSuccess: async (result) => {
+      await refresh();
+      toast.success(`Proposal generated — ${result.frozen} item prices frozen.`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const shareLink =
+    row?.share_token && typeof window !== "undefined"
+      ? `${window.location.origin}/p/${row.share_token}`
+      : null;
+
+  async function copyShareLink() {
+    if (!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      toast.success("Share link copied.");
+    } catch {
+      toast.error("Could not copy the link.");
+    }
+  }
+
+
   /** Catalogue order: category sort_order, then subcategory sort_order, then name. */
   function sortByCatalogue() {
     const catOrder = new Map((categories.data ?? []).map((c, index) => [c.id, index]));
@@ -170,7 +203,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
   return (
     <div className="min-h-screen bg-n-50">
       <div className="proposal-no-print sticky top-0 z-30 border-b border-n-200 bg-white/85 backdrop-blur">
-        <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-[860px] flex-wrap items-center justify-between gap-3 px-4 py-3">
           <button
             type="button"
             onClick={() => void navigate({ to: "/sales/proposals" })}
@@ -203,18 +236,65 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
             >
               + Add items
             </Button>
+            {shareLink ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="h-10 rounded-full"
+                  onClick={() => void copyShareLink()}
+                >
+                  Copy share link
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-10 rounded-full"
+                  onClick={() =>
+                    printProposal({
+                      template: settings.filename_template,
+                      client: row.client_name,
+                      project: row.project_name,
+                      dateISO: row.generated_at ?? row.created_at,
+                    })
+                  }
+                >
+                  Export as PDF
+                </Button>
+              </>
+            ) : null}
             <Button
-              disabled
-              title="Generation arrives with the next part"
-              className="h-10 rounded-full bg-lime-500 font-semibold text-navy-900 hover:bg-lime-500"
+              disabled={generate.isPending || displayItems.length === 0}
+              onClick={() => generate.mutate()}
+              className="h-10 rounded-full bg-lime-500 font-semibold text-navy-900 hover:bg-lime-400"
             >
-              Generate proposal →
+              {generate.isPending ? (
+                <Loader2 className="mr-1.5 size-4 animate-spin" />
+              ) : null}
+              {row.status === "generated" ? "Regenerate →" : "Generate proposal →"}
             </Button>
           </div>
         </div>
+        {shareLink ? (
+          <div className="mx-auto max-w-[860px] px-4 pb-3 text-[11.5px] text-n-600">
+            Share link:{" "}
+            <a
+              href={shareLink}
+              target="_blank"
+              rel="noopener"
+              className="font-semibold text-navy-700 underline decoration-lime-500 decoration-2 underline-offset-2"
+            >
+              {shareLink}
+            </a>
+            {row.edited_since_generated ? (
+              <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700 ring-1 ring-amber-400">
+                Edited since generated
+              </span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      <div className="mx-auto max-w-[1120px] px-4 py-8">
+
+      <div className="mx-auto max-w-[860px] px-4 py-8">
         <div className="overflow-hidden rounded-[20px] border border-n-200 bg-white shadow-[0_10px_30px_-18px_rgba(20,30,50,0.25)]">
           <ProposalDocument
             header={{
@@ -229,6 +309,7 @@ export function ProposalEditorPage({ proposalId }: { proposalId: string }) {
               itemCount: displayItems.length,
             }}
             items={displayItems}
+            itemsPerPage={settings.items_per_page}
             onRemove={(id) => remove.mutate(id)}
             onReorder={(ids) => {
               setOrder("custom");
