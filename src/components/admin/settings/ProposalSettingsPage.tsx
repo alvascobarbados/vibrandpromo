@@ -140,6 +140,23 @@ export function ProposalSettingsPage() {
         </div>
 
         <div>
+          <Label htmlFor="base-url">Public site address</Label>
+          <Input
+            id="base-url"
+            value={draft.public_base_url ?? ""}
+            placeholder="https://vibrand.com"
+            onChange={(event) =>
+              setDraft((prev) => ({ ...prev, public_base_url: event.target.value }))
+            }
+            className="mt-1.5"
+          />
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            The domain client links are built from — e.g. https://vibrand.com. Leave empty to use
+            the current site address.
+          </p>
+        </div>
+
+        <div>
           <Label htmlFor="footer">Share page footer</Label>
           <Textarea
             id="footer"
