@@ -486,7 +486,15 @@
 }
 
 /* Proposals: the document body is the same markup on screen and in print, so
-   printing only has to drop the editing chrome. */
+   printing only has to drop the editing chrome.
+
+   PORTRAIT LOCK: @page is PORTRAIT Letter for every layout preset, current and
+   future (1-up / 2-up / 4-up are all portrait) so mixed proposals staple
+   together cleanly. Never landscape. */
+@page {
+  size: letter portrait;
+  margin: 0.5in;
+}
 @media print {
   .proposal-no-print,
   .proposal-handle {
