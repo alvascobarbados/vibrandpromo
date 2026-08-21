@@ -19,6 +19,7 @@ import { Route as QuoteRouteImport } from './routes/quote'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
+import { Route as PTokenRouteImport } from './routes/p.$token'
 import { Route as SalesClientsRouteImport } from './routes/sales.clients'
 import { Route as SalesProposalsRouteImport } from './routes/sales.proposals'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -99,6 +100,11 @@ const TeamRoute = TeamRouteImport.update({
 const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
   path: '/c/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PTokenRoute = PTokenRouteImport.update({
+  id: '/p/$token',
+  path: '/p/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SalesClientsRoute = SalesClientsRouteImport.update({
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
+  '/p/$token': typeof PTokenRoute
   '/sales/clients': typeof SalesClientsRoute
   '/sales/proposals': typeof SalesProposalsRouteWithChildren
   '/admin/account': typeof AuthenticatedAdminAccountRoute
@@ -338,6 +345,7 @@ export interface FileRoutesByTo {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
+  '/p/$token': typeof PTokenRoute
   '/sales/clients': typeof SalesClientsRoute
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/bulk-images': typeof AuthenticatedAdminBulkImagesRoute
@@ -379,6 +387,7 @@ export interface FileRoutesById {
   '/sales': typeof SalesRouteWithChildren
   '/team': typeof TeamRoute
   '/c/$slug': typeof CSlugRoute
+  '/p/$token': typeof PTokenRoute
   '/sales/clients': typeof SalesClientsRoute
   '/sales/proposals': typeof SalesProposalsRouteWithChildren
   '/_authenticated/admin/account': typeof AuthenticatedAdminAccountRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
+    | '/p/$token'
     | '/sales/clients'
     | '/sales/proposals'
     | '/admin/account'
@@ -467,6 +477,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
+    | '/p/$token'
     | '/sales/clients'
     | '/admin/account'
     | '/admin/bulk-images'
@@ -507,6 +518,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/team'
     | '/c/$slug'
+    | '/p/$token'
     | '/sales/clients'
     | '/sales/proposals'
     | '/_authenticated/admin/account'
@@ -552,6 +564,7 @@ export interface RootRouteChildren {
   SalesRoute: typeof SalesRouteWithChildren
   TeamRoute: typeof TeamRoute
   CSlugRoute: typeof CSlugRoute
+  PTokenRoute: typeof PTokenRoute
   ApiPublicProductImageSplatRoute: typeof ApiPublicProductImageSplatRoute
 }
 
@@ -625,6 +638,13 @@ declare module '@tanstack/react-router' {
       path: '/c/$slug'
       fullPath: '/c/$slug'
       preLoaderRoute: typeof CSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$token': {
+      id: '/p/$token'
+      path: '/p/$token'
+      fullPath: '/p/$token'
+      preLoaderRoute: typeof PTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sales/clients': {
@@ -990,6 +1010,7 @@ const rootRouteChildren: RootRouteChildren = {
   SalesRoute: SalesRouteWithChildren,
   TeamRoute: TeamRoute,
   CSlugRoute: CSlugRoute,
+  PTokenRoute: PTokenRoute,
   ApiPublicProductImageSplatRoute: ApiPublicProductImageSplatRoute,
 }
 export const routeTree = rootRouteImport
