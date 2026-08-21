@@ -86,13 +86,13 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
             className="break-inside-avoid overflow-hidden rounded-[14px] border border-n-200 bg-white"
           >
             <div className="flex items-center justify-between gap-3 border-b border-n-200 bg-n-50 px-3 py-2">
-              <p className="truncate text-[12.5px] font-bold text-navy-900">{bubble.methodName}</p>
+              <p className="truncate text-[14px] font-bold text-navy-900">{bubble.methodName}</p>
               <p className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-n-500">
                 {snapshot.incoterm} {CURRENCY_TAG[snapshot.currency]} · unit
               </p>
             </div>
             <div className="overflow-x-auto px-3 pb-2 pt-1.5">
-              <table className="w-full border-separate border-spacing-0 text-[11px] tabular-nums">
+              <table className="w-full border-separate border-spacing-0 text-[13px] tabular-nums">
                 <thead>
                   <tr>
                     <th className="py-1 text-left" />
@@ -112,7 +112,7 @@ function ProposalPricing({ snapshot }: { snapshot: ProposalSnapshot }) {
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row.label}>
-                      <td className="border-t border-n-200 py-1 pr-1.5 align-middle">
+                      <td className="border-t border-n-200 py-1 pr-1.5 align-middle text-[12.5px]">
                         <span className="flex items-center gap-1 whitespace-nowrap">
                           {row.chip ? <RushChip /> : null}
                           {row.icon ? (
@@ -250,21 +250,27 @@ function ItemBlock({
 
         <div className="flex min-w-0 flex-col">
           {taxonomy ? (
-            <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-n-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-n-500">
               {taxonomy}
             </p>
           ) : null}
-          <h3 className="mt-1 text-[21px] font-[750] leading-tight text-navy-900">
+          <h3 className="mt-1 text-[24px] font-[750] leading-tight text-navy-900">
             {snapshot.name}
           </h3>
           {snapshot.sku ? (
-            <p className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-n-500">
+            <p className="mt-0.5 text-[11.5px] uppercase tracking-[0.08em] text-n-500">
               {snapshot.sku}
             </p>
           ) : null}
 
+          {snapshot.description ? (
+            <p className="mt-2 line-clamp-3 text-[14px] leading-relaxed text-n-600">
+              {snapshot.description}
+            </p>
+          ) : null}
+
           {specs.length ? (
-            <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 text-[12.5px] sm:grid-cols-2">
+            <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 text-[14px] sm:grid-cols-2">
               {specs.map((spec, specIndex) => (
                 <div key={`${spec.label}-${specIndex}`} className="flex gap-1.5">
                   <dt className="shrink-0 font-semibold text-n-500">{spec.label}</dt>
@@ -275,7 +281,7 @@ function ItemBlock({
           ) : null}
 
           {snapshot.leadLabels.length ? (
-            <p className="mt-3 flex flex-wrap items-center gap-3 text-[13px] text-n-600">
+            <p className="mt-3 flex flex-wrap items-center gap-3 text-[14px] text-n-600">
               {snapshot.leadLabels.map((lead) => (
                 <span key={lead.mode} className="inline-flex items-center gap-1">
                   {lead.mode === "air" ? (
@@ -374,7 +380,7 @@ export function ProposalDocument({
     clearDrag();
   }
 
-  const chip = "rounded-full border border-n-200 px-2.5 py-0.5 text-[11px] text-n-600";
+  const chip = "rounded-full border border-n-200 px-2.5 py-0.5 text-[11.5px] text-n-600";
 
   return (
     <div className="proposal-doc">
@@ -388,7 +394,7 @@ export function ProposalDocument({
               Proposal
             </p>
           </div>
-          <div className="text-right text-[11px] text-n-600">
+          <div className="text-right text-[12.5px] text-n-600">
             <p>{formatProposalDate(header.dateISO)}</p>
             {header.preparedBy ? <p>Prepared by {header.preparedBy}</p> : null}
             <p>
@@ -407,14 +413,11 @@ export function ProposalDocument({
           {header.buyerName ? (
             <p className="mt-1 text-[13px] text-n-600">Prepared for {header.buyerName}</p>
           ) : null}
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-[11.5px]">
             <span className="rounded-full bg-navy-900 px-2.5 py-0.5 font-bold uppercase tracking-[0.1em] text-white">
               {header.incoterm} {CURRENCY_TAG[header.currency]}
             </span>
             <span className={chip}>{INCOTERM_SCOPE[header.incoterm]}</span>
-            {header.buyerName ? (
-              <span className={`${chip} proposal-no-print`}>Attn: {header.buyerName}</span>
-            ) : null}
           </div>
         </div>
       </header>

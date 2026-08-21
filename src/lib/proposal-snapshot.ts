@@ -22,6 +22,8 @@ export type ProposalLeadLabel = { mode: "air" | "sea" | "rush"; label: string };
 export type ProposalSnapshot = {
   name: string;
   sku: string | null;
+  /** Customer-facing product description — already public on the shop. */
+  description: string | null;
   /** Up to four customer-safe catalogue image paths — hero first. */
   images: string[];
   category: string | null;
@@ -47,6 +49,7 @@ const SPEC_FIELDS = [
 export type SnapshotProduct = LeadSource & {
   name: string;
   sku: string | null;
+  description?: string | null;
   images: string[] | null;
   moq: number | null;
   material?: string | null;
@@ -116,6 +119,7 @@ export function buildProposalSnapshot({
   return {
     name: product.name,
     sku: product.sku ?? null,
+    description: product.description?.trim() ? product.description.trim() : null,
     images: (product.images ?? []).filter(Boolean).slice(0, 4),
     category,
     subcategory,
