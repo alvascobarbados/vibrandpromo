@@ -101,6 +101,7 @@ export function NewProposalDialog({
     mutationFn: async () => {
       const { data, error } = await supabase
         .from("proposals")
+        // proposal_number is assigned by the database trigger, so it is absent here.
         .insert({
           client_id: clientId,
           project_name: project.trim(),
@@ -109,7 +110,7 @@ export function NewProposalDialog({
           status: "draft",
           created_by: access?.userId ?? null,
           created_by_name: access?.displayName || access?.email || "Staff",
-        })
+        } as never)
         .select("id")
         .single();
       if (error) throw new Error(error.message);
