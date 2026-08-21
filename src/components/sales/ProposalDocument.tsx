@@ -17,7 +17,11 @@ export const PROPOSAL_FOOTER: Record<Incoterm, string> = {
   FOB: "Prices are in US$ at the origin port — freight, insurance & duties not included.",
 };
 
-/** Items per printed page. Part 4 reads this from proposal_settings. */
+/**
+ * Items per printed page. The default; proposal_settings overrides it per
+ * project through the `itemsPerPage` prop, which drives BOTH the editor page
+ * markers and the printed page breaks.
+ */
 export const ITEMS_PER_PAGE = 2;
 
 /** Matrix cells are bare numbers — the currency lives once in the card header. */
@@ -343,6 +347,8 @@ export function ProposalDocument({
   onReorder,
   onAdd,
   footer,
+  footerNote,
+  itemsPerPage = ITEMS_PER_PAGE,
 }: {
   header: ProposalHeader;
   items: ProposalDisplayItem[];
@@ -351,6 +357,8 @@ export function ProposalDocument({
   onReorder?: (ids: string[]) => void;
   onAdd?: () => void;
   footer?: React.ReactNode;
+  footerNote?: React.ReactNode;
+  itemsPerPage?: number;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropAt, setDropAt] = useState<{ id: string; side: "before" | "after" } | null>(null);
@@ -384,6 +392,15 @@ export function ProposalDocument({
 
   return (
     <div className="proposal-doc">
+      {/* Compact header repeated on every printed page (screen-hidden). */}
+      <div aria-hidden="true" className="proposal-running-header">
+        <span>
+          {header.clientName} · {header.projectName}
+        </span>
+        <span>
+          {header.incoterm} {CURRENCY_TAG[header.currency]} · {formatProposalDate(header.dateISO)}
+        </span>
+      </div>
       <header className="proposal-print-header px-5 pt-7 md:px-[34px] md:pt-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -466,10 +483,11 @@ export function ProposalDocument({
                       } as React.HTMLAttributes<HTMLDivElement> & { draggable?: boolean },
                     })}
               />
-              {!readOnly &&
-              (index + 1) % ITEMS_PER_PAGE === 0 &&
-              index + 1 < items.length ? (
-                <PageMarker page={(index + 1) / ITEMS_PER_PAGE + 1} />
+              {(index + 1) % itemsPerPage === 0 && index + 1 < items.length ? (
+                <>
+                  {readOnly ? null : <PageMarker page={(index + 1) / itemsPerPage + 1} />}
+                  <div aria-hidden="true" className="proposal-page-break" />
+                </>
               ) : null}
             </div>
           ))
@@ -491,7 +509,10 @@ export function ProposalDocument({
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-n-200 px-5 py-5 md:px-[34px]">
         <p className="flex max-w-[70%] items-start gap-2 text-[11px] text-n-600">
           <Info className="mt-[1px] size-3.5 shrink-0 text-n-500" />
-          <span>{PROPOSAL_FOOTER[header.incoterm]}</span>
+          <span>
+            {PROPOSAL_FOOTER[header.incoterm]}
+            {footerNote ? <span className="mt-1 block text-n-500">{footerNote}</span> : null}
+          </span>
         </p>
         {footer}
       </div>
