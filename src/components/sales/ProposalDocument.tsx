@@ -228,12 +228,12 @@ function ItemBlock({
       ) : null}
       <div
         {...(dragProps ?? {})}
-        className={`proposal-item group relative grid grid-cols-1 items-stretch gap-6 border-b border-n-100 px-10 py-8 transition-colors md:grid-cols-[340px_minmax(0,1fr)] md:gap-[34px] ${
+        className={`proposal-item group relative grid grid-cols-1 items-stretch gap-6 border-b border-n-100 px-5 py-7 transition-colors md:px-10 md:py-8 md:grid-cols-[340px_minmax(0,1fr)] md:gap-[34px] ${
           dragging ? "rounded-xl bg-white shadow-lg ring-1 ring-n-200" : "hover:bg-n-50/40"
         }`}
       >
         {readOnly ? null : (
-          <div className="proposal-no-print absolute left-2 top-8 flex flex-col items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="proposal-no-print absolute left-1 top-7 md:left-2 md:top-8 flex flex-col items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
             <span className="inline-flex size-5 items-center justify-center rounded-full bg-navy-900 text-[10px] font-bold text-white">
               {index + 1}
             </span>
@@ -314,7 +314,7 @@ function ItemBlock({
 /** Editor-only rhythm marker showing where the printed page breaks. */
 function PageMarker({ page }: { page: number }) {
   return (
-    <div className="proposal-no-print flex items-center gap-3 px-10 py-2">
+    <div className="proposal-no-print flex items-center gap-3 px-5 py-2 md:px-10">
       <span className="h-0 flex-1 border-t border-dashed border-n-300" />
       <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-n-400">
         Page {page} begins
@@ -378,7 +378,7 @@ export function ProposalDocument({
 
   return (
     <div className="proposal-doc">
-      <header className="proposal-print-header px-10 pt-8">
+      <header className="proposal-print-header px-5 pt-7 md:px-10 md:pt-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-display text-[22px] font-extrabold leading-none tracking-tight text-navy-900">
@@ -474,7 +474,7 @@ export function ProposalDocument({
       </div>
 
       {readOnly ? null : (
-        <div className="px-10 pt-6">
+        <div className="px-5 pt-6 md:px-10">
           <button
             type="button"
             onClick={onAdd}
@@ -485,7 +485,7 @@ export function ProposalDocument({
         </div>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-n-200 px-10 py-5">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-n-200 px-5 py-5 md:px-10">
         <p className="flex max-w-[70%] items-start gap-2 text-[11px] text-n-600">
           <Info className="mt-[1px] size-3.5 shrink-0 text-n-500" />
           <span>{PROPOSAL_FOOTER[header.incoterm]}</span>
